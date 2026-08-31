@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://avennex.com/sitemap.xml
+
+# Disallow admin or private areas if you have any
+# Disallow: /admin/
+# Disallow: /private/
