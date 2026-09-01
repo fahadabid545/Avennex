@@ -20,3 +20,14 @@
 - One task at a time.
 - Don't touch files outside the current task scope.
 - Always confirm before deleting anything.
+
+## Content Writing
+- Write like a real human, not an AI. Vary sentence length -- some short. Some longer with more detail.
+- No dashes, no semicolons, no "leveraging", "cutting-edge", "seamless", "robust", "harness", "empower", "elevate", "delve", "tapestry", "landscape", "comprehensive", "innovative", "transformative", "utilize", "facilitate", "streamline".
+- Don't start consecutive sentences with the same word.
+- Mix incomplete thoughts with complete ones. Not every paragraph needs a perfect structure.
+- Use contractions (we're, don't, can't, it's). Nobody writes "we are" on a real website.
+- Keep it conversational but confident. Like a smart founder talking to a smart client.
+- No bullet points in website copy unless it's a feature list or specs.
+- Fluctuate tone slightly between sections. Some sections punch hard, some breathe easy.
+- If it reads like it could be on any other company's site, rewrite it.
