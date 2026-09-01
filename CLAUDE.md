@@ -21,13 +21,46 @@
 - Don't touch files outside the current task scope.
 - Always confirm before deleting anything.
 
-## Content Writing
-- Write like a real human, not an AI. Vary sentence length -- some short. Some longer with more detail.
-- No dashes, no semicolons, no "leveraging", "cutting-edge", "seamless", "robust", "harness", "empower", "elevate", "delve", "tapestry", "landscape", "comprehensive", "innovative", "transformative", "utilize", "facilitate", "streamline".
-- Don't start consecutive sentences with the same word.
-- Mix incomplete thoughts with complete ones. Not every paragraph needs a perfect structure.
-- Use contractions (we're, don't, can't, it's). Nobody writes "we are" on a real website.
-- Keep it conversational but confident. Like a smart founder talking to a smart client.
-- No bullet points in website copy unless it's a feature list or specs.
-- Fluctuate tone slightly between sections. Some sections punch hard, some breathe easy.
-- If it reads like it could be on any other company's site, rewrite it.
+## Content Writing Rules (Mandatory for all website copy, blog posts, job descriptions, product descriptions)
+
+### Banned Words & Phrases (Never use these anywhere on the site)
+leveraging, cutting-edge, seamless, robust, harness, empower, elevate, delve, tapestry, landscape, comprehensive, innovative, transformative, utilize, facilitate, streamline, synergy, holistic, paradigm, revolutionize, next-generation, state-of-the-art, best-in-class, world-class, end-to-end, turnkey, ecosystem, scalable (unless literally talking about infrastructure), at the end of the day, it goes without saying, in today's world, in this day and age, without further ado, take it to the next level, think outside the box, move the needle, deep dive (as a noun), circle back, low-hanging fruit, game-changer, disrupt/disruptive (unless quoting someone)
+
+### Banned Punctuation in Copy
+- No em dashes or en dashes. Use commas, periods, or rewrite the sentence.
+- No semicolons. Split into two sentences or use a comma.
+- No ellipsis (...) unless in dialogue or a deliberate trailing thought.
+
+### Sentence Structure
+- Vary sentence length deliberately. Follow a long sentence with a short one. Then medium. Break rhythm.
+- Never start 3+ consecutive sentences with the same word (especially "We", "Our", "The", "This").
+- Never start 2+ consecutive sentences with "We" specifically. Restructure one of them.
+- Don't open every paragraph with a topic sentence. Sometimes start with a detail or example first.
+- Some sentences can be fragments. On purpose. For impact.
+- Not every thought needs a full explanation. Trust the reader to connect dots.
+
+### Paragraph Structure
+- Vary paragraph length. One paragraph might be 4 sentences. The next might be 1.
+- Don't follow the same pattern across sections (intro > detail > conclusion > intro > detail > conclusion). Mix it up.
+- No section should read like a template filled in with different words.
+
+### Tone
+- Use contractions always (we're, don't, can't, it's, won't, that's, there's).
+- Write like a confident founder explaining things to a peer, not like a brochure.
+- Some sections hit hard and direct. Others can be relaxed, almost casual.
+- Confidence without arrogance. Say what you do well without superlatives on every line.
+- No fake humility ("we humbly believe..."). No fake excitement ("we're thrilled to announce!").
+
+### AI Detection Traps to Avoid
+- Don't use the 3-point pattern (problem, solution, result) for every section.
+- Don't list exactly 3 examples every time. Sometimes 2, sometimes 4, sometimes just describe one well.
+- Don't end sections with a neat summary sentence. Sometimes just stop.
+- Don't start copy with "At Avennex..." or "Here at Avennex..." -- overused pattern.
+- Don't use "Whether you're... or..." constructions.
+- Don't pair adjectives symmetrically ("fast and reliable, clean and modern, simple yet powerful").
+- Avoid "not just X, but Y" pattern repeatedly.
+- Skip transition words between every paragraph (However, Moreover, Additionally, Furthermore).
+- Don't hedge everything with "can", "may", "might" when you mean "does", "will", "is".
+
+### Quality Check
+Before finalizing any copy, ask: if you cover the company name, could this text be on any other tech company's website? If yes, rewrite it. The copy must only make sense for Avennex.
