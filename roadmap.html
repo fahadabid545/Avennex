@@ -31,18 +31,82 @@
 </head>
 <body>
 
-  <!-- Header: build in next step -->
-  <header></header>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">avennex<span class="logo-dot">.</span></a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="roadmap.html" class="active">Roadmap</a>
+        <a href="blog.html">Blog</a>
+        <a href="careers.html">Careers</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="contact.html" class="nav-cta">Let's Talk</a>
+      </nav>
+      <button class="menu-toggle" aria-label="Open menu">
+        <i data-lucide="menu" width="24" height="24"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="mobile-menu">
+    <button class="mobile-menu-close" aria-label="Close menu">
+      <i data-lucide="x" width="28" height="28"></i>
+    </button>
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="roadmap.html" class="active">Roadmap</a>
+    <a href="blog.html">Blog</a>
+    <a href="careers.html">Careers</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="contact.html" class="nav-cta">Let's Talk</a>
+  </div>
 
   <!-- Main content: build in next step -->
   <main></main>
 
-  <!-- Footer: build in next step -->
-  <footer></footer>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <a href="index.html" class="logo">avennex<span class="logo-dot">.</span></a>
+          <p class="footer-brand-text">AI-powered products that automate complex workflows.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin" width="18" height="18"></i></a>
+            <a href="#" aria-label="GitHub"><i data-lucide="github" width="18" height="18"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Products</h4>
+          <a href="products.html">AI HR Platform</a>
+          <a href="products.html">E-Commerce Builder</a>
+          <a href="roadmap.html">Product Roadmap</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="about.html">About</a>
+          <a href="careers.html">Careers</a>
+          <a href="blog.html">Blog</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Avennex. All rights reserved.</p>
+    </div>
+  </footer>
 
   <script src="js/main.js" defer></script>
   <script src="js/header.js" defer></script>
   <script src="js/animations.js" defer></script>
+  <script>lucide.createIcons();</script>
 
 </body>
 </html>
