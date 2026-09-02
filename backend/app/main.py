@@ -7,6 +7,11 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
 from app.auth.router import router as auth_router
+from app.blogs.router import router as blogs_router
+from app.jobs.router import router as jobs_router
+from app.products.router import router as products_router
+from app.launchpad.router import router as launchpad_router
+from app.contact.router import router as contact_router
 
 settings = get_settings()
 
@@ -25,6 +30,11 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(blogs_router)
+app.include_router(jobs_router)
+app.include_router(products_router)
+app.include_router(launchpad_router)
+app.include_router(contact_router)
 
 
 @app.get("/api/health")
