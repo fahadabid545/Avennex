@@ -103,81 +103,12 @@
       </div>
     </section>
 
-    <section class="section launchpad-entries" data-animate="fade-up">
+    <section class="section launchpad-entries">
       <div class="section-inner">
-        <h2 class="section-heading">On the Launchpad</h2>
-        <p class="section-subtext">Product concepts open for feedback and collaboration.</p>
+        <h2 class="section-heading" data-animate="fade-up">On the Launchpad</h2>
+        <p class="section-subtext" data-animate="fade-up">Product concepts open for feedback and collaboration.</p>
 
-        <div class="lp-card">
-          <div class="lp-card-top">
-            <h3 class="lp-card-title">AI-Powered Customer Support Agent</h3>
-            <span class="badge badge-blue"><span class="badge-dot badge-dot-blue"></span> Open for Feedback</span>
-          </div>
-          <p class="lp-card-tagline">Automated support that actually resolves tickets instead of routing them in circles.</p>
-
-          <div class="lp-card-body">
-            <p>Most support chatbots are glorified FAQ searches. They catch the easy questions and punt everything else to a human queue. The backlog grows, response times climb, and customers sit in limbo waiting for someone to read their ticket.</p>
-            <p>This agent handles the full conversation. It reads the customer's history, checks order status, processes refunds, updates accounts. Tasks that a human agent does manually, automated with actual account access, not just canned replies. When it genuinely can't resolve something, it escalates with a full summary so the human doesn't start from scratch.</p>
-            <p>First target is e-commerce support teams handling 200+ tickets a day. The volume makes it worth automating. Smaller teams can use it too, but the ROI hits hardest at scale.</p>
-          </div>
-
-          <div class="lp-details-grid">
-            <div class="lp-detail">
-              <span class="lp-detail-label">Timeline</span>
-              <span class="lp-detail-value">Q1 2027 (estimated)</span>
-            </div>
-            <div class="lp-detail">
-              <span class="lp-detail-label">Funding needed</span>
-              <span class="lp-detail-value">$5,000 - $10,000</span>
-            </div>
-            <div class="lp-detail">
-              <span class="lp-detail-label">Team needed</span>
-              <span class="lp-detail-value">1 NLP engineer, 1 frontend dev</span>
-            </div>
-            <div class="lp-detail">
-              <span class="lp-detail-label">Stage</span>
-              <span class="lp-detail-value">Concept</span>
-            </div>
-          </div>
-
-          <!-- links to individual launchpad detail page when API is ready -->
-          <a href="#" class="text-link">See full details <span class="text-link-arrow">&rarr;</span></a>
-        </div>
-
-        <div class="lp-card">
-          <div class="lp-card-top">
-            <h3 class="lp-card-title">Automated Social Media Manager</h3>
-            <span class="badge badge-yellow"><span class="badge-dot badge-dot-yellow"></span> Coming Soon</span>
-          </div>
-          <p class="lp-card-tagline">Schedule, generate, and post across platforms without juggling five different dashboards.</p>
-
-          <div class="lp-card-body">
-            <p>Small businesses run their own social media. Usually one person, usually the founder, usually between actual work. They copy-paste the same post across Instagram, Facebook, LinkedIn, and Twitter. Formatting breaks every time. Analytics live in four separate tabs.</p>
-            <p>This tool pulls it into one place. Draft posts with AI assistance when you need a caption or thread written fast. Schedule across platforms with per-platform formatting handled automatically. Basic analytics in a single dashboard instead of bouncing between apps. Early concept, but the problem is obvious to anyone running a small brand.</p>
-          </div>
-
-          <div class="lp-details-grid">
-            <div class="lp-detail">
-              <span class="lp-detail-label">Timeline</span>
-              <span class="lp-detail-value">Q2 2027 (estimated)</span>
-            </div>
-            <div class="lp-detail">
-              <span class="lp-detail-label">Funding needed</span>
-              <span class="lp-detail-value">TBD</span>
-            </div>
-            <div class="lp-detail">
-              <span class="lp-detail-label">Team needed</span>
-              <span class="lp-detail-value">TBD</span>
-            </div>
-            <div class="lp-detail">
-              <span class="lp-detail-label">Stage</span>
-              <span class="lp-detail-value">Early concept</span>
-            </div>
-          </div>
-
-          <!-- links to individual launchpad detail page when API is ready -->
-          <a href="#" class="text-link">See full details <span class="text-link-arrow">&rarr;</span></a>
-        </div>
+        <div id="launchpad-list"></div>
       </div>
     </section>
 
@@ -233,6 +164,8 @@
   <script src="js/main.js" defer></script>
   <script src="js/header.js" defer></script>
   <script src="js/animations.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/launchpad.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>
