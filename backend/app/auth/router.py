@@ -1,3 +1,6 @@
+import logging
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
@@ -7,7 +10,10 @@ from app.auth.service import (
     verify_password,
     create_access_token,
     create_refresh_token,
+    create_reset_token,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -107,3 +113,53 @@ def refresh(body: RefreshRequest):
 def logout(body: RefreshRequest):
     db = get_supabase()
     db.table("refresh_tokens").update({"revoked": True}).eq("token", body.refresh_token).execute()
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+def forgot_password(body: ForgotPasswordRequest):
+    db = get_supabase()
+    result = db.table("admins").select("id, email").eq("email", body.email).execute()
+    if result.data:
+        admin = result.data[0]
+        token, expires_at = create_reset_token()
+        db.table("admins").update({
+            "reset_token": token,
+            "reset_token_expires": expires_at.isoformat(),
+        }).eq("id", admin["id"]).execute()
+        logger.info("Password reset token for %s: %s", admin["email"], token)
+    return {"message": "If that email exists, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetPasswordRequest):
+    db = get_supabase()
+    result = (
+        db.table("admins")
+        .select("id, reset_token, reset_token_expires")
+        .eq("reset_token", body.token)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    admin = result.data[0]
+    if admin.get("reset_token_expires"):
+        if datetime.fromisoformat(admin["reset_token_expires"]) < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    password_hash = hash_password(body.new_password)
+    db.table("admins").update({
+        "password_hash": password_hash,
+        "reset_token": None,
+        "reset_token_expires": None,
+    }).eq("id", admin["id"]).execute()
+    return {"message": "Password updated successfully"}

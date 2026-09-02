@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | Avennex Admin</title>
+  <title>Login | Avennex Admin Center</title>
   <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
   <div class="login-container">
     <div class="login-box">
       <a href="../index.html" class="login-logo">avennex<span class="logo-dot">.</span></a>
-      <p class="login-subtitle">Admin Panel</p>
+      <p class="login-subtitle">Admin Center</p>
       <form id="login-form" class="login-form">
         <div class="field">
           <label for="email">Email</label>
@@ -26,7 +26,18 @@
         </div>
         <div id="login-error" class="login-error"></div>
         <button type="submit" class="btn btn-primary btn-full">Log in</button>
+        <p class="forgot-link"><a href="#" id="forgot-link">Forgot password?</a></p>
       </form>
+      <div id="forgot-form" style="display:none">
+        <p class="login-subtitle" style="margin-bottom:16px">Enter your email to reset your password</p>
+        <div class="field">
+          <label for="reset-email">Email</label>
+          <input type="email" id="reset-email" required autocomplete="email">
+        </div>
+        <div id="forgot-msg" class="form-msg"></div>
+        <button class="btn btn-primary btn-full" id="forgot-submit">Send Reset Link</button>
+        <p class="forgot-link"><a href="#" id="back-to-login">Back to login</a></p>
+      </div>
     </div>
   </div>
   <script src="js/admin-api.js"></script>

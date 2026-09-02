@@ -50,6 +50,12 @@ def get_by_slug(slug: str):
     return result.data[0] if result.data else None
 
 
+def get_by_id(blog_id: str):
+    db = get_supabase()
+    result = db.table("blogs").select("*").eq("id", blog_id).execute()
+    return result.data[0] if result.data else None
+
+
 def create(data: dict):
     db = get_supabase()
     if not data.get("slug"):

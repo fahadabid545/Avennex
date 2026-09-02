@@ -23,6 +23,12 @@ def get_by_slug(slug: str):
     return result.data[0] if result.data else None
 
 
+def get_by_id(product_id: str):
+    db = get_supabase()
+    result = db.table("products").select("*").eq("id", product_id).execute()
+    return result.data[0] if result.data else None
+
+
 def create(data: dict):
     db = get_supabase()
     if not data.get("slug"):

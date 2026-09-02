@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.auth.dependencies import get_current_user
 from app.blogs import service
 from app.blogs.schemas import BlogCreate, BlogUpdate, BlogResponse
+from app.admin.service import log_activity
 
 router = APIRouter(prefix="/api/blogs", tags=["blogs"])
 
@@ -31,7 +32,9 @@ def get_blog(slug: str):
 
 @router.post("", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
 def create_blog(body: BlogCreate, _user: dict = Depends(get_current_user)):
-    return service.create(body.model_dump(exclude_none=True))
+    result = service.create(body.model_dump(exclude_none=True))
+    log_activity(_user["email"], "create", "blog", result["id"], result["title"])
+    return result
 
 
 @router.put("/{id}", response_model=BlogResponse)
@@ -39,13 +42,17 @@ def update_blog(id: str, body: BlogUpdate, _user: dict = Depends(get_current_use
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    action = "publish" if data.get("status") == "published" else "update"
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Blog not found")
+    log_activity(_user["email"], action, "blog", result["id"], result["title"])
     return result
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_blog(id: str, _user: dict = Depends(get_current_user)):
+    blog = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="Blog not found")
+    log_activity(_user["email"], "delete", "blog", id, blog["title"] if blog else id)

@@ -7,6 +7,7 @@ from app.jobs import service
 from app.jobs.schemas import JobCreate, JobUpdate, JobResponse, JobApplication
 from app.email.service import send_email
 from app.config import get_settings
+from app.admin.service import log_activity
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 limiter = Limiter(key_func=get_remote_address)
@@ -36,7 +37,9 @@ def get_job(slug: str):
 
 @router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 def create_job(body: JobCreate, _user: dict = Depends(get_current_user)):
-    return service.create(body.model_dump(exclude_none=True))
+    result = service.create(body.model_dump(exclude_none=True))
+    log_activity(_user["email"], "create", "job", result["id"], result["title"])
+    return result
 
 
 @router.put("/{id}", response_model=JobResponse)
@@ -47,13 +50,24 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Job not found")
+    log_activity(_user["email"], "update", "job", result["id"], result["title"])
     return result
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_job(id: str, _user: dict = Depends(get_current_user)):
+    job = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="Job not found")
+    log_activity(_user["email"], "delete", "job", id, job["title"] if job else id)
+
+
+@router.get("/{id}/applications")
+def get_applications(id: str, _user: dict = Depends(get_current_user)):
+    job = service.get_by_id(id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return service.list_applications(id)
 
 
 @router.post("/{slug}/apply", status_code=status.HTTP_201_CREATED)
@@ -61,6 +75,13 @@ def apply_to_job(slug: str, body: JobApplication, request: Request):
     job = service.get_by_slug(slug)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    service.store_application(job["id"], {
+        "name": body.name,
+        "email": body.email,
+        "resume_text": body.resume_text,
+        "cover_letter": body.cover_letter or "",
+    })
 
     settings = get_settings()
     cover = body.cover_letter or "Not provided"

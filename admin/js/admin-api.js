@@ -95,5 +95,16 @@ const AdminAPI = (() => {
     clearTokens();
   }
 
-  return { request, login, logout, getToken, clearTokens, setTokens };
+  async function requestRaw(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    const res = await fetch(`${BASE}${path}`, { ...opts, headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Request failed (${res.status})`);
+    }
+    if (res.status === 204) return {};
+    return res.json();
+  }
+
+  return { request, requestRaw, login, logout, getToken, clearTokens, setTokens };
 })();

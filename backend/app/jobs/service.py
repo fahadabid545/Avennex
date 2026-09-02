@@ -70,3 +70,43 @@ def delete(job_id: str):
     db = get_supabase()
     result = db.table("jobs").delete().eq("id", job_id).execute()
     return bool(result.data)
+
+
+def get_by_id(job_id: str):
+    db = get_supabase()
+    result = db.table("jobs").select("*").eq("id", job_id).execute()
+    return result.data[0] if result.data else None
+
+
+def store_application(job_id: str, data: dict):
+    db = get_supabase()
+    data["job_id"] = job_id
+    result = db.table("job_applications").insert(data).execute()
+    return result.data[0] if result.data else None
+
+
+def list_applications(job_id: str):
+    db = get_supabase()
+    result = (
+        db.table("job_applications")
+        .select("*")
+        .eq("job_id", job_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data
+
+
+def count_applications_for_jobs(job_ids: list[str]):
+    db = get_supabase()
+    result = (
+        db.table("job_applications")
+        .select("job_id")
+        .in_("job_id", job_ids)
+        .execute()
+    )
+    counts = {}
+    for row in result.data:
+        jid = row["job_id"]
+        counts[jid] = counts.get(jid, 0) + 1
+    return counts

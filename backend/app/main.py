@@ -12,6 +12,7 @@ from app.jobs.router import router as jobs_router
 from app.products.router import router as products_router
 from app.launchpad.router import router as launchpad_router
 from app.contact.router import router as contact_router
+from app.admin.router import router as admin_router
 
 settings = get_settings()
 
@@ -35,6 +36,7 @@ app.include_router(jobs_router)
 app.include_router(products_router)
 app.include_router(launchpad_router)
 app.include_router(contact_router)
+app.include_router(admin_router)
 
 
 @app.get("/api/health")

@@ -34,6 +34,12 @@ def create_refresh_token() -> tuple[str, datetime]:
     return token, expires_at
 
 
+def create_reset_token() -> tuple[str, datetime]:
+    token = uuid.uuid4().hex
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    return token, expires_at
+
+
 def decode_access_token(token: str) -> dict:
     settings = get_settings()
     return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])

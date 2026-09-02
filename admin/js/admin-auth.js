@@ -8,6 +8,11 @@
     }
 
     const errorEl = document.getElementById('login-error');
+    const forgotLink = document.getElementById('forgot-link');
+    const forgotForm = document.getElementById('forgot-form');
+    const backToLogin = document.getElementById('back-to-login');
+    const forgotSubmit = document.getElementById('forgot-submit');
+    const forgotMsg = document.getElementById('forgot-msg');
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -28,6 +33,41 @@
         btn.textContent = 'Log in';
       }
     });
+
+    forgotLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginForm.style.display = 'none';
+      forgotForm.style.display = 'block';
+      forgotMsg.textContent = '';
+      forgotMsg.className = 'form-msg';
+    });
+
+    backToLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      forgotForm.style.display = 'none';
+      loginForm.style.display = 'block';
+    });
+
+    forgotSubmit.addEventListener('click', async () => {
+      const email = document.getElementById('reset-email').value.trim();
+      if (!email) return;
+      forgotSubmit.disabled = true;
+      forgotMsg.textContent = '';
+      forgotMsg.className = 'form-msg';
+      try {
+        await AdminAPI.requestRaw('/api/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+        });
+        forgotMsg.textContent = 'If that email exists, a reset link has been sent.';
+        forgotMsg.classList.add('form-msg-success');
+      } catch {
+        forgotMsg.textContent = 'Something went wrong. Try again.';
+        forgotMsg.classList.add('form-msg-error');
+      }
+      forgotSubmit.disabled = false;
+    });
+
     return;
   }
 
