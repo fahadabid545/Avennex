@@ -13,40 +13,40 @@
       return;
     }
 
-    var html = '';
+    var html = '<table class="jobs-table">';
+    html += '<thead><tr><th>#</th><th>Position</th><th>Type</th><th>Closing Date</th></tr></thead>';
+    html += '<tbody>';
     for (var i = 0; i < jobs.length; i++) {
       var job = jobs[i];
-      var meta = [];
-      if (job.type) meta.push(job.type);
-      if (job.commitment) meta.push(job.commitment);
+      var type = [];
+      if (job.type) type.push(job.type);
+      if (job.commitment) type.push(job.commitment);
+      var closing = '';
       if (job.expires_at) {
         var days = API.daysUntil(job.expires_at);
-        if (days > 0) meta.push(days + ' days left');
-      }
-
-      html += '<a href="job-post.html?slug=' + job.slug + '" class="job-card" data-animate="fade-up">';
-      html += '<div class="job-card-info">';
-      html += '<h3 class="job-card-title">' + job.title + '</h3>';
-      if (meta.length) {
-        html += '<div class="job-card-meta">';
-        for (var j = 0; j < meta.length; j++) {
-          html += '<span>' + meta[j] + '</span>';
+        if (days > 0) {
+          closing = API.formatDate(job.expires_at) + ' (' + days + ' days left)';
+        } else {
+          closing = API.formatDate(job.expires_at);
         }
-        html += '</div>';
       }
-      if (job.description) {
-        var excerpt = job.description.length > 150
-          ? job.description.substring(0, 150) + '...'
-          : job.description;
-        html += '<p class="job-card-excerpt">' + excerpt + '</p>';
-      }
-      html += '</div>';
-      html += '<span class="job-card-arrow"><i data-lucide="arrow-right" width="20" height="20"></i></span>';
-      html += '</a>';
-    }
 
+      html += '<tr class="jobs-table-row" data-slug="' + job.slug + '">';
+      html += '<td>' + (i + 1) + '</td>';
+      html += '<td>' + job.title + '</td>';
+      html += '<td>' + type.join(' / ') + '</td>';
+      html += '<td>' + closing + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
     container.innerHTML = html;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    container.addEventListener('click', function (e) {
+      var row = e.target.closest('.jobs-table-row');
+      if (row && row.dataset.slug) {
+        window.location.href = 'job-post.html?slug=' + row.dataset.slug;
+      }
+    });
   }).catch(function (err) {
     API.showError(container, err.message);
   });

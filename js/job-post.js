@@ -12,12 +12,15 @@
 
   API.showLoading(content);
 
+  var jobData = null;
+
   API.get('/jobs/' + encodeURIComponent(slug)).then(function (job) {
     if (!job) {
       API.showError(content, 'Job not found.');
       return;
     }
 
+    jobData = job;
     document.title = job.title + ' | Avennex';
 
     var html = '<div class="job-detail">';
@@ -28,6 +31,7 @@
     var tags = [];
     if (job.type) tags.push(job.type);
     if (job.commitment) tags.push(job.commitment);
+    if (job.location) tags.push(job.location);
     if (job.expires_at) {
       var days = API.daysUntil(job.expires_at);
       if (days > 0) tags.push('Closes in ' + days + ' days');
@@ -40,6 +44,15 @@
       }
       html += '</div>';
     }
+
+    if (job.max_applications) {
+      var appCount = job.application_count || 0;
+      html += '<div class="job-app-count">';
+      html += '<i data-lucide="users" width="14" height="14"></i>';
+      html += '<span>' + appCount + ' / ' + job.max_applications + ' applications</span>';
+      html += '</div>';
+    }
+
     html += '</div>';
 
     if (job.description) {
@@ -51,8 +64,15 @@
 
     if (job.requirements) {
       html += '<div class="job-section">';
-      html += '<h2>What we\'re looking for</h2>';
+      html += '<h2>Must have</h2>';
       html += '<div class="job-body">' + formatText(job.requirements) + '</div>';
+      html += '</div>';
+    }
+
+    if (job.good_to_have) {
+      html += '<div class="job-section">';
+      html += '<h2>Good to have</h2>';
+      html += '<div class="job-body">' + formatText(job.good_to_have) + '</div>';
       html += '</div>';
     }
 
@@ -62,6 +82,20 @@
     if (formWrap) {
       formWrap.style.display = 'block';
       formWrap.querySelector('input[name="job_slug"]').value = slug;
+
+      if (job.custom_questions && job.custom_questions.length) {
+        var qWrap = document.getElementById('custom-questions-wrap');
+        if (qWrap) {
+          var qHtml = '';
+          for (var q = 0; q < job.custom_questions.length; q++) {
+            qHtml += '<div class="job-custom-question">';
+            qHtml += '<label for="cq-' + q + '">' + escHtml(job.custom_questions[q]) + '</label>';
+            qHtml += '<textarea id="cq-' + q + '" data-question="' + escHtml(job.custom_questions[q]) + '" rows="3"></textarea>';
+            qHtml += '</div>';
+          }
+          qWrap.innerHTML = qHtml;
+        }
+      }
     }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -79,25 +113,73 @@
       btn.textContent = 'Sending...';
       msg.textContent = '';
 
-      var data = {
-        name: form.name.value.trim(),
-        email: form.email.value.trim(),
-        resume_text: form.resume_text.value.trim(),
-        cover_letter: form.cover_letter.value.trim() || null
-      };
+      var fileInput = document.getElementById('apply-file');
+      var file = fileInput && fileInput.files[0];
+
+      if (file) {
+        if (file.type !== 'application/pdf') {
+          msg.className = 'form-msg form-msg-error';
+          msg.textContent = 'Only PDF files are accepted.';
+          btn.disabled = false;
+          btn.textContent = 'Submit application';
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          msg.className = 'form-msg form-msg-error';
+          msg.textContent = 'File must be under 5MB.';
+          btn.disabled = false;
+          btn.textContent = 'Submit application';
+          return;
+        }
+      }
+
+      var customAnswers = {};
+      var questionFields = document.querySelectorAll('#custom-questions-wrap textarea');
+      for (var i = 0; i < questionFields.length; i++) {
+        var q = questionFields[i].dataset.question;
+        var a = questionFields[i].value.trim();
+        if (q && a) customAnswers[q] = a;
+      }
+
+      var fd = new FormData();
+      fd.append('name', form.name.value.trim());
+      fd.append('email', form.email.value.trim());
+      fd.append('resume_text', form.resume_text.value.trim());
+      fd.append('cover_letter', form.cover_letter.value.trim() || '');
+      if (Object.keys(customAnswers).length) {
+        fd.append('custom_answers', JSON.stringify(customAnswers));
+      }
+      if (file) {
+        fd.append('resume', file);
+      }
 
       var jobSlug = form.job_slug.value;
-      API.post('/jobs/' + encodeURIComponent(jobSlug) + '/apply', data).then(function () {
-        msg.className = 'form-msg form-msg-success';
-        msg.textContent = 'Application sent. We\'ll be in touch.';
-        form.reset();
-      }).catch(function (err) {
-        msg.className = 'form-msg form-msg-error';
-        msg.textContent = err.message || 'Something went wrong. Try again.';
-      }).finally(function () {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', API.BASE_URL + '/jobs/' + encodeURIComponent(jobSlug) + '/apply');
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          msg.className = 'form-msg form-msg-success';
+          msg.textContent = 'Application sent. We\'ll be in touch.';
+          form.reset();
+        } else {
+          var errMsg = 'Something went wrong. Try again.';
+          try {
+            var resp = JSON.parse(xhr.responseText);
+            if (resp.detail) errMsg = resp.detail;
+          } catch (ex) {}
+          msg.className = 'form-msg form-msg-error';
+          msg.textContent = errMsg;
+        }
         btn.disabled = false;
         btn.textContent = 'Submit application';
-      });
+      };
+      xhr.onerror = function () {
+        msg.className = 'form-msg form-msg-error';
+        msg.textContent = 'Network error. Try again.';
+        btn.disabled = false;
+        btn.textContent = 'Submit application';
+      };
+      xhr.send(fd);
     });
   }
 
@@ -120,5 +202,10 @@
       }
     }
     return html;
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 })();

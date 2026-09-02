@@ -26,4 +26,42 @@
       }
     }
   }).catch(function () {});
+
+  var faqList = document.getElementById('faq-list');
+  var faqSection = document.getElementById('faq-section');
+  if (faqList && faqSection) {
+    API.get('/faqs').then(function (faqs) {
+      if (!faqs || faqs.length === 0) {
+        faqSection.style.display = 'none';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < faqs.length; i++) {
+        var f = faqs[i];
+        html += '<div class="faq-item">';
+        html += '<button class="faq-question">';
+        html += '<span>' + escFaq(f.question) + '</span>';
+        html += '<i data-lucide="chevron-down" width="18" height="18" class="faq-icon"></i>';
+        html += '</button>';
+        html += '<div class="faq-answer"><p>' + escFaq(f.answer) + '</p></div>';
+        html += '</div>';
+      }
+      faqList.innerHTML = html;
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      faqList.addEventListener('click', function (e) {
+        var btn = e.target.closest('.faq-question');
+        if (!btn) return;
+        var item = btn.parentElement;
+        item.classList.toggle('is-open');
+      });
+    }).catch(function () {
+      faqSection.style.display = 'none';
+    });
+  }
+
+  function escFaq(s) {
+    if (!s) return '';
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 })();

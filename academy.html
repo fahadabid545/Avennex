@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog Post | Avennex</title>
-  <meta name="description" content="Read the full post on the Avennex blog.">
+  <title>Academy | Avennex</title>
+  <meta name="description" content="Learn from our team. Video playlists on building products, writing code, and growing a startup.">
 
-  <meta property="og:title" content="Blog Post | Avennex">
-  <meta property="og:description" content="Read the full post on the Avennex blog.">
+  <meta property="og:title" content="Academy | Avennex">
+  <meta property="og:description" content="Learn from our team. Video playlists on building products, writing code, and growing a startup.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:url" content="https://avennex.com/blog-post.html">
+  <meta property="og:url" content="https://avennex.com/academy.html">
   <meta property="og:type" content="website">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="css/footer.css">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/academy.css">
 
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -39,7 +40,7 @@
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
         <a href="blog.html">Blog</a>
-        <a href="academy.html">Academy</a>
+        <a href="academy.html" class="active">Academy</a>
         <a href="careers.html">Careers</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
@@ -59,7 +60,7 @@
     <a href="products.html">Products</a>
     <a href="launchpad.html">Launchpad</a>
     <a href="blog.html">Blog</a>
-    <a href="academy.html">Academy</a>
+    <a href="academy.html" class="active">Academy</a>
     <a href="careers.html">Careers</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
@@ -67,9 +68,30 @@
   </div>
 
   <main>
-    <section class="section" style="padding-top: 140px;">
+    <section class="page-hero section">
       <div class="section-inner">
-        <div id="blog-content"></div>
+        <p class="section-eyebrow" data-animate="fade-up">Academy</p>
+        <h1 class="section-heading" data-animate="fade-up">Learn with us</h1>
+        <p class="page-hero-subtext" data-animate="fade-up">Video playlists from the team. Code, product thinking, and the stuff we figured out the hard way.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-inner">
+        <div id="academy-content"></div>
+      </div>
+    </section>
+
+    <section class="section cta-banner">
+      <div class="section-inner">
+        <div class="cta-content" data-animate="fade-up">
+          <h2 class="cta-heading">Want to build with us?</h2>
+          <p class="cta-subtext">Check out open roles or pitch your skills on one of our Launchpad products.</p>
+          <div class="cta-buttons">
+            <a href="careers.html" class="hero-btn-primary">Open roles</a>
+            <a href="launchpad.html" class="hero-btn-secondary">Launchpad</a>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -114,7 +136,7 @@
   <script src="js/header.js" defer></script>
   <script src="js/animations.js" defer></script>
   <script src="js/api.js" defer></script>
-  <script src="js/blog-post.js" defer></script>
+  <script src="js/academy.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>

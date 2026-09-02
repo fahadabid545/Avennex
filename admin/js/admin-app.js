@@ -20,6 +20,9 @@
       jobs: loadJobs,
       products: loadProducts,
       launchpad: loadLaunchpad,
+      academy: loadAcademy,
+      chat: loadChat,
+      faqs: loadFaqs,
       activity: loadActivity,
       team: loadTeam,
     };
@@ -410,44 +413,71 @@
 
   // ── Jobs ──
 
+  let jobsTab = 'open';
+
   async function loadJobs() {
     showLoading();
     try {
-      const jobs = await AdminAPI.request('/api/jobs/admin/all?limit=50');
-      cachedItems.jobs = jobs;
-      if (!jobs || !jobs.length) return showEmpty('No job listings yet.');
+      const openJobs = await AdminAPI.request('/api/jobs/admin/all?limit=50');
+      let closedJobs = [];
+      try { closedJobs = await AdminAPI.request('/api/jobs/admin/closed'); } catch {}
+
+      const jobs = jobsTab === 'closed' ? closedJobs : openJobs;
+      cachedItems.jobs = [...openJobs, ...closedJobs];
 
       let appCounts = {};
-      const jobIds = jobs.map((j) => j.id);
-      try {
-        const allApps = await Promise.all(jobIds.map((id) =>
-          AdminAPI.request(`/api/jobs/${id}/applications`).then((apps) => ({ id, count: apps.length })).catch(() => ({ id, count: 0 }))
-        ));
-        allApps.forEach((a) => { appCounts[a.id] = a.count; });
-      } catch {}
+      if (jobs.length) {
+        try {
+          const allApps = await Promise.all(jobs.map((j) =>
+            AdminAPI.request(`/api/jobs/${j.id}/applications`).then((apps) => ({ id: j.id, count: apps.length })).catch(() => ({ id: j.id, count: 0 }))
+          ));
+          allApps.forEach((a) => { appCounts[a.id] = a.count; });
+        } catch {}
+      }
 
       content.innerHTML = listHeader('Job Listings', 'New Job') + `
-        <table class="admin-table">
+        <div class="tab-bar">
+          <button class="tab-btn ${jobsTab === 'open' ? 'active' : ''}" data-tab="open">Open</button>
+          <button class="tab-btn ${jobsTab === 'closed' ? 'active' : ''}" data-tab="closed">Closed</button>
+        </div>
+        ${jobs.length ? `<table class="admin-table">
           <thead><tr><th>Title</th><th>Type</th><th>Apps</th><th>Status</th><th>Expires</th><th></th></tr></thead>
           <tbody>${jobs.map((j) => `
             <tr>
               <td class="row-title">${esc(j.title)}</td>
               <td>${j.type || ''} ${j.commitment ? '/ ' + j.commitment : ''}</td>
-              <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] || 0} apps</button></td>
+              <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] || 0}${j.max_applications ? '/' + j.max_applications : ''} apps</button></td>
               <td>${statusBadge(j.status)}</td>
               <td>${formatDate(j.expires_at)}</td>
               <td class="row-actions">
+                ${j.status === 'closed' ? `<button class="btn btn-primary btn-sm" data-repost="${j.id}">Repost</button>` : ''}
                 <button class="btn btn-secondary btn-sm" data-edit="${j.id}">Edit</button>
                 <button class="btn btn-danger btn-sm" data-delete="${j.id}">Delete</button>
               </td>
             </tr>`).join('')}
           </tbody>
-        </table>`;
+        </table>` : '<div class="admin-empty">No ' + jobsTab + ' jobs.</div>'}`;
+
       bindListActions('jobs', jobForm);
 
-      content.addEventListener('click', (e) => {
+      content.addEventListener('click', async (e) => {
         const appsId = e.target.dataset.apps;
         if (appsId) showApplications(appsId);
+
+        const repostId = e.target.dataset.repost;
+        if (repostId) {
+          try {
+            await AdminAPI.request(`/api/jobs/${repostId}/repost`, { method: 'POST' });
+            jobsTab = 'open';
+            loadJobs();
+          } catch (err) { alert(err.message); }
+        }
+
+        const tab = e.target.dataset.tab;
+        if (tab) {
+          jobsTab = tab;
+          loadJobs();
+        }
       });
     } catch (err) {
       showEmpty('Failed to load jobs.');
@@ -466,13 +496,19 @@
             <h2 class="form-card-title">Applications${job ? ': ' + esc(job.title) : ''}</h2>
           </div>
           ${apps.length ? `<table class="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Resume</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Resume</th><th></th></tr></thead>
             <tbody>${apps.map((a) => `
               <tr>
                 <td class="row-title">${esc(a.name)}</td>
                 <td>${esc(a.email)}</td>
                 <td>${formatDate(a.created_at)}</td>
-                <td><button class="btn btn-secondary btn-sm" data-resume="${esc(a.id)}">View</button></td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" data-resume="${esc(a.id)}">View</button>
+                  ${a.resume_url ? `<a href="${esc(a.resume_url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-left:4px">PDF</a>` : ''}
+                </td>
+                <td class="row-actions">
+                  <button class="btn btn-danger btn-sm" data-delete-app="${esc(a.id)}">Delete</button>
+                </td>
               </tr>`).join('')}
             </tbody>
           </table>` : '<div class="admin-empty">No applications yet.</div>'}
@@ -482,7 +518,7 @@
 
       const appMap = {};
       apps.forEach((a) => { appMap[a.id] = a; });
-      content.addEventListener('click', (e) => {
+      content.addEventListener('click', async (e) => {
         const rid = e.target.dataset.resume;
         if (rid && appMap[rid]) {
           const a = appMap[rid];
@@ -495,6 +531,8 @@
               <h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Resume</h4>
               <pre style="white-space:pre-wrap;font-size:0.82rem;color:var(--text-secondary);background:var(--bg-secondary);padding:12px;border-radius:8px">${esc(a.resume_text)}</pre>
               ${a.cover_letter ? `<h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Cover Letter</h4><p style="font-size:0.85rem;color:var(--text-secondary)">${esc(a.cover_letter)}</p>` : ''}
+              ${a.custom_answers ? `<h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Custom Answers</h4><pre style="white-space:pre-wrap;font-size:0.82rem;color:var(--text-secondary);background:var(--bg-secondary);padding:12px;border-radius:8px">${esc(JSON.stringify(a.custom_answers, null, 2))}</pre>` : ''}
+              ${a.resume_url ? `<p style="margin-top:12px"><a href="${esc(a.resume_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Download Resume PDF</a></p>` : ''}
               <div class="confirm-actions" style="margin-top:16px"><button class="btn btn-secondary btn-sm" data-action="cancel">Close</button></div>
             </div>`;
           document.body.appendChild(overlay);
@@ -502,14 +540,38 @@
             if (ev.target.dataset.action === 'cancel') document.body.removeChild(overlay);
           });
         }
+
+        const delAppId = e.target.dataset.deleteApp;
+        if (delAppId) {
+          const ok = await confirmDialog('Delete this application?');
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/jobs/applications/${delAppId}`, { method: 'DELETE' });
+            showApplications(jobId);
+          } catch (err) { alert(err.message); }
+        }
       });
     } catch {
       showEmpty('Failed to load applications.');
     }
   }
 
+  let jobCustomQuestions = [];
+
+  function renderJobQuestions() {
+    const list = document.getElementById('custom-questions-list');
+    if (!list) return;
+    list.innerHTML = jobCustomQuestions.map((q, i) => `
+      <div class="feature-row">
+        <input type="text" value="${esc(q)}" placeholder="Question text" data-idx="${i}">
+        <button type="button" class="btn-remove" data-remove-q="${i}">Remove</button>
+      </div>`).join('');
+  }
+
   function jobForm(item) {
     const j = item || {};
+    jobCustomQuestions = Array.isArray(j.custom_questions) ? [...j.custom_questions] : [];
+
     const formData = {
       title: j.title || '',
       slug: j.slug || '',
@@ -517,6 +579,7 @@
       commitment: j.commitment || '',
       description: j.description || '',
       requirements: j.requirements || '',
+      max_applications: j.max_applications || '',
       status: j.status || 'open',
       expires_at: j.expires_at ? j.expires_at.slice(0, 10) : '',
     };
@@ -544,6 +607,7 @@
               { value: 'full-time', label: 'Full-time' },
               { value: 'part-time', label: 'Part-time' },
             ]},
+            { name: 'max_applications', id: 'f-maxapps', label: 'Max Applications', type: 'number', hint: 'Leave empty for unlimited' },
           ],
         },
         {
@@ -557,6 +621,42 @@
             { name: 'expires_at', id: 'f-expires', label: 'Expires', type: 'date' },
           ],
         },
+        {
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            wrap.innerHTML = `
+              <div class="field">
+                <label>Custom Questions</label>
+                <span class="field-hint">Questions applicants answer in the form</span>
+                <div id="custom-questions-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-question" style="margin-top:8px">Add Question</button>
+              </div>`;
+
+            renderJobQuestions();
+
+            document.getElementById('add-question').addEventListener('click', () => {
+              jobCustomQuestions.push('');
+              renderJobQuestions();
+            });
+
+            wrap.addEventListener('click', (e) => {
+              const rm = e.target.dataset.removeQ;
+              if (rm !== undefined) {
+                jobCustomQuestions.splice(Number(rm), 1);
+                renderJobQuestions();
+              }
+            });
+
+            wrap.addEventListener('input', (e) => {
+              const idx = e.target.dataset.idx;
+              if (idx !== undefined) {
+                jobCustomQuestions[Number(idx)] = e.target.value;
+              }
+            });
+          },
+        },
         { review: true, fields: [] },
       ],
       onSubmit: (d) => ({
@@ -567,6 +667,8 @@
         type: d.type || undefined,
         commitment: d.commitment || undefined,
         status: d.status,
+        max_applications: d.max_applications ? parseInt(d.max_applications, 10) : null,
+        custom_questions: jobCustomQuestions.filter((q) => q.trim()),
         expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : undefined,
       }),
       onBack: loadJobs,
@@ -862,6 +964,442 @@
         status: d.status,
       }),
       onBack: loadLaunchpad,
+    });
+  }
+
+  // ── Academy ──
+
+  async function loadAcademy() {
+    showLoading();
+    try {
+      const playlists = await AdminAPI.request('/api/academy/playlists/admin/all');
+      cachedItems.academy = playlists;
+      if (!playlists || !playlists.length) return showEmpty('No playlists yet.');
+
+      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `
+        <table class="admin-table">
+          <thead><tr><th>Title</th><th>Videos</th><th>Order</th><th></th></tr></thead>
+          <tbody>${playlists.map((p) => `
+            <tr>
+              <td class="row-title">${esc(p.title)}</td>
+              <td><button class="btn btn-secondary btn-sm" data-videos="${p.id}">${p.video_count || 0} videos</button></td>
+              <td>${p.display_order ?? 0}</td>
+              <td class="row-actions">
+                <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
+                <button class="btn btn-danger btn-sm" data-delete-playlist="${p.id}">Delete</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
+
+      content.addEventListener('click', async (e) => {
+        const editId = e.target.dataset.edit;
+        if (editId) {
+          const item = (cachedItems.academy || []).find((p) => p.id === editId);
+          academyPlaylistForm(item || { id: editId });
+        }
+
+        const videosId = e.target.dataset.videos;
+        if (videosId) showPlaylistVideos(videosId);
+
+        const delId = e.target.dataset.deletePlaylist;
+        if (delId) {
+          const ok = await confirmDialog('Delete this playlist and all its videos?');
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/academy/playlists/${delId}`, { method: 'DELETE' });
+            loadAcademy();
+          } catch (err) { alert(err.message); }
+        }
+      });
+    } catch {
+      showEmpty('Failed to load playlists.');
+    }
+  }
+
+  function academyPlaylistForm(item) {
+    const p = item || {};
+    const formData = {
+      title: p.title || '',
+      slug: p.slug || '',
+      description: p.description || '',
+      display_order: p.display_order ?? 0,
+    };
+
+    renderStepForm({
+      title: p.id ? 'Edit Playlist' : 'New Playlist',
+      item: p,
+      formData,
+      currentStep: 1,
+      apiPath: '/api/academy/playlists',
+      reloadFn: loadAcademy,
+      steps: [
+        {
+          fields: [
+            { name: 'title', id: 'f-title', label: 'Title', required: true },
+            { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'Auto-generated from title' },
+            { name: 'description', id: 'f-description', label: 'Description', type: 'textarea', rows: 4 },
+            { name: 'display_order', id: 'f-order', label: 'Display Order', type: 'number' },
+          ],
+        },
+        { review: true, fields: [] },
+      ],
+      onSubmit: (d) => ({
+        title: d.title,
+        slug: d.slug || undefined,
+        description: d.description || undefined,
+        display_order: parseInt(d.display_order, 10) || 0,
+      }),
+      onBack: loadAcademy,
+    });
+  }
+
+  async function showPlaylistVideos(playlistId) {
+    showLoading();
+    try {
+      const playlist = (cachedItems.academy || []).find((p) => p.id === playlistId);
+      const data = await AdminAPI.request(`/api/academy/playlists/${playlistId}`);
+      const videos = data.videos || [];
+
+      content.innerHTML = `
+        <div class="form-card" style="max-width:900px">
+          <div class="form-card-header">
+            <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+            <h2 class="form-card-title">Videos${playlist ? ': ' + esc(playlist.title) : ''}</h2>
+            <button class="btn btn-primary btn-sm" id="add-video-btn">Add Video</button>
+          </div>
+          ${videos.length ? `<table class="admin-table">
+            <thead><tr><th>Title</th><th>Order</th><th></th></tr></thead>
+            <tbody>${videos.map((v) => `
+              <tr>
+                <td class="row-title">${esc(v.title)}</td>
+                <td>${v.display_order ?? 0}</td>
+                <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-edit-video="${v.id}">Edit</button>
+                  <button class="btn btn-danger btn-sm" data-delete-video="${v.id}">Delete</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : '<div class="admin-empty">No videos yet.</div>'}
+        </div>`;
+
+      document.getElementById('back-btn').addEventListener('click', loadAcademy);
+      document.getElementById('add-video-btn').addEventListener('click', () => academyVideoForm(null, playlistId));
+
+      const videoMap = {};
+      videos.forEach((v) => { videoMap[v.id] = v; });
+
+      content.addEventListener('click', async (e) => {
+        const editVid = e.target.dataset.editVideo;
+        if (editVid && videoMap[editVid]) academyVideoForm(videoMap[editVid], playlistId);
+
+        const delVid = e.target.dataset.deleteVideo;
+        if (delVid) {
+          const ok = await confirmDialog('Delete this video?');
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/academy/videos/${delVid}`, { method: 'DELETE' });
+            showPlaylistVideos(playlistId);
+          } catch (err) { alert(err.message); }
+        }
+      });
+    } catch {
+      showEmpty('Failed to load videos.');
+    }
+  }
+
+  function academyVideoForm(item, playlistId) {
+    const v = item || {};
+    content.innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <h2 class="form-card-title">${v.id ? 'Edit Video' : 'Add Video'}</h2>
+        </div>
+        <form id="crud-form">
+          <div class="field">
+            <label for="f-title">Title <span class="field-req">Required</span></label>
+            <input type="text" id="f-title" value="${esc(v.title)}" required>
+          </div>
+          <div class="field">
+            <label for="f-url">YouTube URL <span class="field-req">Required</span></label>
+            <input type="text" id="f-url" value="${esc(v.youtube_url)}" required placeholder="https://youtube.com/watch?v=...">
+          </div>
+          <div class="field">
+            <label for="f-description">Description</label>
+            <textarea id="f-description" rows="3">${esc(v.description)}</textarea>
+          </div>
+          <div class="field">
+            <label for="f-order">Display Order</label>
+            <input type="number" id="f-order" value="${v.display_order ?? 0}">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">${v.id ? 'Update' : 'Add'}</button>
+          </div>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+      </div>`;
+
+    document.getElementById('back-btn').addEventListener('click', () => showPlaylistVideos(playlistId));
+    document.getElementById('crud-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('form-msg');
+      const btn = document.querySelector('#crud-form button[type="submit"]');
+      btn.disabled = true;
+      msg.textContent = '';
+
+      const data = {
+        title: val('f-title'),
+        youtube_url: val('f-url'),
+        description: val('f-description') || undefined,
+        display_order: parseInt(val('f-order'), 10) || 0,
+        playlist_id: playlistId,
+      };
+
+      try {
+        if (v.id) {
+          await AdminAPI.request(`/api/academy/videos/${v.id}`, { method: 'PUT', body: JSON.stringify(data) });
+          msg.textContent = 'Updated.';
+        } else {
+          await AdminAPI.request('/api/academy/videos', { method: 'POST', body: JSON.stringify(data) });
+          msg.textContent = 'Added.';
+        }
+        msg.classList.add('form-msg-success');
+        setTimeout(() => showPlaylistVideos(playlistId), 800);
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.classList.add('form-msg-error');
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // ── Home Chat ──
+
+  async function loadChat() {
+    showLoading();
+    try {
+      const messages = await AdminAPI.request('/api/chat/admin/messages');
+      cachedItems.chat = messages;
+      if (!messages || !messages.length) return showEmpty('No chat messages yet.');
+
+      content.innerHTML = listHeader('Home Chat') + `
+        <div class="chat-admin-list">
+          ${messages.map((m) => `
+            <div class="comment-item">
+              <div class="comment-header">
+                <span class="comment-author">${esc(m.author_name)}</span>
+                <span class="comment-date">${formatTime(m.created_at)}</span>
+                ${m.author_email ? `<span style="color:var(--text-muted);font-size:0.78rem">${esc(m.author_email)}</span>` : ''}
+              </div>
+              <p class="comment-body">${esc(m.message)}</p>
+              ${m.has_reply ? '<span style="font-size:0.75rem;color:var(--accent)">Replied</span>' : ''}
+              <div style="margin-top:8px;display:flex;gap:6px">
+                ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-reply-chat="${m.id}">Reply</button>` : ''}
+                <button class="btn btn-danger btn-sm" data-delete-chat="${m.id}">Delete</button>
+              </div>
+            </div>`).join('')}
+        </div>`;
+
+      content.addEventListener('click', async (e) => {
+        const replyId = e.target.dataset.replyChat;
+        if (replyId) showChatReply(replyId);
+
+        const delId = e.target.dataset.deleteChat;
+        if (delId) {
+          const ok = await confirmDialog('Delete this message and its replies?');
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/chat/${delId}`, { method: 'DELETE' });
+            loadChat();
+          } catch (err) { alert(err.message); }
+        }
+      });
+    } catch {
+      showEmpty('Failed to load chat messages.');
+    }
+  }
+
+  function showChatReply(messageId) {
+    const msg = (cachedItems.chat || []).find((m) => m.id === messageId);
+    content.innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <h2 class="form-card-title">Reply to ${msg ? esc(msg.author_name) : 'message'}</h2>
+        </div>
+        ${msg ? `<div class="comment-item" style="margin-bottom:16px"><p class="comment-body">${esc(msg.message)}</p></div>` : ''}
+        <form id="crud-form">
+          <div class="field">
+            <label for="f-reply">Your reply <span class="field-req">Required</span></label>
+            <textarea id="f-reply" rows="4" required></textarea>
+            <span class="field-hint">An email notification will be sent to the sender</span>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Send Reply</button>
+          </div>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+      </div>`;
+
+    document.getElementById('back-btn').addEventListener('click', loadChat);
+    document.getElementById('crud-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formMsg = document.getElementById('form-msg');
+      const btn = document.querySelector('#crud-form button[type="submit"]');
+      btn.disabled = true;
+      formMsg.textContent = '';
+
+      try {
+        await AdminAPI.request(`/api/chat/${messageId}/reply`, {
+          method: 'POST',
+          body: JSON.stringify({ message: val('f-reply') }),
+        });
+        formMsg.textContent = 'Reply sent.';
+        formMsg.classList.add('form-msg-success');
+        setTimeout(loadChat, 800);
+      } catch (err) {
+        formMsg.textContent = err.message;
+        formMsg.classList.add('form-msg-error');
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // ── FAQs ──
+
+  async function loadFaqs() {
+    showLoading();
+    try {
+      const faqs = await AdminAPI.request('/api/faqs/admin/all');
+      cachedItems.faqs = faqs;
+      if (!faqs || !faqs.length) return showEmpty('No FAQs yet.');
+
+      content.innerHTML = listHeader('FAQs', 'New FAQ') + `
+        <table class="admin-table">
+          <thead><tr><th>Question</th><th>Status</th><th>Order</th><th></th></tr></thead>
+          <tbody>${faqs.map((f) => `
+            <tr>
+              <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}</td>
+              <td>
+                <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
+                  ${f.active ? 'Active' : 'Inactive'}
+                </button>
+              </td>
+              <td>${f.display_order ?? 0}</td>
+              <td class="row-actions">
+                <button class="btn btn-secondary btn-sm" data-edit-faq="${f.id}">Edit</button>
+                <button class="btn btn-danger btn-sm" data-delete-faq="${f.id}">Delete</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => faqForm(null));
+
+      content.addEventListener('click', async (e) => {
+        const editId = e.target.dataset.editFaq;
+        if (editId) {
+          const item = (cachedItems.faqs || []).find((f) => f.id === editId);
+          faqForm(item || { id: editId });
+        }
+
+        const toggleId = e.target.dataset.toggleFaq;
+        if (toggleId) {
+          const isActive = e.target.dataset.active === 'true';
+          try {
+            await AdminAPI.request(`/api/faqs/${toggleId}`, {
+              method: 'PUT',
+              body: JSON.stringify({ active: !isActive }),
+            });
+            loadFaqs();
+          } catch (err) { alert(err.message); }
+        }
+
+        const delId = e.target.dataset.deleteFaq;
+        if (delId) {
+          const ok = await confirmDialog('Delete this FAQ?');
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/faqs/${delId}`, { method: 'DELETE' });
+            loadFaqs();
+          } catch (err) { alert(err.message); }
+        }
+      });
+    } catch {
+      showEmpty('Failed to load FAQs.');
+    }
+  }
+
+  function faqForm(item) {
+    const f = item || {};
+    content.innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <h2 class="form-card-title">${f.id ? 'Edit FAQ' : 'New FAQ'}</h2>
+        </div>
+        <form id="crud-form">
+          <div class="field">
+            <label for="f-question">Question <span class="field-req">Required</span></label>
+            <input type="text" id="f-question" value="${esc(f.question)}" required>
+          </div>
+          <div class="field">
+            <label for="f-answer">Answer <span class="field-req">Required</span></label>
+            <textarea id="f-answer" rows="4" required>${esc(f.answer)}</textarea>
+          </div>
+          <div class="field">
+            <label for="f-order">Display Order</label>
+            <input type="number" id="f-order" value="${f.display_order ?? 0}">
+          </div>
+          <div class="field">
+            <label for="f-active">Active</label>
+            <select id="f-active">
+              <option value="true" ${f.active !== false ? 'selected' : ''}>Active</option>
+              <option value="false" ${f.active === false ? 'selected' : ''}>Inactive</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">${f.id ? 'Update' : 'Create'}</button>
+          </div>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+      </div>`;
+
+    document.getElementById('back-btn').addEventListener('click', loadFaqs);
+    document.getElementById('crud-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('form-msg');
+      const btn = document.querySelector('#crud-form button[type="submit"]');
+      btn.disabled = true;
+      msg.textContent = '';
+
+      const data = {
+        question: val('f-question'),
+        answer: val('f-answer'),
+        display_order: parseInt(val('f-order'), 10) || 0,
+        active: val('f-active') === 'true',
+      };
+
+      try {
+        if (f.id) {
+          await AdminAPI.request(`/api/faqs/${f.id}`, { method: 'PUT', body: JSON.stringify(data) });
+          msg.textContent = 'Updated.';
+        } else {
+          await AdminAPI.request('/api/faqs', { method: 'POST', body: JSON.stringify(data) });
+          msg.textContent = 'Created.';
+        }
+        msg.classList.add('form-msg-success');
+        setTimeout(loadFaqs, 800);
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.classList.add('form-msg-error');
+        btn.disabled = false;
+      }
     });
   }
 

@@ -40,6 +40,7 @@
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
         <a href="blog.html">Blog</a>
+        <a href="academy.html">Academy</a>
         <a href="careers.html">Careers</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
@@ -178,71 +179,53 @@
       </div>
     </section>
 
-    <section class="section faq-section" data-animate="fade-up">
+    <section class="section chat-section" id="chat-section" data-animate="fade-up">
       <div class="section-inner">
-        <h2 class="section-heading">Things people ask us</h2>
+        <h2 class="section-heading">Say something</h2>
+        <p class="section-subtext">Public board. Drop a message, we read everything and reply when there's something worth saying.</p>
 
-        <div class="faq-list">
-          <div class="faq-item is-open">
-            <button class="faq-question">
-              <span>What does Avennex actually build?</span>
-              <i data-lucide="chevron-down" width="20" height="20" class="faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Our own products. Right now that's an AI-powered HR screening tool and an affordable e-commerce platform. Both target specific problems in South Asian markets where existing tools are too expensive or too generic. The Launchpad page shows what's coming after these two ship.</p>
-            </div>
+        <div class="chat-board">
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-compose">
+            <input type="text" id="chat-input" placeholder="Write a message..." class="chat-compose-input">
+            <button type="button" id="chat-send-btn" class="hero-btn-primary chat-compose-btn">Send</button>
           </div>
+          <p class="chat-disclaimer">Messages and replies here are public.</p>
+        </div>
 
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>How is this different from a typical software house?</span>
-              <i data-lucide="chevron-down" width="20" height="20" class="faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Software houses build what clients ask for. We build what we decide to build. No client briefs, no outsourced sprints. Every product is ours from concept through revenue. That means we're slower to ship but we own everything we make.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>Can I contribute to a Launchpad product?</span>
-              <i data-lucide="chevron-down" width="20" height="20" class="faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Yes. Launchpad products are published before development starts. You can leave feedback on the concept, suggest changes to the scope, or pitch your skills for the build. Some products will have open contributor roles if the concept gains traction.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>What tech stack do you use?</span>
-              <i data-lucide="chevron-down" width="20" height="20" class="faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Frontend is static HTML, CSS, and vanilla JS for the public site. Product backends run on FastAPI with Supabase (PostgreSQL). We pick tools based on what the product needs, not what's trending. Game projects use Phaser 3 with TypeScript.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>Are you hiring?</span>
-              <i data-lucide="chevron-down" width="20" height="20" class="faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>When we need specific skills for a product, open roles go on the careers page. We don't hire to fill seats. If something's posted there, it's because a real gap exists on a real project.</p>
-            </div>
-          </div>
-
-          <div class="faq-item">
-            <button class="faq-question">
-              <span>How do I get in touch?</span>
-              <i data-lucide="chevron-down" width="20" height="20" class="faq-icon"></i>
-            </button>
-            <div class="faq-answer">
-              <p>Contact page. Fill out the form with what you're reaching out about. We read everything and respond to anything that's relevant. No auto-replies, no chatbot maze.</p>
-            </div>
+        <div class="chat-modal-overlay" id="chat-modal" style="display:none;">
+          <div class="chat-modal">
+            <button type="button" class="chat-modal-close"><i data-lucide="x" width="20" height="20"></i></button>
+            <h3>Before you send</h3>
+            <form id="chat-details-form">
+              <div class="form-group">
+                <label for="chat-name">Name</label>
+                <input type="text" id="chat-name" required>
+              </div>
+              <div class="form-group">
+                <label for="chat-email">Email</label>
+                <input type="email" id="chat-email" required>
+              </div>
+              <div class="form-group">
+                <label for="chat-profession">Profession (optional)</label>
+                <input type="text" id="chat-profession">
+              </div>
+              <div class="form-group">
+                <label for="chat-company">Company (optional)</label>
+                <input type="text" id="chat-company">
+              </div>
+              <div id="chat-form-msg" class="form-msg"></div>
+              <button type="submit" class="hero-btn-primary form-submit" style="width:100%">Send message</button>
+            </form>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq-section" data-animate="fade-up">
+      <div class="section-inner">
+        <h2 class="section-heading">Things people ask us</h2>
+        <div class="faq-list" id="faq-list"></div>
       </div>
     </section>
 
@@ -302,6 +285,7 @@
   <script src="js/space-bg.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/home.js" defer></script>
+  <script src="js/chat.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>

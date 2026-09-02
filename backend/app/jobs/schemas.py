@@ -12,6 +12,8 @@ class JobCreate(BaseModel):
     commitment: Optional[str] = None
     status: Optional[str] = "open"
     expires_at: Optional[datetime] = None
+    custom_questions: Optional[list[str]] = None
+    max_applications: Optional[int] = None
 
 
 class JobUpdate(BaseModel):
@@ -23,6 +25,8 @@ class JobUpdate(BaseModel):
     commitment: Optional[str] = None
     status: Optional[str] = None
     expires_at: Optional[datetime] = None
+    custom_questions: Optional[list[str]] = None
+    max_applications: Optional[int] = None
 
 
 class JobResponse(BaseModel):
@@ -35,6 +39,8 @@ class JobResponse(BaseModel):
     commitment: Optional[str] = None
     status: str
     expires_at: Optional[datetime] = None
+    custom_questions: Optional[list[str]] = None
+    max_applications: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
@@ -44,3 +50,4 @@ class JobApplication(BaseModel):
     email: EmailStr
     resume_text: str
     cover_letter: Optional[str] = None
+    custom_answers: Optional[dict] = None
