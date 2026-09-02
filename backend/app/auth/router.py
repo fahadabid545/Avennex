@@ -3,12 +3,18 @@ from pydantic import BaseModel, EmailStr
 
 from app.database import get_supabase
 from app.auth.service import (
+    hash_password,
     verify_password,
     create_access_token,
     create_refresh_token,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+class SetupRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 
 class LoginRequest(BaseModel):
@@ -29,6 +35,22 @@ class RefreshRequest(BaseModel):
 class AccessTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+@router.post("/setup", status_code=status.HTTP_201_CREATED)
+def setup(body: SetupRequest):
+    db = get_supabase()
+    existing = db.table("admins").select("id").limit(1).execute()
+    if existing.data:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Setup already complete")
+
+    password_hash = hash_password(body.password)
+    db.table("admins").insert({
+        "email": body.email,
+        "password_hash": password_hash,
+        "name": "Admin",
+    }).execute()
+    return {"message": "Admin created"}
 
 
 @router.post("/login", response_model=TokenResponse)
