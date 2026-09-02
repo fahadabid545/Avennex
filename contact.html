@@ -64,8 +64,54 @@
     <a href="contact.html" class="nav-cta">Let's Talk</a>
   </div>
 
-  <!-- Main content: build in next step -->
-  <main></main>
+  <main>
+    <section class="page-hero section">
+      <div class="section-inner">
+        <p class="section-eyebrow" data-animate="fade-up">Contact</p>
+        <h1 class="section-heading" data-animate="fade-up">Get in touch</h1>
+        <p class="page-hero-subtext" data-animate="fade-up">Questions, partnerships, or just want to say hi.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-inner">
+        <div class="contact-layout">
+          <div class="form-container" data-animate="fade-up">
+            <form id="contact-form" class="form">
+              <div class="form-group">
+                <label for="contact-name">Name</label>
+                <input type="text" id="contact-name" name="name" required>
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Email</label>
+                <input type="email" id="contact-email" name="email" required>
+              </div>
+              <div class="form-group">
+                <label for="contact-message">Message</label>
+                <textarea id="contact-message" name="message" rows="6" required></textarea>
+              </div>
+              <div id="contact-msg" class="form-msg"></div>
+              <button type="submit" class="hero-btn-primary form-submit">Send message</button>
+            </form>
+          </div>
+          <div class="contact-info" data-animate="fade-up">
+            <div class="contact-info-block">
+              <h3>Email</h3>
+              <p><a href="mailto:hello@avennex.com">hello@avennex.com</a></p>
+            </div>
+            <div class="contact-info-block">
+              <h3>Based in</h3>
+              <p>Lahore, Pakistan</p>
+            </div>
+            <div class="contact-info-block">
+              <h3>Response time</h3>
+              <p>Usually within 24 hours on weekdays.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -106,6 +152,8 @@
   <script src="js/main.js" defer></script>
   <script src="js/header.js" defer></script>
   <script src="js/animations.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/contact.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>

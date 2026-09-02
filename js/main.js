@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
           var el = entry.target;
-          var children = el.querySelectorAll('.bento-card, .stat-item, .faq-item, .team-card, .value-card');
+          var children = el.querySelectorAll('.bento-card, .stat-item, .faq-item, .team-card, .value-card, .job-card, .blog-card');
           if (children.length) {
             children.forEach(function (child, i) {
               child.style.transitionDelay = (i * 0.1) + 's';
