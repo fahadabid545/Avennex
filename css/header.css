@@ -33,7 +33,11 @@
   letter-spacing: -0.02em;
 }
 
-.logo-dot {
+.logo-aven {
+  color: var(--text-primary);
+}
+
+.logo-nex {
   color: var(--accent);
 }
 
