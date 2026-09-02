@@ -4,6 +4,19 @@ from app.database import get_supabase
 from app.blogs.service import slugify
 
 
+def list_all(page: int, limit: int):
+    db = get_supabase()
+    offset = (page - 1) * limit
+    result = (
+        db.table("launchpad_entries")
+        .select("*")
+        .order("created_at", desc=True)
+        .range(offset, offset + limit - 1)
+        .execute()
+    )
+    return result.data
+
+
 def list_active(page: int, limit: int):
     db = get_supabase()
     offset = (page - 1) * limit

@@ -19,6 +19,15 @@ def list_entries(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)
     return service.list_active(page, limit)
 
 
+@router.get("/admin/all", response_model=list[LaunchpadResponse])
+def list_all_entries(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    _user: dict = Depends(get_current_user),
+):
+    return service.list_all(page, limit)
+
+
 @router.get("/{slug}", response_model=LaunchpadDetailResponse)
 def get_entry(slug: str):
     entry = service.get_by_slug(slug)

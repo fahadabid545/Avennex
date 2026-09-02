@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Avennex Admin</title>
+  <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="dashboard-page">
+  <aside class="sidebar">
+    <a href="../index.html" class="sidebar-logo">avennex<span class="logo-dot">.</span></a>
+    <nav class="sidebar-nav">
+      <button class="sidebar-link active" data-module="blogs">Blogs</button>
+      <button class="sidebar-link" data-module="jobs">Jobs</button>
+      <button class="sidebar-link" data-module="products">Products</button>
+      <button class="sidebar-link" data-module="launchpad">Launchpad</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="sidebar-link sidebar-logout" id="logout-btn">Log out</button>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar">
+      <span class="topbar-title">Avennex Admin</span>
+      <span class="topbar-email" id="admin-email"></span>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+
+  <script src="js/admin-api.js"></script>
+  <script src="js/admin-auth.js"></script>
+  <script src="js/admin-app.js"></script>
+</body>
+</html>

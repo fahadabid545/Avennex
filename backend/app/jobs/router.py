@@ -17,6 +17,15 @@ def list_jobs(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
     return service.list_open(page, limit)
 
 
+@router.get("/admin/all", response_model=list[JobResponse])
+def list_all_jobs(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    _user: dict = Depends(get_current_user),
+):
+    return service.list_all(page, limit)
+
+
 @router.get("/{slug}", response_model=JobResponse)
 def get_job(slug: str):
     job = service.get_by_slug(slug)

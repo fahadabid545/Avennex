@@ -11,6 +11,19 @@ def slugify(text: str) -> str:
     return re.sub(r"-+", "-", slug).strip("-")
 
 
+def list_all(page: int, limit: int):
+    db = get_supabase()
+    offset = (page - 1) * limit
+    result = (
+        db.table("blogs")
+        .select("*")
+        .order("created_at", desc=True)
+        .range(offset, offset + limit - 1)
+        .execute()
+    )
+    return result.data
+
+
 def list_published(page: int, limit: int):
     db = get_supabase()
     offset = (page - 1) * limit

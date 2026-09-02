@@ -12,6 +12,15 @@ def list_blogs(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50)):
     return service.list_published(page, limit)
 
 
+@router.get("/admin/all", response_model=list[BlogResponse])
+def list_all_blogs(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    _user: dict = Depends(get_current_user),
+):
+    return service.list_all(page, limit)
+
+
 @router.get("/{slug}", response_model=BlogResponse)
 def get_blog(slug: str):
     blog = service.get_by_slug(slug)
