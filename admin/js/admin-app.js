@@ -23,7 +23,7 @@
       academy: loadAcademy,
       chat: loadChat,
       faqs: loadFaqs,
-      activity: loadActivity,
+      dashboard: loadDashboard,
       team: loadTeam,
     };
     if (loaders[mod]) loaders[mod]();
@@ -496,12 +496,13 @@
             <h2 class="form-card-title">Applications${job ? ': ' + esc(job.title) : ''}</h2>
           </div>
           ${apps.length ? `<table class="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Resume</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Email</th><th>Resume</th><th></th></tr></thead>
             <tbody>${apps.map((a) => `
               <tr>
                 <td class="row-title">${esc(a.name)}</td>
                 <td>${esc(a.email)}</td>
                 <td>${formatDate(a.created_at)}</td>
+                <td>${a.email_status ? `<span class="email-status email-status-${a.email_status}"></span>${a.email_status}` : '<span class="email-status email-status-skipped"></span>'}</td>
                 <td>
                   <button class="btn btn-secondary btn-sm" data-resume="${esc(a.id)}">View</button>
                   ${a.resume_url ? `<a href="${esc(a.resume_url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-left:4px">PDF</a>` : ''}
@@ -1196,7 +1197,7 @@
                 ${m.author_email ? `<span style="color:var(--text-muted);font-size:0.78rem">${esc(m.author_email)}</span>` : ''}
               </div>
               <p class="comment-body">${esc(m.message)}</p>
-              ${m.has_reply ? '<span style="font-size:0.75rem;color:var(--accent)">Replied</span>' : ''}
+              ${m.has_reply ? `<span style="font-size:0.75rem;color:var(--accent)">Replied</span>${m.email_status ? ` <span class="email-status email-status-${m.email_status}"></span><span style="font-size:0.72rem;color:var(--text-muted)">${m.email_status}</span>` : ''}` : ''}
               <div style="margin-top:8px;display:flex;gap:6px">
                 ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-reply-chat="${m.id}">Reply</button>` : ''}
                 <button class="btn btn-danger btn-sm" data-delete-chat="${m.id}">Delete</button>
@@ -1254,12 +1255,13 @@
       formMsg.textContent = '';
 
       try {
-        await AdminAPI.request(`/api/chat/${messageId}/reply`, {
+        const result = await AdminAPI.request(`/api/chat/${messageId}/reply`, {
           method: 'POST',
           body: JSON.stringify({ message: val('f-reply') }),
         });
-        formMsg.textContent = 'Reply sent.';
-        formMsg.classList.add('form-msg-success');
+        const warn = result && result.warnings && result.warnings.length;
+        formMsg.textContent = warn ? 'Reply saved, but email notification failed.' : 'Reply sent.';
+        formMsg.classList.add(warn ? 'form-msg-error' : 'form-msg-success');
         setTimeout(loadChat, 800);
       } catch (err) {
         formMsg.textContent = err.message;
@@ -1403,30 +1405,167 @@
     });
   }
 
-  // ── Activity ──
+  // ── Dashboard ──
 
-  async function loadActivity() {
+  async function loadDashboard() {
     showLoading();
     try {
-      const logs = await AdminAPI.request('/api/admin/activity?limit=50');
-      if (!logs || !logs.length) return showEmpty('No activity yet.');
+      const [statsRes, chartsRes, logs] = await Promise.all([
+        AdminAPI.request('/api/admin/stats'),
+        AdminAPI.request('/api/admin/charts'),
+        AdminAPI.request('/api/admin/activity?limit=20'),
+      ]);
 
-      content.innerHTML = listHeader('Activity Log') + `
-        <div class="activity-timeline">
-          ${logs.map((l) => `
-            <div class="activity-item">
-              <div class="activity-dot"></div>
-              <div class="activity-body">
-                <span class="activity-who">${esc(l.admin_email)}</span>
-                <span class="activity-action">${esc(l.action)}</span>
-                <span class="activity-entity">${esc(l.entity_type)}</span>
-                <span class="activity-target">${esc(l.entity_title)}</span>
-                <span class="activity-time">${formatTime(l.created_at)}</span>
-              </div>
-            </div>`).join('')}
+      const s = statsRes.data || {};
+      const c = chartsRes.data || {};
+
+      const lp = s.launchpad || {};
+      const lpSummary = Object.entries(lp).map(([k, v]) => `${k}: ${v}`).join(', ') || 'none';
+
+      content.innerHTML = `
+        <div class="content-header"><h1 class="content-title">Dashboard</h1></div>
+
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="dash-card-label">Blogs</div>
+            <div class="dash-card-value">${(s.blogs_published || 0) + (s.blogs_draft || 0)}</div>
+            <div class="dash-card-sub">${s.blogs_published || 0} published, ${s.blogs_draft || 0} draft</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Jobs</div>
+            <div class="dash-card-value">${(s.jobs_open || 0) + (s.jobs_closed || 0)}</div>
+            <div class="dash-card-sub">${s.jobs_open || 0} open, ${s.jobs_closed || 0} closed</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Applications</div>
+            <div class="dash-card-value">${s.applications || 0}</div>
+            <div class="dash-card-sub">total received</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Products</div>
+            <div class="dash-card-value">${s.products || 0}</div>
+            <div class="dash-card-sub">listed</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Launchpad</div>
+            <div class="dash-card-value">${s.launchpad_total || 0}</div>
+            <div class="dash-card-sub">${lpSummary}</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Chat</div>
+            <div class="dash-card-value">${s.chat_total || 0}</div>
+            <div class="dash-card-sub">${s.chat_unreplied || 0} unreplied</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Academy</div>
+            <div class="dash-card-value">${s.playlists || 0}</div>
+            <div class="dash-card-sub">${s.videos || 0} videos</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">FAQs</div>
+            <div class="dash-card-value">${(s.faqs_active || 0) + (s.faqs_inactive || 0)}</div>
+            <div class="dash-card-sub">${s.faqs_active || 0} active, ${s.faqs_inactive || 0} inactive</div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-label">Chatbot</div>
+            <div class="dash-card-value">${s.chatbot_visible ? 'Visible' : 'Hidden'}</div>
+            <div class="dash-card-sub">
+              <button class="btn btn-sm ${s.chatbot_visible ? 'btn-danger' : 'btn-primary'}" id="toggle-chatbot">
+                ${s.chatbot_visible ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-charts">
+          <div class="dash-chart-card">
+            <h3>Applications (30 days)</h3>
+            <canvas id="chart-applications"></canvas>
+          </div>
+          <div class="dash-chart-card">
+            <h3>Chat Messages (30 days)</h3>
+            <canvas id="chart-chat"></canvas>
+          </div>
+          <div class="dash-chart-card">
+            <h3>Admin Activity (30 days)</h3>
+            <canvas id="chart-activity"></canvas>
+          </div>
+        </div>
+
+        <div class="dash-activity">
+          <h3>Recent Activity</h3>
+          ${(logs && logs.length) ? `
+          <div class="activity-timeline">
+            ${logs.map((l) => `
+              <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-body">
+                  <span class="activity-who">${esc(l.admin_email)}</span>
+                  <span class="activity-action">${esc(l.action)}</span>
+                  <span class="activity-entity">${esc(l.entity_type)}</span>
+                  <span class="activity-target">${esc(l.entity_title)}</span>
+                  <span class="activity-time">${formatTime(l.created_at)}</span>
+                </div>
+              </div>`).join('')}
+          </div>` : '<p class="admin-empty">No activity yet.</p>'}
         </div>`;
+
+      document.getElementById('toggle-chatbot').addEventListener('click', async (e) => {
+        const btn = e.target;
+        btn.disabled = true;
+        try {
+          const newVal = s.chatbot_visible ? 'false' : 'true';
+          await AdminAPI.request('/api/settings/chatbot_visible', {
+            method: 'PUT',
+            body: JSON.stringify({ value: newVal }),
+          });
+          loadDashboard();
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+        }
+      });
+
+      if (typeof Chart !== 'undefined') {
+        const chartOpts = {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', font: { size: 10 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', stepSize: 1 } },
+          },
+        };
+
+        function buildChart(canvasId, data, color) {
+          const labels = getLast30Days();
+          const values = labels.map((d) => data[d] || 0);
+          new Chart(document.getElementById(canvasId), {
+            type: 'bar',
+            data: {
+              labels: labels.map((d) => d.slice(5)),
+              datasets: [{ data: values, backgroundColor: color, borderRadius: 3 }],
+            },
+            options: chartOpts,
+          });
+        }
+
+        function getLast30Days() {
+          const days = [];
+          const now = new Date();
+          for (let i = 29; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            days.push(d.toISOString().slice(0, 10));
+          }
+          return days;
+        }
+
+        buildChart('chart-applications', c.applications || {}, '#3b82f6');
+        buildChart('chart-chat', c.chat_messages || {}, '#10b981');
+        buildChart('chart-activity', c.activity || {}, '#f59e0b');
+      }
     } catch {
-      showEmpty('Failed to load activity.');
+      showEmpty('Failed to load dashboard.');
     }
   }
 

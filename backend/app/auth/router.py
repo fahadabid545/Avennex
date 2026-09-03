@@ -128,6 +128,7 @@ class ResetPasswordRequest(BaseModel):
 def forgot_password(body: ForgotPasswordRequest):
     db = get_supabase()
     result = db.table("admins").select("id, email").eq("email", body.email).execute()
+    warnings = []
     if result.data:
         admin = result.data[0]
         token, expires_at = create_reset_token()
@@ -135,8 +136,28 @@ def forgot_password(body: ForgotPasswordRequest):
             "reset_token": token,
             "reset_token_expires": expires_at.isoformat(),
         }).eq("id", admin["id"]).execute()
-        logger.info("Password reset token for %s: %s", admin["email"], token)
-    return {"message": "If that email exists, a reset link has been sent."}
+
+        try:
+            from app.email.service import send_email
+            from app.config import get_settings
+            settings = get_settings()
+            html = f"""
+            <h2>Password Reset</h2>
+            <p>Your password reset token is: <strong>{token}</strong></p>
+            <p>This token expires in 1 hour.</p>
+            """
+            sent = send_email(admin["email"], "Avennex Password Reset", html)
+            if not sent:
+                logger.info("Password reset token for %s: %s (email not configured)", admin["email"], token)
+                warnings.append("Email service not configured, token logged to server")
+        except Exception as e:
+            logger.info("Password reset token for %s: %s (email failed)", admin["email"], token)
+            warnings.append("Email delivery failed, token logged to server")
+
+    response = {"success": True, "message": "If that email exists, a reset link has been sent."}
+    if warnings:
+        response["warnings"] = warnings
+    return response
 
 
 @router.post("/reset-password")

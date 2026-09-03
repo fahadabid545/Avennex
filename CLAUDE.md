@@ -64,3 +64,26 @@ leveraging, cutting-edge, seamless, robust, harness, empower, elevate, delve, ta
 
 ### Quality Check
 Before finalizing any copy, ask: if you cover the company name, could this text be on any other tech company's website? If yes, rewrite it. The copy must only make sense for Avennex.
+
+## Resilience Principle
+
+Every feature has a core action and optional side-effects. The core action must ALWAYS succeed even if side-effects fail.
+
+- Chat reply: core = save reply to DB. Side-effect = send email. If email fails, reply is still saved.
+- Job application: core = save application to DB. Side-effect = send emails. If emails fail, application is still saved.
+- Contact form: core = send email. If email fails, return error but don't crash the server.
+- Any API call: if one part fails, the response includes what succeeded and what failed. Never a raw 500.
+- Any frontend fetch: if API is down or returns error, show a user-friendly message. Never a blank page or raw error.
+- Any admin action: if a side-effect fails (email, file delete, external service), show a clear warning with the specific error, but confirm the core action completed.
+- Database queries: if a query fails, catch it, log it, return a clear error response. Never expose raw database errors to the frontend.
+
+Every endpoint must return structured error responses:
+```
+{
+  "success": true/false,
+  "data": {...},
+  "warnings": ["email notification failed: SMTP not configured"]
+}
+```
+
+Apply this principle retroactively to ALL existing endpoints. Wrap every side-effect in try/except with proper logging and warning responses.

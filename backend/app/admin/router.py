@@ -14,6 +14,22 @@ class AdminCreate(BaseModel):
     name: Optional[str] = None
 
 
+@router.get("/stats")
+def get_stats(_user: dict = Depends(get_current_user)):
+    try:
+        return {"success": True, "data": service.get_stats()}
+    except Exception as e:
+        return {"success": False, "data": {}, "warnings": [str(e)]}
+
+
+@router.get("/charts")
+def get_charts(_user: dict = Depends(get_current_user)):
+    try:
+        return {"success": True, "data": service.get_charts()}
+    except Exception as e:
+        return {"success": False, "data": {}, "warnings": [str(e)]}
+
+
 @router.get("/activity")
 def get_activity(
     page: int = Query(1, ge=1),

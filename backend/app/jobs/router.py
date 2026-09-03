@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -10,6 +12,8 @@ from app.email.service import send_email
 from app.config import get_settings
 from app.admin.service import log_activity
 from app.database import get_supabase
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 limiter = Limiter(key_func=get_remote_address)
@@ -155,12 +159,15 @@ async def apply_to_job(
         except Exception:
             pass
 
-    service.store_application(job["id"], app_data)
+    application = service.store_application(job["id"], app_data)
 
     if job.get("max_applications"):
         new_count = service.count_applications(job["id"])
         if new_count >= job["max_applications"]:
             service.update(job["id"], {"status": "closed"})
+
+    warnings = []
+    email_status = "skipped"
 
     settings = get_settings()
     cover = cover_letter or "Not provided"
@@ -175,13 +182,33 @@ async def apply_to_job(
     <h3>Cover Letter</h3>
     <p>{cover}</p>
     """
-    send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html)
 
-    applicant_html = f"""
-    <h2>Application received</h2>
-    <p>Your application for <strong>{job['title']}</strong> at Avennex has been received.</p>
-    <p>We'll review it and get back to you if there's a fit.</p>
-    """
-    send_email(email, f"Application received for {job['title']} at Avennex", applicant_html)
+    try:
+        send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html)
+    except Exception as e:
+        logger.error("Admin notification email failed: %s", e)
+        warnings.append(f"Admin notification email failed: {e}")
 
-    return {"message": "Application submitted"}
+    try:
+        applicant_html = f"""
+        <h2>Application received</h2>
+        <p>Your application for <strong>{job['title']}</strong> at Avennex has been received.</p>
+        <p>We'll review it and get back to you if there's a fit.</p>
+        """
+        sent = send_email(email, f"Application received for {job['title']} at Avennex", applicant_html)
+        email_status = "sent" if sent else "failed"
+    except Exception as e:
+        logger.error("Applicant confirmation email failed: %s", e)
+        email_status = "failed"
+        warnings.append(f"Confirmation email failed: {e}")
+
+    try:
+        db = get_supabase()
+        db.table("job_applications").update({"email_status": email_status}).eq("id", application["id"]).execute()
+    except Exception:
+        pass
+
+    response = {"success": True, "message": "Application submitted"}
+    if warnings:
+        response["warnings"] = warnings
+    return response
