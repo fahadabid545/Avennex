@@ -16,6 +16,7 @@
 
   var stars = [];
   var planets = [];
+  var nebulae = [];
 
   var sunX = 0.82;
   var sunY = 0.18;
@@ -26,6 +27,12 @@
     { dist: 240, size: 6, color: '#b8926a', speed: 0.0002, angle: 2.1 },
     { dist: 330, size: 5, color: '#8a7ca8', speed: 0.00012, angle: 4.4 },
     { dist: 420, size: 7, color: '#6a9a7c', speed: 0.00008, angle: 1.2 }
+  ];
+
+  var nebulaColors = [
+    { r: 60, g: 80, b: 180 },
+    { r: 120, g: 60, b: 160 },
+    { r: 40, g: 100, b: 200 }
   ];
 
   function resize() {
@@ -39,14 +46,28 @@
   function initStars() {
     stars = [];
     for (var i = 0; i < starCount; i++) {
+      var isBright = Math.random() > 0.85;
       stars.push({
         x: Math.random(),
         y: Math.random(),
-        r: 0.5 + Math.random() * 1.5,
-        baseAlpha: 0.3 + Math.random() * 0.7,
-        twinkle: Math.random() > 0.5,
-        twinkleSpeed: 0.0008 + Math.random() * 0.0015,
+        r: isBright ? (1.2 + Math.random() * 1.8) : (0.4 + Math.random() * 1.2),
+        baseAlpha: isBright ? (0.6 + Math.random() * 0.4) : (0.2 + Math.random() * 0.6),
+        twinkle: Math.random() > 0.3,
+        twinkleSpeed: 0.0004 + Math.random() * 0.002,
         twinkleOffset: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function initNebulae() {
+    nebulae = [];
+    for (var i = 0; i < nebulaColors.length; i++) {
+      nebulae.push({
+        x: 0.15 + Math.random() * 0.7,
+        y: 0.1 + Math.random() * 0.8,
+        radius: 150 + Math.random() * 200,
+        color: nebulaColors[i],
+        opacity: 0.03 + Math.random() * 0.02
       });
     }
   }
@@ -74,9 +95,26 @@
     var h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
 
-    var starParallax = scrollY * 0.1;
-    var planetParallax = scrollY * 0.3;
-    var planetScale = Math.max(0.6, 1 - scrollY * 0.0003);
+    var scrollFactor = scrollY / (document.documentElement.scrollHeight - h || 1);
+    var eased = 1 - Math.pow(1 - Math.min(scrollFactor, 1), 2);
+    var starParallax = eased * h * 0.15;
+    var planetParallax = eased * h * 0.35;
+    var planetScale = Math.max(0.5, 1 - eased * 0.5);
+
+    for (var n = 0; n < nebulae.length; n++) {
+      var neb = nebulae[n];
+      var nx = neb.x * w;
+      var ny = neb.y * h - starParallax * 0.5;
+      var grad = ctx.createRadialGradient(nx, ny, 0, nx, ny, neb.radius);
+      var c = neb.color;
+      grad.addColorStop(0, 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + neb.opacity + ')');
+      grad.addColorStop(1, 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(nx, ny, neb.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
@@ -84,7 +122,7 @@
       var sy = s.y * h - starParallax;
       var alpha = s.baseAlpha;
       if (s.twinkle) {
-        alpha *= 0.5 + 0.5 * Math.sin(time * s.twinkleSpeed + s.twinkleOffset);
+        alpha *= 0.4 + 0.6 * Math.sin(time * s.twinkleSpeed + s.twinkleOffset);
       }
       if (alpha < 0.05) continue;
       ctx.globalAlpha = alpha;
@@ -98,14 +136,14 @@
       var cx = sunX * w;
       var cy = sunY * h - planetParallax;
 
-      var sunGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunRadius);
+      var sunGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunRadius * planetScale);
       sunGrad.addColorStop(0, 'rgba(255, 200, 100, 0.15)');
       sunGrad.addColorStop(0.5, 'rgba(255, 180, 60, 0.06)');
       sunGrad.addColorStop(1, 'rgba(255, 160, 40, 0)');
       ctx.globalAlpha = 1;
       ctx.fillStyle = sunGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, sunRadius, 0, Math.PI * 2);
+      ctx.arc(cx, cy, sunRadius * planetScale, 0, Math.PI * 2);
       ctx.fill();
 
       for (var j = 0; j < planets.length; j++) {
@@ -119,7 +157,7 @@
         var dx = mouseX - px;
         var dy = mouseY - py;
         var hoverDist = Math.sqrt(dx * dx + dy * dy);
-        p.hovered = hoverDist < 20;
+        p.hovered = hoverDist < 50;
 
         var targetGlow = p.hovered ? 1 : 0;
         p.glowAlpha += (targetGlow - p.glowAlpha) * 0.08;
@@ -182,6 +220,7 @@
 
   resize();
   initStars();
+  initNebulae();
   initPlanets();
 
   window.addEventListener('scroll', onScroll, { passive: true });

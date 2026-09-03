@@ -20,21 +20,33 @@ def is_email_enabled() -> bool:
     return True
 
 
-def send_email(to: str, subject: str, body_html: str) -> bool:
+def send_email(to: str, subject: str, body_html: str, email_type: str = "general") -> bool:
     settings = get_settings()
     if not settings.smtp_host:
+        return False
+
+    if email_type == "careers":
+        user = settings.smtp_careers_user or settings.smtp_general_user or settings.smtp_user
+        password = settings.smtp_careers_password or settings.smtp_general_password or settings.smtp_password
+        from_addr = settings.smtp_from_careers or settings.smtp_from_general or settings.smtp_from_email
+    else:
+        user = settings.smtp_general_user or settings.smtp_user
+        password = settings.smtp_general_password or settings.smtp_password
+        from_addr = settings.smtp_from_general or settings.smtp_from_email
+
+    if not user or not password:
         return False
 
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = settings.smtp_from_email
+        msg["From"] = from_addr
         msg["To"] = to
         msg.attach(MIMEText(body_html, "html"))
 
         with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
             server.starttls()
-            server.login(settings.smtp_user, settings.smtp_password)
+            server.login(user, password)
             server.send_message(msg)
 
         return True

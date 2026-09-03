@@ -786,11 +786,15 @@
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   margin-bottom: var(--space-xl);
-  transition: border-color var(--transition-base);
+  transition: border-color var(--transition-base),
+              transform var(--transition-base),
+              box-shadow var(--transition-base);
 }
 
 .lp-card:hover {
   border-color: rgba(59, 130, 246, 0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px var(--accent-glow);
 }
 
 .lp-card-top {
@@ -993,12 +997,15 @@
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-md);
   text-decoration: none;
-  transition: border-color var(--transition-base), transform var(--transition-base);
+  transition: border-color var(--transition-base),
+              transform var(--transition-base),
+              box-shadow var(--transition-base);
 }
 
 .job-card:hover {
   border-color: rgba(59, 130, 246, 0.25);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px var(--accent-glow);
 }
 
 .job-card-title {
@@ -1140,12 +1147,15 @@
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   text-decoration: none;
-  transition: border-color var(--transition-base), transform var(--transition-base);
+  transition: border-color var(--transition-base),
+              transform var(--transition-base),
+              box-shadow var(--transition-base);
 }
 
 .blog-card:hover {
   border-color: rgba(59, 130, 246, 0.25);
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px var(--accent-glow);
 }
 
 .blog-card-date {

@@ -12,6 +12,13 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,https://avennex.com,https://staging.avennex.com"
     smtp_host: str = ""
     smtp_port: int = 587
+    smtp_general_user: str = ""
+    smtp_general_password: str = ""
+    smtp_careers_user: str = ""
+    smtp_careers_password: str = ""
+    smtp_from_general: str = ""
+    smtp_from_careers: str = ""
+
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from_email: str = ""

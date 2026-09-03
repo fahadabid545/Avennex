@@ -194,7 +194,7 @@ async def apply_to_job(
     """
 
     try:
-        send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html)
+        send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html, email_type="careers")
     except Exception as e:
         logger.error("Admin notification email failed: %s", e)
         warnings.append(f"Admin notification email failed: {e}")
@@ -205,7 +205,7 @@ async def apply_to_job(
         <p>Your application for <strong>{job['title']}</strong> at Avennex has been received.</p>
         <p>We'll review it and get back to you if there's a fit.</p>
         """
-        sent = send_email(email, f"Application received for {job['title']} at Avennex", applicant_html)
+        sent = send_email(email, f"Application received for {job['title']} at Avennex", applicant_html, email_type="careers")
         email_status = "sent" if sent else "failed"
     except Exception as e:
         logger.error("Applicant confirmation email failed: %s", e)
