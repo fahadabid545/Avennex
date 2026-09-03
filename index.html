@@ -86,10 +86,17 @@
         <div class="scroll-indicator-line"></div>
       </div>
 
-      <!-- AvenRun game integration point -->
-      <div class="hero-game-hint">
+      <div class="hero-game-hint" id="game-trigger">
         <i data-lucide="gamepad-2" width="16" height="16"></i>
-        <span>Play AvenRun</span>
+        <span>Play</span>
+      </div>
+
+      <div class="hero-game-overlay" id="game-overlay">
+        <canvas id="game-canvas"></canvas>
+        <div class="game-exit-hint">
+          <span class="game-exit-arrow">&larr;</span>
+          <span>scroll down to exit</span>
+        </div>
       </div>
     </section>
 
@@ -283,6 +290,7 @@
   <script src="js/header.js" defer></script>
   <script src="js/animations.js" defer></script>
   <script src="js/space-bg.js" defer></script>
+  <script src="js/game.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/home.js" defer></script>
   <script src="js/chat.js" defer></script>

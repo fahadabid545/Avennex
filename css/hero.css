@@ -127,6 +127,65 @@
   transition: color var(--transition-fast);
 }
 
+.hero-game-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(10, 10, 11, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hero-game-overlay.active {
+  display: block;
+}
+
+.hero-game-overlay canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero.game-active .hero-content,
+.hero.game-active .scroll-indicator {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.hero.game-active .hero-game-hint {
+  display: none;
+}
+
+.game-exit-hint {
+  position: absolute;
+  left: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.game-exit-arrow {
+  writing-mode: horizontal-tb;
+  animation: exitBounce 1.5s ease-in-out infinite;
+  font-size: 1rem;
+}
+
+@keyframes exitBounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-6px); }
+}
+
 @media (max-width: 768px) {
   .hero {
     padding: 100px var(--space-md) var(--space-2xl);
@@ -146,5 +205,10 @@
   .hero-game-hint {
     bottom: var(--space-md);
     right: var(--space-md);
+  }
+
+  .game-exit-hint {
+    left: var(--space-sm);
+    font-size: 0.6rem;
   }
 }
