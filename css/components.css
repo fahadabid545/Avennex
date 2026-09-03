@@ -38,6 +38,35 @@
   margin-bottom: var(--space-md);
 }
 
+/* Brain section */
+
+.brain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3xl);
+  align-items: center;
+}
+
+.brain-text p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: var(--space-md);
+}
+
+.brain-canvas-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 500px;
+  position: relative;
+}
+
+.brain-canvas-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* Scroll strip */
 
 .scroll-strip {
@@ -1514,6 +1543,15 @@
   .stats-row {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-2xl) var(--space-lg);
+  }
+
+  .brain-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+
+  .brain-canvas-wrap {
+    max-height: 350px;
   }
 
   .about-grid {
