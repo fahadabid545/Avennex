@@ -8,6 +8,18 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+def is_email_enabled() -> bool:
+    try:
+        from app.database import get_supabase
+        db = get_supabase()
+        result = db.table("settings").select("value").eq("key", "emails_enabled").execute()
+        if result.data:
+            return result.data[0]["value"] == "true"
+    except Exception:
+        pass
+    return True
+
+
 def send_email(to: str, subject: str, body_html: str) -> bool:
     settings = get_settings()
     if not settings.smtp_host:

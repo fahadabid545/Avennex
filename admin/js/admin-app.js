@@ -1200,6 +1200,7 @@
               ${m.has_reply ? `<span style="font-size:0.75rem;color:var(--accent)">Replied</span>${m.email_status ? ` <span class="email-status email-status-${m.email_status}"></span><span style="font-size:0.72rem;color:var(--text-muted)">${m.email_status}</span>` : ''}` : ''}
               <div style="margin-top:8px;display:flex;gap:6px">
                 ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-reply-chat="${m.id}">Reply</button>` : ''}
+                <button class="btn btn-secondary btn-sm" data-edit-chat="${m.id}">Edit</button>
                 <button class="btn btn-danger btn-sm" data-delete-chat="${m.id}">Delete</button>
               </div>
             </div>`).join('')}
@@ -1208,6 +1209,9 @@
       content.addEventListener('click', async (e) => {
         const replyId = e.target.dataset.replyChat;
         if (replyId) showChatReply(replyId);
+
+        const editId = e.target.dataset.editChat;
+        if (editId) showChatEdit(editId);
 
         const delId = e.target.dataset.deleteChat;
         if (delId) {
@@ -1262,6 +1266,51 @@
         const warn = result && result.warnings && result.warnings.length;
         formMsg.textContent = warn ? 'Reply saved, but email notification failed.' : 'Reply sent.';
         formMsg.classList.add(warn ? 'form-msg-error' : 'form-msg-success');
+        setTimeout(loadChat, 800);
+      } catch (err) {
+        formMsg.textContent = err.message;
+        formMsg.classList.add('form-msg-error');
+        btn.disabled = false;
+      }
+    });
+  }
+
+  function showChatEdit(messageId) {
+    const msg = (cachedItems.chat || []).find((m) => m.id === messageId);
+    if (!msg) return;
+    content.innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <h2 class="form-card-title">Edit message</h2>
+        </div>
+        <form id="crud-form">
+          <div class="field">
+            <label for="f-message">Message</label>
+            <textarea id="f-message" rows="4" required>${esc(msg.message)}</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+      </div>`;
+
+    document.getElementById('back-btn').addEventListener('click', loadChat);
+    document.getElementById('crud-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formMsg = document.getElementById('form-msg');
+      const btn = document.querySelector('#crud-form button[type="submit"]');
+      btn.disabled = true;
+      formMsg.textContent = '';
+
+      try {
+        await AdminAPI.request(`/api/chat/${messageId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ message: val('f-message') }),
+        });
+        formMsg.textContent = 'Message updated.';
+        formMsg.classList.add('form-msg-success');
         setTimeout(loadChat, 800);
       } catch (err) {
         formMsg.textContent = err.message;
@@ -1466,14 +1515,30 @@
             <div class="dash-card-value">${(s.faqs_active || 0) + (s.faqs_inactive || 0)}</div>
             <div class="dash-card-sub">${s.faqs_active || 0} active, ${s.faqs_inactive || 0} inactive</div>
           </div>
-          <div class="dash-card">
-            <div class="dash-card-label">Chatbot</div>
-            <div class="dash-card-value">${s.chatbot_visible ? 'Visible' : 'Hidden'}</div>
-            <div class="dash-card-sub">
-              <button class="btn btn-sm ${s.chatbot_visible ? 'btn-danger' : 'btn-primary'}" id="toggle-chatbot">
-                ${s.chatbot_visible ? 'Hide' : 'Show'}
-              </button>
-            </div>
+        </div>
+
+        <div class="dash-controls">
+          <h3>Controls</h3>
+          <div class="toggle-row">
+            <span class="toggle-label">Chatbot on website</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-chatbot" ${s.chatbot_visible ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Email notifications</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-emails" ${s.emails_enabled ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Show profession/company in chat</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-chat-details" ${s.chat_show_details ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
 
@@ -1510,21 +1575,25 @@
           </div>` : '<p class="admin-empty">No activity yet.</p>'}
         </div>`;
 
-      document.getElementById('toggle-chatbot').addEventListener('click', async (e) => {
-        const btn = e.target;
-        btn.disabled = true;
-        try {
-          const newVal = s.chatbot_visible ? 'false' : 'true';
-          await AdminAPI.request('/api/settings/chatbot_visible', {
-            method: 'PUT',
-            body: JSON.stringify({ value: newVal }),
-          });
-          loadDashboard();
-        } catch (err) {
-          alert(err.message);
-          btn.disabled = false;
-        }
-      });
+      function bindToggle(id, key) {
+        document.getElementById(id).addEventListener('change', async (e) => {
+          const cb = e.target;
+          cb.disabled = true;
+          try {
+            await AdminAPI.request(`/api/settings/${key}`, {
+              method: 'PUT',
+              body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
+            });
+          } catch (err) {
+            alert(err.message);
+            cb.checked = !cb.checked;
+          }
+          cb.disabled = false;
+        });
+      }
+      bindToggle('toggle-chatbot', 'chatbot_visible');
+      bindToggle('toggle-emails', 'emails_enabled');
+      bindToggle('toggle-chat-details', 'chat_show_details');
 
       if (typeof Chart !== 'undefined') {
         const chartOpts = {

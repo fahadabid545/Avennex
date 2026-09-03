@@ -114,10 +114,15 @@ def get_stats():
         stats["launchpad_total"] = 0
 
     try:
-        setting = db.table("settings").select("value").eq("key", "chatbot_visible").execute()
-        stats["chatbot_visible"] = (setting.data[0]["value"] == "true") if setting.data else False
+        all_settings = db.table("settings").select("key, value").execute()
+        settings_map = {s["key"]: s["value"] for s in (all_settings.data or [])}
+        stats["chatbot_visible"] = settings_map.get("chatbot_visible") == "true"
+        stats["emails_enabled"] = settings_map.get("emails_enabled", "true") == "true"
+        stats["chat_show_details"] = settings_map.get("chat_show_details", "true") == "true"
     except Exception:
         stats["chatbot_visible"] = False
+        stats["emails_enabled"] = True
+        stats["chat_show_details"] = True
 
     return stats
 

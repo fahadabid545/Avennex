@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import get_current_user
 from app.chat import service
 from app.chat.schemas import ChatMessageCreate, ChatReply, ChatMessageUpdate
-from app.email.service import send_email
+from app.email.service import send_email, is_email_enabled
 from app.admin.service import log_activity
 
 logger = logging.getLogger(__name__)
@@ -58,21 +58,24 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
 
     email_status = "skipped"
     if original.get("author_email"):
-        try:
-            html = f"""
-            <h2>Avennex replied to your message</h2>
-            <p><strong>Your message:</strong></p>
-            <blockquote>{original['message']}</blockquote>
-            <p><strong>Reply:</strong></p>
-            <p>{body.message}</p>
-            <p><a href="https://avennex.com/#chat">View the conversation</a></p>
-            """
-            sent = send_email(original["author_email"], "Avennex replied to your message", html)
-            email_status = "sent" if sent else "failed"
-        except Exception as e:
-            logger.error("Failed to send reply email: %s", e)
-            email_status = "failed"
-            warnings.append(f"Email notification failed: {e}")
+        if not is_email_enabled():
+            email_status = "disabled"
+        else:
+            try:
+                html = f"""
+                <h2>Avennex replied to your message</h2>
+                <p><strong>Your message:</strong></p>
+                <blockquote>{original['message']}</blockquote>
+                <p><strong>Reply:</strong></p>
+                <p>{body.message}</p>
+                <p><a href="https://avennex.com/#chat">View the conversation</a></p>
+                """
+                sent = send_email(original["author_email"], "Avennex replied to your message", html)
+                email_status = "sent" if sent else "failed"
+            except Exception as e:
+                logger.error("Failed to send reply email: %s", e)
+                email_status = "failed"
+                warnings.append(f"Email notification failed: {e}")
         service.clear_personal_data(id)
 
     try:
@@ -103,11 +106,9 @@ def update_message(id: str, body: ChatMessageUpdate, _user: dict = Depends(get_c
     msg = service.get_by_id(id)
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")
-    if not msg.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Can only edit admin messages")
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     result = service.update_message(id, data)
-    log_activity(_user["email"], "update", "chat", id, "admin reply")
+    log_activity(_user["email"], "update", "chat", id, msg.get("author_name", "admin reply"))
     return result

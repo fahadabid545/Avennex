@@ -8,7 +8,7 @@ from typing import Optional
 from app.auth.dependencies import get_current_user
 from app.jobs import service
 from app.jobs.schemas import JobCreate, JobUpdate, JobResponse, JobApplication
-from app.email.service import send_email
+from app.email.service import send_email, is_email_enabled
 from app.config import get_settings
 from app.admin.service import log_activity
 from app.database import get_supabase
@@ -168,6 +168,16 @@ async def apply_to_job(
 
     warnings = []
     email_status = "skipped"
+
+    if not is_email_enabled():
+        email_status = "disabled"
+        try:
+            db = get_supabase()
+            db.table("job_applications").update({"email_status": email_status}).eq("id", application["id"]).execute()
+        except Exception:
+            pass
+        response = {"success": True, "message": "Application submitted"}
+        return response
 
     settings = get_settings()
     cover = cover_letter or "Not provided"

@@ -3,7 +3,13 @@
   var list = document.getElementById('chat-messages');
   if (!section || !list) return;
 
-  loadMessages();
+  var showDetails = false;
+
+  API.get('/settings/chat_show_details').then(function (setting) {
+    showDetails = setting && setting.value === 'true';
+  }).catch(function () {}).finally(function () {
+    loadMessages();
+  });
 
   function loadMessages() {
     API.get('/chat/messages').then(function (messages) {
@@ -18,6 +24,14 @@
         html += '<div class="chat-msg">';
         html += '<div class="chat-msg-header">';
         html += '<span class="chat-msg-author">' + escHtml(m.author_name) + '</span>';
+        if (showDetails) {
+          var details = [];
+          if (m.author_profession) details.push(escHtml(m.author_profession));
+          if (m.author_company) details.push(escHtml(m.author_company));
+          if (details.length) {
+            html += '<span class="chat-msg-details">' + details.join(' at ') + '</span>';
+          }
+        }
         html += '<span class="chat-msg-time">' + API.formatDate(m.created_at) + '</span>';
         html += '</div>';
         html += '<p class="chat-msg-text">' + escHtml(m.message) + '</p>';

@@ -7,6 +7,8 @@ create table if not exists settings (
 );
 alter table settings disable row level security;
 insert into settings (key, value) values ('chatbot_visible', 'false') on conflict (key) do nothing;
+insert into settings (key, value) values ('emails_enabled', 'true') on conflict (key) do nothing;
+insert into settings (key, value) values ('chat_show_details', 'true') on conflict (key) do nothing;
 
 -- Email status tracking
 alter table chat_messages add column if not exists email_status text;

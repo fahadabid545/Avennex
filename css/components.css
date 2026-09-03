@@ -333,6 +333,11 @@
   color: var(--text-primary);
 }
 
+.chat-msg-details {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 .chat-admin-badge {
   color: var(--accent);
 }
