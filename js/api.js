@@ -43,6 +43,11 @@ var API = (function () {
     return diff;
   }
 
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   return {
     get: function (path) { return request('GET', path); },
     post: function (path, body) { return request('POST', path, body); },
@@ -50,6 +55,8 @@ var API = (function () {
     showError: showError,
     showEmpty: showEmpty,
     formatDate: formatDate,
-    daysUntil: daysUntil
+    daysUntil: daysUntil,
+    escHtml: escHtml,
+    BASE_URL: BASE
   };
 })();

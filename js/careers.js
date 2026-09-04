@@ -33,9 +33,9 @@
 
       html += '<tr class="jobs-table-row" data-slug="' + job.slug + '" data-created="' + (job.created_at || '') + '">';
       html += '<td>' + (i + 1) + '</td>';
-      html += '<td>' + job.title + '</td>';
-      html += '<td>' + type.join(' / ') + '</td>';
-      html += '<td>' + closing + '</td>';
+      html += '<td>' + API.escHtml(job.title) + '</td>';
+      html += '<td>' + API.escHtml(type.join(' / ')) + '</td>';
+      html += '<td>' + API.escHtml(closing) + '</td>';
       html += '</tr>';
     }
     html += '</tbody></table>';

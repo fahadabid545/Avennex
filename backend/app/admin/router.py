@@ -1,9 +1,13 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 from app.auth.dependencies import get_current_user
 from app.admin import service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -19,7 +23,8 @@ def get_stats(_user: dict = Depends(get_current_user)):
     try:
         return {"success": True, "data": service.get_stats()}
     except Exception as e:
-        return {"success": False, "data": {}, "warnings": [str(e)]}
+        logger.error("Stats fetch failed: %s", e)
+        return {"success": False, "data": {}, "warnings": ["Failed to load stats"]}
 
 
 @router.get("/charts")
@@ -27,7 +32,8 @@ def get_charts(_user: dict = Depends(get_current_user)):
     try:
         return {"success": True, "data": service.get_charts()}
     except Exception as e:
-        return {"success": False, "data": {}, "warnings": [str(e)]}
+        logger.error("Charts fetch failed: %s", e)
+        return {"success": False, "data": {}, "warnings": ["Failed to load charts"]}
 
 
 @router.get("/activity")

@@ -19,12 +19,12 @@
 
       html += '<div class="lp-card" data-animate="fade-up">';
       html += '<div class="lp-card-top">';
-      html += '<h3 class="lp-card-title">' + e.title + '</h3>';
+      html += '<h3 class="lp-card-title">' + API.escHtml(e.title) + '</h3>';
       html += stageBadge(e.stage);
       html += '</div>';
 
       if (e.tagline) {
-        html += '<p class="lp-card-tagline">' + e.tagline + '</p>';
+        html += '<p class="lp-card-tagline">' + API.escHtml(e.tagline) + '</p>';
       }
 
       if (e.description) {
@@ -32,15 +32,15 @@
         var paragraphs = e.description.split(/\n\n+/);
         for (var j = 0; j < paragraphs.length; j++) {
           var para = paragraphs[j].trim();
-          if (para) html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+          if (para) html += '<p>' + API.escHtml(para).replace(/\n/g, '<br>') + '</p>';
         }
         html += '</div>';
       }
 
       html += '<div class="lp-details-grid">';
-      html += detailItem('Timeline', e.timeline || 'TBD');
-      html += detailItem('Funding needed', e.funding_needed || 'TBD');
-      html += detailItem('Team needed', e.team_needed || 'TBD');
+      html += detailItem('Timeline', API.escHtml(e.timeline || 'TBD'));
+      html += detailItem('Funding needed', API.escHtml(e.funding_needed || 'TBD'));
+      html += detailItem('Team needed', API.escHtml(e.team_needed || 'TBD'));
       html += detailItem('Stage', stageLabel(e.stage));
       html += '</div>';
 

@@ -36,7 +36,7 @@
       html += '<time class="blog-article-date">' + API.formatDate(post.published_at) + '</time>';
     }
 
-    html += '<h1 class="blog-article-title">' + post.title + '</h1>';
+    html += '<h1 class="blog-article-title">' + API.escHtml(post.title) + '</h1>';
 
     if (post.content) {
       html += '<div class="blog-article-body">' + renderContent(post.content) + '</div>';
@@ -51,25 +51,26 @@
   });
 
   function renderContent(text) {
+    var esc = API.escHtml;
     var paragraphs = text.split(/\n\n+/);
     var html = '';
     for (var i = 0; i < paragraphs.length; i++) {
       var p = paragraphs[i].trim();
       if (!p) continue;
       if (p.indexOf('## ') === 0) {
-        html += '<h2>' + p.substring(3) + '</h2>';
+        html += '<h2>' + esc(p.substring(3)) + '</h2>';
       } else if (p.indexOf('### ') === 0) {
-        html += '<h3>' + p.substring(4) + '</h3>';
+        html += '<h3>' + esc(p.substring(4)) + '</h3>';
       } else if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
         var lines = p.split('\n');
         html += '<ul>';
         for (var j = 0; j < lines.length; j++) {
           var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + line + '</li>';
+          if (line) html += '<li>' + esc(line) + '</li>';
         }
         html += '</ul>';
       } else {
-        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>';
       }
     }
     return html;

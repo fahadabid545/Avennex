@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.auth.dependencies import get_current_user
 from app.launchpad import service
@@ -13,6 +15,7 @@ from app.launchpad.schemas import (
 )
 
 router = APIRouter(prefix="/api/launchpad", tags=["launchpad"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("", response_model=list[LaunchpadResponse])
@@ -70,7 +73,8 @@ def list_comments(id: str, _user: dict = Depends(get_current_user)):
 
 
 @router.post("/{slug}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
-def add_comment(slug: str, body: CommentCreate):
+@limiter.limit("10/hour")
+def add_comment(slug: str, body: CommentCreate, request: Request):
     entry = service.get_by_slug(slug)
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")

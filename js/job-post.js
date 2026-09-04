@@ -36,7 +36,7 @@
     var html = '<div class="job-detail">';
     html += '<div class="job-detail-header">';
     html += '<a href="careers.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All roles</a>';
-    html += '<h1 class="job-detail-title">' + job.title + '</h1>';
+    html += '<h1 class="job-detail-title">' + API.escHtml(job.title) + '</h1>';
 
     var tags = [];
     if (job.type) tags.push(job.type);
@@ -50,7 +50,7 @@
     if (tags.length) {
       html += '<div class="job-detail-tags">';
       for (var i = 0; i < tags.length; i++) {
-        html += '<span class="job-tag">' + tags[i] + '</span>';
+        html += '<span class="job-tag">' + API.escHtml(tags[i]) + '</span>';
       }
       html += '</div>';
     }
@@ -194,6 +194,7 @@
   }
 
   function formatText(text) {
+    var esc = API.escHtml;
     var paragraphs = text.split(/\n\n+/);
     var html = '';
     for (var i = 0; i < paragraphs.length; i++) {
@@ -204,11 +205,11 @@
         html += '<ul>';
         for (var j = 0; j < lines.length; j++) {
           var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + line + '</li>';
+          if (line) html += '<li>' + esc(line) + '</li>';
         }
         html += '</ul>';
       } else {
-        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>';
       }
     }
     return html;

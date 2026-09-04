@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth.dependencies import get_current_user
@@ -5,11 +7,13 @@ from app.settings import service
 from app.settings.schemas import SettingUpdate
 from app.admin.service import log_activity
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 
 @router.get("/{key}")
-def get_setting(key: str):
+def get_setting(key: str, _user: dict = Depends(get_current_user)):
     setting = service.get_setting(key)
     if not setting:
         raise HTTPException(status_code=404, detail="Setting not found")
@@ -23,4 +27,5 @@ def update_setting(key: str, body: SettingUpdate, _user: dict = Depends(get_curr
         log_activity(_user["email"], "update", "setting", key, f"{key} = {body.value}")
         return {"success": True, "data": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Setting update failed for %s: %s", key, e)
+        raise HTTPException(status_code=500, detail="Failed to update setting")

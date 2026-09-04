@@ -16,14 +16,14 @@
     var html = '';
     for (var i = 0; i < posts.length; i++) {
       var post = posts[i];
-      html += '<a href="blog-post.html?slug=' + post.slug + '" class="blog-card" data-animate="fade-up">';
+      html += '<a href="blog-post.html?slug=' + encodeURIComponent(post.slug) + '" class="blog-card" data-animate="fade-up">';
       html += '<div class="blog-card-body">';
       if (post.published_at) {
         html += '<span class="blog-card-date">' + API.formatDate(post.published_at) + '</span>';
       }
-      html += '<h3 class="blog-card-title">' + post.title + '</h3>';
+      html += '<h3 class="blog-card-title">' + API.escHtml(post.title) + '</h3>';
       if (post.excerpt) {
-        html += '<p class="blog-card-excerpt">' + post.excerpt + '</p>';
+        html += '<p class="blog-card-excerpt">' + API.escHtml(post.excerpt) + '</p>';
       }
       html += '<span class="blog-card-read">Read more <i data-lucide="arrow-right" width="14" height="14"></i></span>';
       html += '</div>';

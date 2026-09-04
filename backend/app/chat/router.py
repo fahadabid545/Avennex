@@ -1,6 +1,9 @@
 import logging
+from html import escape as html_escape
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.auth.dependencies import get_current_user
 from app.chat import service
@@ -11,10 +14,12 @@ from app.admin.service import log_activity
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/send", status_code=status.HTTP_201_CREATED)
-def send_message(body: ChatMessageCreate):
+@limiter.limit("5/minute")
+def send_message(body: ChatMessageCreate, request: Request):
     try:
         service.create_message({
             "author_name": body.author_name,
@@ -65,9 +70,9 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
                 html = f"""
                 <h2>Avennex replied to your message</h2>
                 <p><strong>Your message:</strong></p>
-                <blockquote>{original['message']}</blockquote>
+                <blockquote>{html_escape(original['message'])}</blockquote>
                 <p><strong>Reply:</strong></p>
-                <p>{body.message}</p>
+                <p>{html_escape(body.message)}</p>
                 <p><a href="https://avennex.com/#chat">View the conversation</a></p>
                 """
                 sent = send_email(original["author_email"], "Avennex replied to your message", html)

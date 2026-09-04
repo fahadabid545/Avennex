@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.database import get_supabase
 from app.auth.service import (
@@ -16,11 +18,12 @@ from app.auth.service import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 class SetupRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8)
 
 
 class LoginRequest(BaseModel):
@@ -60,7 +63,8 @@ def setup(body: SetupRequest):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: LoginRequest):
+@limiter.limit("5/minute")
+def login(body: LoginRequest, request: Request):
     db = get_supabase()
 
     result = db.table("admins").select("*").eq("email", body.email).execute()
@@ -121,11 +125,12 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str
+    new_password: str = Field(..., min_length=8)
 
 
 @router.post("/forgot-password")
-def forgot_password(body: ForgotPasswordRequest):
+@limiter.limit("3/hour")
+def forgot_password(body: ForgotPasswordRequest, request: Request):
     db = get_supabase()
     result = db.table("admins").select("id, email").eq("email", body.email).execute()
     warnings = []
@@ -148,11 +153,11 @@ def forgot_password(body: ForgotPasswordRequest):
             """
             sent = send_email(admin["email"], "Avennex Password Reset", html)
             if not sent:
-                logger.info("Password reset token for %s: %s (email not configured)", admin["email"], token)
-                warnings.append("Email service not configured, token logged to server")
+                logger.warning("Password reset requested for %s but email not configured", admin["email"])
+                warnings.append("Email service not configured")
         except Exception as e:
-            logger.info("Password reset token for %s: %s (email failed)", admin["email"], token)
-            warnings.append("Email delivery failed, token logged to server")
+            logger.error("Password reset email failed for %s: %s", admin["email"], e)
+            warnings.append("Email delivery failed")
 
     response = {"success": True, "message": "If that email exists, a reset link has been sent."}
     if warnings:
@@ -183,4 +188,7 @@ def reset_password(body: ResetPasswordRequest):
         "reset_token": None,
         "reset_token_expires": None,
     }).eq("id", admin["id"]).execute()
+
+    db.table("refresh_tokens").update({"revoked": True}).eq("admin_id", admin["id"]).eq("revoked", False).execute()
+
     return {"message": "Password updated successfully"}

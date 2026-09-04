@@ -23,7 +23,7 @@ settings = get_settings()
 
 limiter = Limiter(key_func=get_remote_address)
 
-app = FastAPI(title="Avennex API", docs_url="/api/docs", redoc_url=None)
+app = FastAPI(title="Avennex API", docs_url=None, redoc_url=None)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

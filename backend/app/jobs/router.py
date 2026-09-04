@@ -1,4 +1,5 @@
 import logging
+from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from slowapi import Limiter
@@ -104,6 +105,7 @@ def repost_job(id: str, body: Optional[JobUpdate] = None, _user: dict = Depends(
 
 
 @router.post("/{slug}/apply", status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/hour")
 async def apply_to_job(
     slug: str,
     request: Request,
@@ -139,16 +141,18 @@ async def apply_to_job(
 
     resume_url = None
     if resume:
-        if resume.content_type != "application/pdf":
+        content = await resume.read()
+        if not content[:5].startswith(b'%PDF-'):
             raise HTTPException(status_code=400, detail="Resume must be a PDF file")
 
-        content = await resume.read()
         if len(content) > 5 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="Resume must be under 5MB")
 
         import time
+        import re
         timestamp = int(time.time())
-        path = f"{slug}/{email}_{timestamp}.pdf"
+        safe_email = re.sub(r'[^a-zA-Z0-9@._-]', '_', email)
+        path = f"{slug}/{safe_email}_{timestamp}.pdf"
 
         db = get_supabase()
         try:
@@ -181,16 +185,16 @@ async def apply_to_job(
 
     settings = get_settings()
     cover = cover_letter or "Not provided"
-    resume_link = f'<p><a href="{resume_url}">Download Resume</a></p>' if resume_url else ""
+    resume_link = f'<p><a href="{html_escape(resume_url)}">Download Resume</a></p>' if resume_url else ""
     admin_html = f"""
-    <h2>New application for: {job['title']}</h2>
-    <p><strong>Name:</strong> {name}</p>
-    <p><strong>Email:</strong> {email}</p>
+    <h2>New application for: {html_escape(job['title'])}</h2>
+    <p><strong>Name:</strong> {html_escape(name)}</p>
+    <p><strong>Email:</strong> {html_escape(email)}</p>
     <h3>Resume</h3>
-    <pre>{resume_text}</pre>
+    <pre>{html_escape(resume_text)}</pre>
     {resume_link}
     <h3>Cover Letter</h3>
-    <p>{cover}</p>
+    <p>{html_escape(cover)}</p>
     """
 
     try:
@@ -202,7 +206,7 @@ async def apply_to_job(
     try:
         applicant_html = f"""
         <h2>Application received</h2>
-        <p>Your application for <strong>{job['title']}</strong> at Avennex has been received.</p>
+        <p>Your application for <strong>{html_escape(job['title'])}</strong> at Avennex has been received.</p>
         <p>We'll review it and get back to you if there's a fit.</p>
         """
         sent = send_email(email, f"Application received for {job['title']} at Avennex", applicant_html, email_type="careers")

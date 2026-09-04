@@ -24,13 +24,13 @@
 
       html += '<div class="product-info">';
       html += '<span class="badge ' + statusBadgeClass(p.status) + '"><span class="badge-dot ' + statusDotClass(p.status) + '"></span> ' + statusLabel(p.status) + '</span>';
-      html += '<h2 class="product-name">' + p.name + '</h2>';
+      html += '<h2 class="product-name">' + API.escHtml(p.name) + '</h2>';
 
       if (p.description) {
         var paragraphs = p.description.split(/\n\n+/);
         for (var j = 0; j < paragraphs.length; j++) {
           var para = paragraphs[j].trim();
-          if (para) html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+          if (para) html += '<p>' + API.escHtml(para).replace(/\n/g, '<br>') + '</p>';
         }
       }
 
@@ -39,8 +39,8 @@
         for (var k = 0; k < p.features.length; k++) {
           var f = p.features[k];
           html += '<div class="feature-item">';
-          html += '<i data-lucide="' + (f.icon || 'check') + '" width="20" height="20"></i>';
-          html += '<span>' + f.text + '</span>';
+          html += '<i data-lucide="' + API.escHtml(f.icon || 'check') + '" width="20" height="20"></i>';
+          html += '<span>' + API.escHtml(f.text) + '</span>';
           html += '</div>';
         }
         html += '</div>';

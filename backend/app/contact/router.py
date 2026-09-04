@@ -1,4 +1,5 @@
 import logging
+from html import escape as html_escape
 
 from fastapi import APIRouter, Request, status
 from pydantic import BaseModel, EmailStr
@@ -29,10 +30,10 @@ def contact(body: ContactRequest, request: Request):
     settings = get_settings()
     html = f"""
     <h2>New contact form submission</h2>
-    <p><strong>Name:</strong> {body.name}</p>
-    <p><strong>Email:</strong> {body.email}</p>
+    <p><strong>Name:</strong> {html_escape(body.name)}</p>
+    <p><strong>Email:</strong> {html_escape(body.email)}</p>
     <h3>Message</h3>
-    <p>{body.message}</p>
+    <p>{html_escape(body.message)}</p>
     """
     try:
         sent = send_email(settings.smtp_from_email, f"Contact: {body.name}", html)
