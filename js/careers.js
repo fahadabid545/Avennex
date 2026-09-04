@@ -31,7 +31,7 @@
         }
       }
 
-      html += '<tr class="jobs-table-row" data-slug="' + job.slug + '">';
+      html += '<tr class="jobs-table-row" data-slug="' + job.slug + '" data-created="' + (job.created_at || '') + '">';
       html += '<td>' + (i + 1) + '</td>';
       html += '<td>' + job.title + '</td>';
       html += '<td>' + type.join(' / ') + '</td>';

@@ -19,6 +19,16 @@
 
     document.title = post.title + ' | Avennex';
 
+    var postUrl = 'https://avennex.com/blog-post.html?slug=' + encodeURIComponent(slug);
+    var canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.href = postUrl;
+    var ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', postUrl);
+    var ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', post.title + ' | Avennex');
+    var twTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twTitle) twTitle.setAttribute('content', post.title + ' | Avennex');
+
     var html = '<article class="blog-article">';
     html += '<a href="blog.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All posts</a>';
 

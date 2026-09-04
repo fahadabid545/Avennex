@@ -23,6 +23,16 @@
     jobData = job;
     document.title = job.title + ' | Avennex';
 
+    var jobUrl = 'https://avennex.com/job-post.html?slug=' + encodeURIComponent(slug);
+    var canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.href = jobUrl;
+    var ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', jobUrl);
+    var ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', job.title + ' | Avennex');
+    var twTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twTitle) twTitle.setAttribute('content', job.title + ' | Avennex');
+
     var html = '<div class="job-detail">';
     html += '<div class="job-detail-header">';
     html += '<a href="careers.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All roles</a>';

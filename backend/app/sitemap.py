@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from xml.sax.saxutils import escape
 
 from fastapi import APIRouter
 from fastapi.responses import Response
@@ -23,6 +24,9 @@ STATIC_PAGES = [
 ]
 
 
+STATIC_LASTMOD = "2026-09-04"
+
+
 @router.get("/api/sitemap.xml")
 def dynamic_sitemap():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -32,14 +36,15 @@ def dynamic_sitemap():
         urls.append(
             f"  <url>\n"
             f"    <loc>{page['loc']}</loc>\n"
-            f"    <lastmod>{today}</lastmod>\n"
+            f"    <lastmod>{STATIC_LASTMOD}</lastmod>\n"
             f"    <changefreq>{page['changefreq']}</changefreq>\n"
             f"    <priority>{page['priority']}</priority>\n"
             f"  </url>"
         )
 
+    db = get_supabase()
+
     try:
-        db = get_supabase()
         blogs = (
             db.table("blogs")
             .select("slug, published_at, updated_at")
@@ -48,10 +53,11 @@ def dynamic_sitemap():
             .execute()
         )
         for blog in blogs.data:
-            lastmod = (blog.get("updated_at") or blog.get("published_at") or today)[:10]
+            lastmod = str(blog.get("updated_at") or blog.get("published_at") or today)[:10]
+            slug = escape(str(blog.get("slug", "")))
             urls.append(
                 f"  <url>\n"
-                f"    <loc>https://avennex.com/blog-post.html?slug={blog['slug']}</loc>\n"
+                f"    <loc>https://avennex.com/blog-post.html?slug={slug}</loc>\n"
                 f"    <lastmod>{lastmod}</lastmod>\n"
                 f"    <changefreq>monthly</changefreq>\n"
                 f"    <priority>0.7</priority>\n"
@@ -61,7 +67,6 @@ def dynamic_sitemap():
         logger.warning(f"sitemap: failed to fetch blogs: {e}")
 
     try:
-        db = get_supabase()
         now = datetime.now(timezone.utc).isoformat()
         jobs = (
             db.table("jobs")
@@ -72,10 +77,11 @@ def dynamic_sitemap():
             .execute()
         )
         for job in jobs.data:
-            lastmod = (job.get("updated_at") or job.get("created_at") or today)[:10]
+            lastmod = str(job.get("updated_at") or job.get("created_at") or today)[:10]
+            slug = escape(str(job.get("slug", "")))
             urls.append(
                 f"  <url>\n"
-                f"    <loc>https://avennex.com/job-post.html?slug={job['slug']}</loc>\n"
+                f"    <loc>https://avennex.com/job-post.html?slug={slug}</loc>\n"
                 f"    <lastmod>{lastmod}</lastmod>\n"
                 f"    <changefreq>weekly</changefreq>\n"
                 f"    <priority>0.6</priority>\n"

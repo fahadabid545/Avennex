@@ -72,7 +72,7 @@
     var prodEl = document.getElementById('products-list');
     if (prodEl) {
       var observer = new MutationObserver(function () {
-        var cards = prodEl.querySelectorAll('.product-card, [class*="product"]');
+        var cards = prodEl.querySelectorAll('.product-detail');
         if (!cards.length) return;
         observer.disconnect();
         cards.forEach(function (card) {
@@ -129,7 +129,7 @@
     var jobsEl = document.getElementById('jobs-list');
     if (jobsEl) {
       var observer = new MutationObserver(function () {
-        var rows = jobsEl.querySelectorAll('tr[data-slug], .job-card, [class*="job"]');
+        var rows = jobsEl.querySelectorAll('tr[data-slug], .job-card');
         if (!rows.length) return;
         observer.disconnect();
         rows.forEach(function (row) {
@@ -150,7 +150,7 @@
                 }
               },
               employmentType: type ? type.textContent.trim().toUpperCase().replace(/\s+/g, '_') : 'FULL_TIME',
-              datePosted: new Date().toISOString().split('T')[0]
+              datePosted: (row.dataset.created || '').substring(0, 10) || new Date().toISOString().split('T')[0]
             });
           }
         });
@@ -163,7 +163,7 @@
     var acadEl = document.getElementById('academy-content');
     if (acadEl) {
       var observer = new MutationObserver(function () {
-        var playlists = acadEl.querySelectorAll('.playlist-card, [class*="playlist"], [class*="course"]');
+        var playlists = acadEl.querySelectorAll('.playlist-card');
         if (!playlists.length) return;
         observer.disconnect();
         playlists.forEach(function (pl) {
