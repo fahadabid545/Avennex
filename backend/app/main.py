@@ -18,6 +18,7 @@ from app.chat.router import router as chat_router
 from app.faqs.router import router as faqs_router
 from app.settings.router import router as settings_router
 from app.sitemap import router as sitemap_router
+from app.chatbot.router import router as chatbot_router
 
 settings = get_settings()
 
@@ -47,6 +48,21 @@ app.include_router(chat_router)
 app.include_router(faqs_router)
 app.include_router(settings_router)
 app.include_router(sitemap_router)
+app.include_router(chatbot_router)
+
+
+@app.on_event("startup")
+def startup_load_chatbot_index():
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        from app.chatbot.service import get_chatbot_service
+        svc = get_chatbot_service()
+        loaded = svc.load_backup()
+        if not loaded:
+            logger.info("Starting with empty chatbot index")
+    except Exception as e:
+        logger.warning("Chatbot index load failed: %s", e)
 
 
 @app.get("/api/health")

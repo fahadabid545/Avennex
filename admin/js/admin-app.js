@@ -23,6 +23,7 @@
       academy: loadAcademy,
       chat: loadChat,
       faqs: loadFaqs,
+      chatbot: loadChatbot,
       dashboard: loadDashboard,
       team: loadTeam,
     };
@@ -1452,6 +1453,299 @@
         btn.disabled = false;
       }
     });
+  }
+
+  // ── Chatbot ──
+
+  async function loadChatbot() {
+    showLoading();
+
+    let settings = {};
+    try {
+      const keys = ['chatbot_model', 'chatbot_temperature', 'chatbot_system_prompt', 'chatbot_max_tokens', 'chatbot_top_k', 'chatbot_auto_backup'];
+      const results = await Promise.all(keys.map((k) => AdminAPI.request(`/api/settings/${k}`).catch(() => null)));
+      keys.forEach((k, i) => { if (results[i]) settings[k] = results[i].value; });
+    } catch {}
+
+    const model = settings.chatbot_model || 'gpt-4o-mini';
+    const temp = settings.chatbot_temperature || '0.7';
+    const prompt = settings.chatbot_system_prompt || '';
+    const maxTok = settings.chatbot_max_tokens || '500';
+    const topK = settings.chatbot_top_k || '3';
+    const autoBackup = settings.chatbot_auto_backup === 'true';
+
+    const defaultModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4.1-nano'];
+    const isCustomModel = !defaultModels.includes(model);
+
+    content.innerHTML = `
+      <div class="content-header"><h1 class="content-title">Chatbot</h1></div>
+
+      <div class="chatbot-admin-section">
+        <h3>Settings</h3>
+        <div class="field">
+          <label for="cb-model">Model</label>
+          <select id="cb-model">
+            ${defaultModels.map((m) => `<option value="${m}" ${m === model && !isCustomModel ? 'selected' : ''}>${m}</option>`).join('')}
+            <option value="custom" ${isCustomModel ? 'selected' : ''}>Custom</option>
+          </select>
+          <input type="text" id="cb-model-custom" placeholder="Enter model name" value="${isCustomModel ? esc(model) : ''}" style="${isCustomModel ? '' : 'display:none'}">
+        </div>
+        <div class="field">
+          <label for="cb-temp">Temperature: <span id="cb-temp-val">${esc(temp)}</span></label>
+          <input type="range" id="cb-temp" min="0" max="2" step="0.1" value="${esc(temp)}">
+        </div>
+        <div class="field">
+          <label for="cb-prompt">System Prompt</label>
+          <textarea id="cb-prompt" rows="4" placeholder="You are a helpful assistant for Avennex...">${esc(prompt)}</textarea>
+        </div>
+        <div class="field">
+          <label for="cb-max-tokens">Max Tokens (100-2000)</label>
+          <input type="number" id="cb-max-tokens" min="100" max="2000" value="${esc(maxTok)}">
+        </div>
+        <div class="field">
+          <label for="cb-top-k">Top-K Results (1-10)</label>
+          <input type="number" id="cb-top-k" min="1" max="10" value="${esc(topK)}">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary btn-sm" id="cb-save-settings">Save Settings</button>
+        </div>
+        <div class="form-msg" id="cb-settings-msg"></div>
+      </div>
+
+      <div class="chatbot-admin-section">
+        <h3>Documents</h3>
+        <div class="cb-upload-zone" id="cb-upload-zone">
+          <p>Drag & drop files here or click to select</p>
+          <p class="field-hint">PDF, DOCX, TXT (max 10MB)</p>
+          <input type="file" id="cb-file-input" accept=".pdf,.docx,.txt" style="display:none">
+        </div>
+        <div id="cb-upload-status"></div>
+        <table class="admin-table" id="cb-docs-table" style="display:none">
+          <thead><tr><th>Filename</th><th>Type</th><th>Chunks</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <tbody id="cb-docs-body"></tbody>
+        </table>
+        <div id="cb-docs-empty" class="admin-empty" style="display:none">No documents uploaded yet.</div>
+      </div>
+
+      <div class="chatbot-admin-section">
+        <h3>Backup</h3>
+        <div class="toggle-row">
+          <span class="toggle-label">Auto-backup after upload</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cb-auto-backup" ${autoBackup ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="form-actions" style="margin-top:12px">
+          <button class="btn btn-primary btn-sm" id="cb-backup-now">Backup Now</button>
+          <button class="btn btn-danger btn-sm" id="cb-backup-delete">Delete Backup</button>
+        </div>
+        <div id="cb-backup-status" style="margin-top:8px"></div>
+      </div>`;
+
+    const modelSelect = document.getElementById('cb-model');
+    const modelCustom = document.getElementById('cb-model-custom');
+    const tempSlider = document.getElementById('cb-temp');
+    const tempVal = document.getElementById('cb-temp-val');
+
+    modelSelect.addEventListener('change', () => {
+      modelCustom.style.display = modelSelect.value === 'custom' ? '' : 'none';
+    });
+
+    tempSlider.addEventListener('input', () => {
+      tempVal.textContent = tempSlider.value;
+    });
+
+    document.getElementById('cb-save-settings').addEventListener('click', async () => {
+      const btn = document.getElementById('cb-save-settings');
+      const msg = document.getElementById('cb-settings-msg');
+      btn.disabled = true;
+      msg.textContent = '';
+      msg.className = 'form-msg';
+
+      const selectedModel = modelSelect.value === 'custom' ? modelCustom.value.trim() : modelSelect.value;
+      if (!selectedModel) { msg.textContent = 'Model is required.'; msg.classList.add('form-msg-error'); btn.disabled = false; return; }
+
+      const pairs = {
+        chatbot_model: selectedModel,
+        chatbot_temperature: tempSlider.value,
+        chatbot_system_prompt: val('cb-prompt'),
+        chatbot_max_tokens: val('cb-max-tokens'),
+        chatbot_top_k: val('cb-top-k'),
+      };
+
+      try {
+        await Promise.all(Object.entries(pairs).map(([k, v]) =>
+          AdminAPI.request(`/api/settings/${k}`, { method: 'PUT', body: JSON.stringify({ value: v }) })
+        ));
+        msg.textContent = 'Settings saved.';
+        msg.classList.add('form-msg-success');
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.classList.add('form-msg-error');
+      }
+      btn.disabled = false;
+    });
+
+    const uploadZone = document.getElementById('cb-upload-zone');
+    const fileInput = document.getElementById('cb-file-input');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) uploadDocument(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) uploadDocument(fileInput.files[0]);
+      fileInput.value = '';
+    });
+
+    async function uploadDocument(file) {
+      const statusEl = document.getElementById('cb-upload-status');
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) { statusEl.innerHTML = '<span class="form-msg form-msg-error">File exceeds 10MB limit.</span>'; return; }
+
+      const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!allowed.includes(file.type) && !['pdf', 'docx', 'txt'].includes(ext)) {
+        statusEl.innerHTML = '<span class="form-msg form-msg-error">Only PDF, DOCX, TXT files are accepted.</span>';
+        return;
+      }
+
+      statusEl.innerHTML = '<span class="form-msg">Uploading...</span>';
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const token = AdminAPI.getToken();
+        const res = await fetch('https://avennex.onrender.com/api/chatbot/documents', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData,
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Upload failed');
+        }
+        statusEl.innerHTML = '<span class="form-msg form-msg-success">Document uploaded and indexed.</span>';
+        loadDocuments();
+      } catch (err) {
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(err.message)}</span>`;
+      }
+    }
+
+    async function loadDocuments() {
+      try {
+        const docs = await AdminAPI.request('/api/chatbot/documents');
+        const table = document.getElementById('cb-docs-table');
+        const body = document.getElementById('cb-docs-body');
+        const empty = document.getElementById('cb-docs-empty');
+
+        if (!docs || !docs.length) {
+          table.style.display = 'none';
+          empty.style.display = '';
+          return;
+        }
+
+        table.style.display = '';
+        empty.style.display = 'none';
+        body.innerHTML = docs.map((d) => `
+          <tr>
+            <td class="row-title">${esc(d.filename)}</td>
+            <td>${esc(d.file_type)}</td>
+            <td>${d.chunk_count}</td>
+            <td>${statusBadge(d.status)}</td>
+            <td>${formatDate(d.created_at)}</td>
+            <td class="row-actions"><button class="btn btn-danger btn-sm" data-delete-doc="${d.id}">Delete</button></td>
+          </tr>`).join('');
+
+        body.querySelectorAll('[data-delete-doc]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const ok = await confirmDialog('Delete this document? Its vectors will be removed from the index.');
+            if (!ok) return;
+            try {
+              await AdminAPI.request(`/api/chatbot/documents/${btn.dataset.deleteDoc}`, { method: 'DELETE' });
+              loadDocuments();
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        });
+
+        const processing = docs.some((d) => d.status === 'processing');
+        if (processing) setTimeout(loadDocuments, 2000);
+      } catch {
+        document.getElementById('cb-docs-empty').style.display = '';
+        document.getElementById('cb-docs-empty').textContent = 'Failed to load documents.';
+      }
+    }
+
+    loadDocuments();
+
+    document.getElementById('cb-auto-backup').addEventListener('change', async (e) => {
+      const cb = e.target;
+      cb.disabled = true;
+      try {
+        await AdminAPI.request('/api/settings/chatbot_auto_backup', {
+          method: 'PUT',
+          body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
+        });
+      } catch (err) {
+        alert(err.message);
+        cb.checked = !cb.checked;
+      }
+      cb.disabled = false;
+    });
+
+    document.getElementById('cb-backup-now').addEventListener('click', async () => {
+      const btn = document.getElementById('cb-backup-now');
+      const statusEl = document.getElementById('cb-backup-status');
+      btn.disabled = true;
+      statusEl.textContent = 'Creating backup...';
+      try {
+        await AdminAPI.request('/api/chatbot/backup', { method: 'POST' });
+        statusEl.innerHTML = '<span class="form-msg form-msg-success">Backup created.</span>';
+        loadBackupStatus();
+      } catch (err) {
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(err.message)}</span>`;
+      }
+      btn.disabled = false;
+    });
+
+    document.getElementById('cb-backup-delete').addEventListener('click', async () => {
+      const ok = await confirmDialog('Delete the backup? This cannot be undone.');
+      if (!ok) return;
+      const btn = document.getElementById('cb-backup-delete');
+      const statusEl = document.getElementById('cb-backup-status');
+      btn.disabled = true;
+      try {
+        await AdminAPI.request('/api/chatbot/backup', { method: 'DELETE' });
+        statusEl.innerHTML = '<span class="form-msg form-msg-success">Backup deleted.</span>';
+        loadBackupStatus();
+      } catch (err) {
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(err.message)}</span>`;
+      }
+      btn.disabled = false;
+    });
+
+    async function loadBackupStatus() {
+      try {
+        const data = await AdminAPI.request('/api/chatbot/backup/status');
+        const statusEl = document.getElementById('cb-backup-status');
+        if (data.exists) {
+          const size = data.size ? (data.size / 1024).toFixed(1) + ' KB' : 'unknown size';
+          const date = data.last_updated ? formatTime(data.last_updated) : 'unknown';
+          statusEl.textContent = `Last backup: ${date} (${size})`;
+        } else {
+          statusEl.textContent = 'No backup exists.';
+        }
+      } catch {}
+    }
+
+    loadBackupStatus();
   }
 
   // ── Dashboard ──

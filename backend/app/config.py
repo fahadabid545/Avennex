@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from_email: str = ""
 
+    openai_api_key: str = ""
+    chatbot_jwt_secret: str = "change-this-chatbot-secret"
+
     model_config = {"env_file": ".env"}
 
     @property
