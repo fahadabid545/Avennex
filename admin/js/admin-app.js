@@ -178,7 +178,7 @@
     if (isLast) {
       html += `<button type="submit" class="btn btn-primary">${item.id ? 'Update' : 'Publish'}</button>`;
     } else {
-      html += '<button type="button" class="btn btn-primary" id="next-step">Save Draft & Continue</button>';
+      html += '<button type="button" class="btn btn-primary" id="next-step">Save & Continue</button>';
     }
     html += '</div>';
     html += '<div class="form-msg" id="form-msg"></div>';
@@ -218,7 +218,11 @@
   }
 
   function collectStepData(step, config) {
-    if (step.review) return;
+    if (step.review) {
+      const statusEl = document.getElementById('f-status');
+      if (statusEl) config.formData.status = statusEl.value;
+      return;
+    }
     step.fields.forEach((f) => {
       if (f.type === 'features') return;
       if (f.type === 'range') {
@@ -227,6 +231,8 @@
         config.formData[f.name] = val(f.id);
       }
     });
+    const contentEl = document.getElementById('f-content');
+    if (contentEl) config.formData.content = contentEl.value.trim();
   }
 
   function renderField(f, data) {
@@ -339,26 +345,83 @@
     try {
       const blogs = await AdminAPI.request('/api/blogs/admin/all?limit=50');
       cachedItems.blogs = blogs;
-      if (!blogs || !blogs.length) return showEmpty('No blog posts yet.');
-      content.innerHTML = listHeader('Blog Posts', 'New Post') + `
-        <table class="admin-table">
-          <thead><tr><th>Title</th><th>Status</th><th>Created</th><th></th></tr></thead>
-          <tbody>${blogs.map((b) => `
-            <tr>
-              <td class="row-title">${esc(b.title)}</td>
-              <td>${statusBadge(b.status)}</td>
-              <td>${formatDate(b.created_at)}</td>
-              <td class="row-actions">
-                <button class="btn btn-secondary btn-sm" data-edit="${b.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete="${b.id}">Delete</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
+      content.innerHTML = listHeader('Blog Posts', 'Add New Blog');
+      if (!blogs || !blogs.length) {
+        content.innerHTML += '<div class="admin-empty">No blog posts yet.</div>';
+      } else {
+        content.innerHTML += `
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Date</th><th></th></tr></thead>
+            <tbody>${blogs.map((b, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td class="row-title">${esc(b.title)}</td>
+                <td>${statusBadge(b.status)}</td>
+                <td>${formatDate(b.created_at)}</td>
+                <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-edit="${b.id}">Edit</button>
+                  <button class="btn btn-danger btn-sm" data-delete="${b.id}">Delete</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
       bindListActions('blogs', blogForm);
     } catch (err) {
       showEmpty('Failed to load blogs.');
     }
+  }
+
+  function blogSlugify(text) {
+    return text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function blogToolbarAction(textarea, action) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    let before = '', after = '', insert = '';
+
+    switch (action) {
+      case 'bold': before = '<strong>'; after = '</strong>'; break;
+      case 'italic': before = '<em>'; after = '</em>'; break;
+      case 'h2': before = '<h2>'; after = '</h2>'; break;
+      case 'h3': before = '<h3>'; after = '</h3>'; break;
+      case 'link': {
+        const url = prompt('Enter URL:');
+        if (!url) return;
+        before = `<a href="${url}" target="_blank">`;
+        after = '</a>';
+        break;
+      }
+      case 'ul': {
+        const items = selected ? selected.split('\n').map((l) => `  <li>${l}</li>`).join('\n') : '  <li></li>';
+        insert = `<ul>\n${items}\n</ul>`;
+        break;
+      }
+      case 'blockquote': before = '<blockquote>'; after = '</blockquote>'; break;
+      case 'image': {
+        const src = prompt('Image URL:');
+        if (!src) return;
+        const alt = prompt('Alt text:', '');
+        insert = `<img src="${src}" alt="${alt || ''}">`;
+        break;
+      }
+      case 'code': before = '<pre><code>'; after = '</code></pre>'; break;
+    }
+
+    if (insert) {
+      textarea.value = textarea.value.substring(0, start) + insert + textarea.value.substring(end);
+      textarea.selectionStart = start;
+      textarea.selectionEnd = start + insert.length;
+    } else {
+      const replacement = before + (selected || '') + after;
+      textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+      textarea.selectionStart = start + before.length;
+      textarea.selectionEnd = start + before.length + selected.length;
+    }
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input'));
   }
 
   function blogForm(item) {
@@ -366,6 +429,7 @@
     const formData = {
       title: b.title || '',
       slug: b.slug || '',
+      author: b.author || '',
       excerpt: b.excerpt || '',
       meta_description: b.meta_description || '',
       content: b.content || '',
@@ -383,31 +447,154 @@
       steps: [
         {
           fields: [
-            { name: 'title', id: 'f-title', label: 'Title', required: true, hint: 'Max 200 characters' },
-            { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'Auto-generated from title', hint: 'URL-safe identifier' },
-            { name: 'excerpt', id: 'f-excerpt', label: 'Excerpt', hint: 'Short summary, max 300 characters' },
+            { name: 'title', id: 'f-title', label: 'Title', required: true },
+            { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'url-friendly-text' },
+            { name: 'author', id: 'f-author', label: 'Author', required: true },
+            { name: 'excerpt', id: 'f-excerpt', label: 'Excerpt / Short Description', required: true },
             { name: 'meta_description', id: 'f-meta', label: 'Meta Description', hint: 'For SEO, max 160 characters' },
           ],
+          onMount: (config) => {
+            const titleInput = document.getElementById('f-title');
+            const slugInput = document.getElementById('f-slug');
+            const excerptInput = document.getElementById('f-excerpt');
+            const metaInput = document.getElementById('f-meta');
+
+            function addCounter(input, max) {
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              counter.textContent = `${input.value.length}/${max}`;
+              input.parentNode.appendChild(counter);
+              input.setAttribute('maxlength', max);
+              input.addEventListener('input', () => {
+                counter.textContent = `${input.value.length}/${max}`;
+                counter.classList.toggle('field-char-warn', input.value.length >= max);
+              });
+            }
+
+            if (titleInput) addCounter(titleInput, 100);
+            if (excerptInput) addCounter(excerptInput, 200);
+            if (metaInput) addCounter(metaInput, 160);
+
+            if (titleInput && slugInput) {
+              titleInput.addEventListener('input', () => {
+                if (!slugInput.dataset.edited) {
+                  slugInput.value = blogSlugify(titleInput.value);
+                }
+              });
+              slugInput.addEventListener('input', () => {
+                slugInput.dataset.edited = 'true';
+              });
+              if (!config.formData.slug && config.formData.title) {
+                slugInput.value = blogSlugify(config.formData.title);
+              }
+            }
+          },
         },
         {
-          fields: [
-            { name: 'content', id: 'f-content', label: 'Content', type: 'textarea', rows: 14, hint: 'Supports ## headings, bullet lists' },
-            { name: 'status', id: 'f-status', label: 'Status', type: 'select', options: [
-              { value: 'draft', label: 'Draft' },
-              { value: 'published', label: 'Published' },
-            ]},
-          ],
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            wrap.innerHTML = `
+              <div class="field">
+                <label for="f-content">Content <span class="field-req">Required</span></label>
+                <div class="blog-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                  <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                  <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="image" title="Image">Img</button>
+                  <button type="button" data-cmd="code" title="Code Block">Code</button>
+                </div>
+                <textarea id="f-content" class="blog-content-editor" rows="18">${esc(config.formData.content)}</textarea>
+                <span class="field-hint">Recommended image size: 1200x630px, max 2MB, JPG/PNG</span>
+              </div>
+              <div class="field">
+                <label>Preview</label>
+                <div class="blog-preview" id="blog-preview"></div>
+              </div>`;
+
+            const textarea = document.getElementById('f-content');
+            const preview = document.getElementById('blog-preview');
+
+            function updatePreview() {
+              preview.innerHTML = textarea.value || '<span class="text-muted">Nothing to preview</span>';
+            }
+            textarea.addEventListener('input', updatePreview);
+            updatePreview();
+
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
+              const cmd = e.target.closest('[data-cmd]');
+              if (cmd) blogToolbarAction(textarea, cmd.dataset.cmd);
+            });
+          },
         },
-        { review: true, fields: [] },
+        {
+          review: true,
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+
+            const d = config.formData;
+            let reviewHtml = '<div class="review-fields">';
+            const rows = [
+              ['Title', d.title],
+              ['Author', d.author],
+              ['Slug', d.slug],
+              ['Excerpt', d.excerpt],
+              ['Meta Description', d.meta_description],
+            ];
+            rows.forEach(([label, val]) => {
+              reviewHtml += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${val ? esc(val) : '<span class="text-muted">Not set</span>'}</span></div>`;
+            });
+            reviewHtml += '</div>';
+            reviewHtml += '<div class="field" style="margin-top:20px"><label>Content Preview</label><div class="blog-preview">' + (d.content || '<span class="text-muted">No content</span>') + '</div></div>';
+            reviewHtml += `
+              <div class="field" style="margin-top:20px">
+                <label for="f-status">Status</label>
+                <select id="f-status">
+                  <option value="draft" ${d.status === 'draft' ? 'selected' : ''}>Draft</option>
+                  <option value="published" ${d.status === 'published' ? 'selected' : ''}>Published</option>
+                </select>
+              </div>`;
+
+            wrap.innerHTML = reviewHtml;
+
+            const statusSelect = document.getElementById('f-status');
+            const submitBtn = document.querySelector('#crud-form button[type="submit"]');
+            function updateBtnLabel() {
+              if (submitBtn) submitBtn.textContent = statusSelect.value === 'published' ? 'Publish' : 'Save as Draft';
+            }
+            statusSelect.addEventListener('change', () => {
+              config.formData.status = statusSelect.value;
+              updateBtnLabel();
+            });
+            updateBtnLabel();
+          },
+        },
       ],
-      onSubmit: (d) => ({
-        title: d.title,
-        slug: d.slug || undefined,
-        excerpt: d.excerpt || undefined,
-        meta_description: d.meta_description || undefined,
-        content: d.content || undefined,
-        status: d.status,
-      }),
+      onSubmit: (d) => {
+        const statusEl = document.getElementById('f-status');
+        if (statusEl) d.status = statusEl.value;
+        const contentEl = document.getElementById('f-content');
+        if (contentEl) d.content = contentEl.value.trim();
+        return {
+          title: d.title,
+          slug: d.slug || undefined,
+          author: d.author || undefined,
+          excerpt: d.excerpt || undefined,
+          meta_description: d.meta_description || undefined,
+          content: d.content || undefined,
+          status: d.status,
+        };
+      },
       onBack: loadBlogs,
     });
   }
