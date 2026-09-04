@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blog | Avennex</title>
-  <meta name="description" content="Notes on building products, shipping fast, and the messy parts nobody talks about.">
+  <meta name="description" content="Product decisions, technical tradeoffs, and the messy reality of building AI software from Lahore. Written by the people doing the work.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://avennex.com/blog.html">
 
   <meta property="og:title" content="Blog | Avennex">
-  <meta property="og:description" content="Notes on building products, shipping fast, and the messy parts nobody talks about.">
+  <meta property="og:description" content="Product decisions, technical tradeoffs, and the messy reality of building AI software from Lahore. Written by the people doing the work.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
   <meta property="og:url" content="https://avennex.com/blog.html">
   <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog | Avennex">
+  <meta name="twitter:description" content="Product decisions, technical tradeoffs, and the messy reality of building AI software from Lahore. Written by the people doing the work.">
+  <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 
@@ -30,11 +37,12 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to content</a>
 
   <header class="site-header">
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Main navigation">
         <a href="index.html">Home</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
@@ -66,7 +74,7 @@
     <a href="contact.html" class="nav-cta">Let's Talk</a>
   </div>
 
-  <main>
+  <main id="main">
     <section class="page-hero section">
       <div class="section-inner">
         <p class="section-eyebrow" data-animate="fade-up">Blog</p>
@@ -123,6 +131,7 @@
   <script src="js/animations.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/blog.js" defer></script>
+  <script src="js/schema.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>

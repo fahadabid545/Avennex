@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Avennex | AI-Powered Product Studio</title>
-  <meta name="description" content="Avennex builds AI-powered products that automate complex workflows. From HR automation to affordable e-commerce, we turn real problems into working software.">
+  <meta name="description" content="Avennex builds AI products that automate HR screening and e-commerce for South Asian businesses. Two products in development, built by the team that found the problems.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://avennex.com/">
 
   <meta property="og:title" content="Avennex | AI-Powered Product Studio">
-  <meta property="og:description" content="Avennex builds AI-powered products that automate complex workflows. From HR automation to affordable e-commerce, we turn real problems into working software.">
+  <meta property="og:description" content="Avennex builds AI products that automate HR screening and e-commerce for South Asian businesses. Two products in development, built by the team that found the problems.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
   <meta property="og:url" content="https://avennex.com/">
   <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Avennex | AI-Powered Product Studio">
+  <meta name="twitter:description" content="Avennex builds AI products that automate HR screening and e-commerce for South Asian businesses. Two products in development, built by the team that found the problems.">
+  <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 
@@ -31,11 +38,12 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body data-header-transparent="true">
+  <a href="#main" class="skip-link">Skip to content</a>
 
   <header class="site-header">
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Main navigation">
         <a href="index.html" class="active">Home</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
@@ -66,7 +74,7 @@
     <a href="contact.html" class="nav-cta">Let's Talk</a>
   </div>
 
-  <main>
+  <main id="main">
     <section class="hero">
       <div class="hero-content">
         <p class="hero-eyebrow">Product Studio</p>
@@ -86,7 +94,7 @@
         <div class="scroll-indicator-line"></div>
       </div>
 
-      <div class="hero-game-hint" id="game-trigger">
+      <div class="hero-game-hint" id="game-trigger" role="button" tabindex="0" aria-label="Play the mini game">
         <i data-lucide="gamepad-2" width="16" height="16"></i>
         <span>Play</span>
       </div>
@@ -369,6 +377,7 @@
   <script src="js/api.js" defer></script>
   <script src="js/home.js" defer></script>
   <script src="js/chat.js" defer></script>
+  <script src="js/schema.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>

@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Page Not Found | Avennex</title>
-  <meta name="description" content="This page doesn't exist.">
+  <meta name="description" content="This page doesn't exist. Head back to the Avennex homepage.">
+  <meta name="robots" content="noindex, follow">
 
   <meta property="og:title" content="Page Not Found | Avennex">
-  <meta property="og:description" content="This page doesn't exist.">
+  <meta property="og:description" content="This page doesn't exist. Head back to the Avennex homepage.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
   <meta property="og:url" content="https://avennex.com/404.html">
   <meta property="og:type" content="website">
@@ -30,11 +31,12 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to content</a>
 
   <header class="site-header">
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Main navigation">
         <a href="index.html">Home</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
@@ -66,7 +68,7 @@
     <a href="contact.html" class="nav-cta">Let's Talk</a>
   </div>
 
-  <main>
+  <main id="main">
     <section class="error-page">
       <canvas id="space-bg" class="error-bg"></canvas>
       <div class="error-content" data-animate="fade-up">

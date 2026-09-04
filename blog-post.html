@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blog Post | Avennex</title>
   <meta name="description" content="Read the full post on the Avennex blog.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://avennex.com/blog-post.html">
 
   <meta property="og:title" content="Blog Post | Avennex">
   <meta property="og:description" content="Read the full post on the Avennex blog.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
   <meta property="og:url" content="https://avennex.com/blog-post.html">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="article">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog Post | Avennex">
+  <meta name="twitter:description" content="Read the full post on the Avennex blog.">
+  <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 
@@ -30,11 +37,12 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to content</a>
 
   <header class="site-header">
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Main navigation">
         <a href="index.html">Home</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
@@ -66,7 +74,7 @@
     <a href="contact.html" class="nav-cta">Let's Talk</a>
   </div>
 
-  <main>
+  <main id="main">
     <section class="section" style="padding-top: 140px;">
       <div class="section-inner">
         <div id="blog-content"></div>
@@ -115,6 +123,7 @@
   <script src="js/animations.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/blog-post.js" defer></script>
+  <script src="js/schema.js" defer></script>
   <script>lucide.createIcons();</script>
 
 </body>
