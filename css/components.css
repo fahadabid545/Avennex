@@ -2,6 +2,14 @@
   padding: var(--space-3xl) 0;
 }
 
+.section-tight {
+  padding: var(--space-2xl) 0;
+}
+
+.section-loose {
+  padding: 96px 0;
+}
+
 .section-inner {
   max-width: 1200px;
   margin: 0 auto;
@@ -210,9 +218,9 @@
 }
 
 .bento-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px var(--accent-glow);
-  border-color: rgba(59, 130, 246, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .bento-card-accent {
@@ -707,7 +715,7 @@
 }
 
 .cta-heading {
-  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: var(--space-sm);
@@ -872,8 +880,9 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--accent);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1087,8 +1096,9 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--accent);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1622,6 +1632,27 @@
 
 .api-empty a {
   color: var(--accent);
+}
+
+.callout {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding: var(--space-2xl) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.cta-banner.section-loose {
+  padding-top: 96px;
+}
+
+.stats-strip .section-inner {
+  max-width: 1400px;
 }
 
 /* Responsive */

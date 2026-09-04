@@ -7,8 +7,8 @@
   API.get('/jobs').then(function (jobs) {
     if (!jobs || jobs.length === 0) {
       API.showEmpty(container,
-        '<p>No open roles right now.</p>' +
-        '<p>Check back soon or <a href="contact.html">drop us a line</a> anyway.</p>'
+        '<p>Nothing open at the moment.</p>' +
+        '<p>Roles show up here when a real gap exists on a real project. <a href="contact.html">Send a note</a> if you want in anyway.</p>'
       );
       return;
     }
@@ -47,7 +47,7 @@
         window.location.href = 'job-post.html?slug=' + row.dataset.slug;
       }
     });
-  }).catch(function (err) {
-    API.showError(container, err.message);
+  }).catch(function () {
+    API.showError(container, 'Couldn\'t load job listings. Try refreshing the page.');
   });
 })();

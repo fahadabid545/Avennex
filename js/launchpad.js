@@ -7,8 +7,8 @@
   API.get('/launchpad').then(function (entries) {
     if (!entries || entries.length === 0) {
       API.showEmpty(container,
-        '<p>Nothing on the launchpad yet.</p>' +
-        '<p>New concepts show up here before development starts.</p>'
+        '<p>The launchpad is quiet right now.</p>' +
+        '<p>Product ideas land here before any code gets written. <a href="contact.html">Pitch one</a> if you have something.</p>'
       );
       return;
     }
@@ -49,8 +49,8 @@
     }
 
     container.innerHTML = html;
-  }).catch(function (err) {
-    API.showError(container, err.message);
+  }).catch(function () {
+    API.showError(container, 'Couldn\'t load launchpad entries. Try refreshing.');
   });
 
   function detailItem(label, value) {

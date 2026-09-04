@@ -21,8 +21,8 @@
             '<div class="academy-launching-icon">' +
               '<i data-lucide="play-circle" width="28" height="28"></i>' +
             '</div>' +
-            '<h3>Launching Soon</h3>' +
-            '<p>Video playlists are on the way. Topics will cover product development, coding walkthroughs, and lessons from building our own products.</p>' +
+            '<h3>Coming soon</h3>' +
+            '<p>Video playlists will show up here. Topics: code walkthroughs, product decisions, and the things we learned the hard way.</p>' +
           '</div>';
         if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
@@ -61,8 +61,8 @@
           '<div class="academy-launching-icon">' +
             '<i data-lucide="play-circle" width="28" height="28"></i>' +
           '</div>' +
-          '<h3>Launching Soon</h3>' +
-          '<p>Video playlists are on the way. Topics will cover product development, coding walkthroughs, and lessons from building our own products.</p>' +
+          '<h3>Coming soon</h3>' +
+          '<p>Video playlists will show up here. Topics: code walkthroughs, product decisions, and the things we learned the hard way.</p>' +
         '</div>';
       if (typeof lucide !== 'undefined') lucide.createIcons();
     });

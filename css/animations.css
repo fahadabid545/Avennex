@@ -35,9 +35,25 @@
   transition: opacity var(--transition-slow), transform var(--transition-slow);
 }
 
+[data-animate="fade-left"] {
+  transform: translateX(-30px);
+}
+
+[data-animate="fade-right"] {
+  transform: translateX(30px);
+}
+
+[data-animate="fade-in"] {
+  transform: none;
+}
+
 [data-animate].animate-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) translateX(0);
+}
+
+[data-animate="fade-in"].animate-visible {
+  transform: none;
 }
 
 .section-rounded {

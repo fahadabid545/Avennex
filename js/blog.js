@@ -7,8 +7,8 @@
   API.get('/blogs').then(function (posts) {
     if (!posts || posts.length === 0) {
       API.showEmpty(container,
-        '<p>Nothing published yet.</p>' +
-        '<p>First posts are on the way.</p>'
+        '<p>No posts yet. We write when there\'s something worth reading.</p>' +
+        '<p>Product updates and technical decisions will show up here.</p>'
       );
       return;
     }
@@ -32,7 +32,7 @@
 
     container.innerHTML = html;
     if (typeof lucide !== 'undefined') lucide.createIcons();
-  }).catch(function (err) {
-    API.showError(container, err.message);
+  }).catch(function () {
+    API.showError(container, 'Couldn\'t load blog posts. Try refreshing.');
   });
 })();

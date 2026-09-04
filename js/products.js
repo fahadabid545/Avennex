@@ -7,8 +7,8 @@
   API.get('/products').then(function (products) {
     if (!products || products.length === 0) {
       API.showEmpty(container,
-        '<p>No products listed yet.</p>' +
-        '<p>Check back soon.</p>'
+        '<p>Products page is empty right now. We\'re heads-down building.</p>' +
+        '<p>Check the <a href="launchpad.html">Launchpad</a> to see what\'s in the pipeline.</p>'
       );
       return;
     }
@@ -73,8 +73,8 @@
 
     container.innerHTML = html;
     if (typeof lucide !== 'undefined') lucide.createIcons();
-  }).catch(function (err) {
-    API.showError(container, err.message);
+  }).catch(function () {
+    API.showError(container, 'Couldn\'t load products right now. Try refreshing in a minute.');
   });
 
   function statusBadgeClass(status) {
