@@ -33,15 +33,6 @@ def _strip_html(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text)
 
 
-def _count_tokens(text: str) -> int:
-    try:
-        import tiktoken
-        enc = tiktoken.encoding_for_model("gpt-4o-mini")
-        return len(enc.encode(text))
-    except Exception:
-        return len(text.split())
-
-
 def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     try:
         import tiktoken

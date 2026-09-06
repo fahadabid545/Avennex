@@ -99,18 +99,3 @@ def list_comments(entry_id: str):
         .execute()
     )
     return result.data
-
-
-def count_comments_for_entries(entry_ids: list[str]):
-    db = get_supabase()
-    result = (
-        db.table("launchpad_comments")
-        .select("entry_id")
-        .in_("entry_id", entry_ids)
-        .execute()
-    )
-    counts = {}
-    for row in result.data:
-        eid = row["entry_id"]
-        counts[eid] = counts.get(eid, 0) + 1
-    return counts

@@ -125,21 +125,6 @@ def count_applications(job_id: str) -> int:
     return len(result.data) if result.data else 0
 
 
-def count_applications_for_jobs(job_ids: list[str]):
-    db = get_supabase()
-    result = (
-        db.table("job_applications")
-        .select("job_id")
-        .in_("job_id", job_ids)
-        .execute()
-    )
-    counts = {}
-    for row in result.data:
-        jid = row["job_id"]
-        counts[jid] = counts.get(jid, 0) + 1
-    return counts
-
-
 def delete_application(app_id: str):
     db = get_supabase()
     app = db.table("job_applications").select("*").eq("id", app_id).execute()

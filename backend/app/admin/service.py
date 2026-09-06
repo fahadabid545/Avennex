@@ -7,14 +7,17 @@ logger = logging.getLogger(__name__)
 
 
 def log_activity(admin_email: str, action: str, entity_type: str, entity_id: str, entity_title: str):
-    db = get_supabase()
-    db.table("activity_log").insert({
-        "admin_email": admin_email,
-        "action": action,
-        "entity_type": entity_type,
-        "entity_id": entity_id,
-        "entity_title": entity_title,
-    }).execute()
+    try:
+        db = get_supabase()
+        db.table("activity_log").insert({
+            "admin_email": admin_email,
+            "action": action,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "entity_title": entity_title,
+        }).execute()
+    except Exception as e:
+        logger.warning("Failed to log activity (%s %s %s): %s", action, entity_type, entity_id, e)
 
 
 def list_activity(page: int, limit: int):

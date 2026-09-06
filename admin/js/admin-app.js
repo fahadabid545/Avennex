@@ -31,7 +31,20 @@
     if (loaders[mod]) loaders[mod]();
   }
 
+  let contentListeners = [];
+
+  function addContentListener(type, fn) {
+    contentListeners.push({ type, fn });
+    content.addEventListener(type, fn);
+  }
+
+  function clearContentListeners() {
+    contentListeners.forEach(({ type, fn }) => content.removeEventListener(type, fn));
+    contentListeners = [];
+  }
+
   function showLoading() {
+    clearContentListeners();
     content.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
   }
 
@@ -357,7 +370,7 @@
     const addBtn = document.getElementById('add-btn');
     if (addBtn) addBtn.addEventListener('click', () => formFn(null));
 
-    content.addEventListener('click', async (e) => {
+    addContentListener('click', async (e) => {
       const editId = e.target.dataset.edit;
       const deleteId = e.target.dataset.delete;
 
@@ -800,7 +813,7 @@
 
       bindListActions('jobs', jobForm);
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const appsId = e.target.dataset.apps;
         if (appsId) showApplications(appsId);
 
@@ -833,7 +846,7 @@
             <h2 class="form-card-title">Applications${job ? ': ' + esc(job.title) : ''}</h2>
           </div>
           ${apps.length ? `<table class="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Email</th><th>Resume</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Date</th><th>Email Status</th><th>Resume</th><th></th></tr></thead>
             <tbody>${apps.map((a) => `
               <tr>
                 <td class="row-title">${esc(a.name)}</td>
@@ -856,7 +869,7 @@
 
       const appMap = {};
       apps.forEach((a) => { appMap[a.id] = a; });
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const rid = e.target.dataset.resume;
         if (rid && appMap[rid]) {
           const a = appMap[rid];
@@ -1158,7 +1171,7 @@
         }
         bindListActions('products', productForm);
 
-        content.addEventListener('click', async (e) => {
+        addContentListener('click', async (e) => {
           const toggleId = e.target.dataset.toggleChat;
           if (toggleId) {
             const isOn = e.target.dataset.chatOn === 'true';
@@ -1179,7 +1192,7 @@
         });
       }
 
-      content.addEventListener('click', (e) => {
+      addContentListener('click', (e) => {
         const tab = e.target.dataset.ptab;
         if (tab) {
           productsTab = tab;
@@ -1312,7 +1325,7 @@
 
       document.getElementById('back-btn').addEventListener('click', loadProducts);
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const replyId = e.target.dataset.pchatReply;
         if (replyId) showProductChatReply(product, replyId);
 
@@ -1711,7 +1724,7 @@
         </table>`;
       bindListActions('launchpad', launchpadForm);
 
-      content.addEventListener('click', (e) => {
+      addContentListener('click', (e) => {
         const commentsId = e.target.dataset.comments;
         if (commentsId) showLaunchpadComments(commentsId);
       });
@@ -1748,7 +1761,7 @@
 
       document.getElementById('back-btn').addEventListener('click', loadLaunchpad);
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const commentId = e.target.dataset.deleteComment;
         if (commentId) {
           const ok = await confirmDialog('Delete this comment?');
@@ -2081,7 +2094,7 @@
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const editId = e.target.dataset.edit;
         if (editId) {
           const item = (cachedItems.academy || []).find((p) => p.id === editId);
@@ -2178,7 +2191,7 @@
       const videoMap = {};
       videos.forEach((v) => { videoMap[v.id] = v; });
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const editVid = e.target.dataset.editVideo;
         if (editVid && videoMap[editVid]) academyVideoForm(videoMap[editVid], playlistId);
 
@@ -2291,7 +2304,7 @@
             </div>`).join('')}
         </div>`;
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const replyId = e.target.dataset.replyChat;
         if (replyId) showChatReply(replyId);
 
@@ -2438,7 +2451,7 @@
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => faqForm(null));
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const editId = e.target.dataset.editFaq;
         if (editId) {
           const item = (cachedItems.faqs || []).find((f) => f.id === editId);
@@ -2474,14 +2487,23 @@
 
   function faqForm(item) {
     const f = item || {};
+    const formData = {
+      question: f.question || '',
+      answer: f.answer || '',
+      display_order: f.display_order ?? 0,
+      active: f.active === false ? 'false' : 'true',
+    };
+
     renderStepForm({
+      title: f.id ? 'Edit FAQ' : 'New FAQ',
       item: f,
+      formData,
+      currentStep: 1,
       entityType: 'faq',
       apiPath: '/api/faqs',
       reloadFn: loadFaqs,
       steps: [
         {
-          title: 'Content',
           fields: [
             { name: 'question', id: 'f-question', label: 'Question', type: 'text', required: true },
             { name: 'display_order', id: 'f-order', label: 'Display Order', type: 'number' },
@@ -2490,17 +2512,17 @@
               { value: 'false', label: 'Inactive' },
             ] },
           ],
-          onMount() {
+          onMount(config) {
             const qInput = document.getElementById('f-question');
             if (qInput) {
-              const counter = document.createElement('div');
-              counter.className = 'char-counter';
-              counter.textContent = (qInput.value || '').length + ' / 200';
-              qInput.parentElement.appendChild(counter);
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              counter.textContent = `${qInput.value.length}/200`;
+              qInput.parentNode.appendChild(counter);
               qInput.setAttribute('maxlength', '200');
               qInput.addEventListener('input', () => {
-                counter.textContent = qInput.value.length + ' / 200';
-                counter.style.color = qInput.value.length > 180 ? 'var(--danger)' : '';
+                counter.textContent = `${qInput.value.length}/200`;
+                counter.classList.toggle('field-char-warn', qInput.value.length >= 180);
               });
             }
 
@@ -2508,51 +2530,58 @@
             if (orderField) orderField.closest('.field').insertAdjacentHTML('beforebegin', `
               <div class="field">
                 <label for="f-faq-answer">Answer <span class="field-req">Required</span></label>
-                <div class="toolbar">${['bold','italic','heading','link','ul','ol','blockquote','code'].map(a =>
-                  `<button type="button" class="toolbar-btn" data-action="${a}">${a}</button>`
-                ).join('')}</div>
-                <textarea id="f-faq-answer" rows="8" required>${esc(f.answer)}</textarea>
-                <div class="field-hint">Supports rich text formatting</div>
-                <div style="margin-top:var(--space-sm)">
-                  <button type="button" class="btn btn-secondary btn-sm" id="faq-preview-toggle">Preview</button>
-                  <div id="faq-preview" class="content-preview" hidden></div>
+                <div class="blog-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                  <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                  <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
                 </div>
+                <textarea id="f-faq-answer" class="blog-content-editor" rows="8" required>${esc(config.formData.answer)}</textarea>
+                <span class="field-hint">Supports rich text formatting</span>
+              </div>
+              <div class="field">
+                <label>Answer Preview</label>
+                <div class="blog-preview" id="faq-answer-preview"></div>
               </div>
             `);
 
             const ta = document.getElementById('f-faq-answer');
-            if (ta) {
-              ta.closest('.field').querySelectorAll('.toolbar-btn').forEach(btn => {
-                btn.addEventListener('click', () => blogToolbarAction(ta, btn.dataset.action));
-              });
+            const preview = document.getElementById('faq-answer-preview');
+            function updatePreview() {
+              preview.innerHTML = ta.value || '<span class="text-muted">Nothing to preview</span>';
             }
+            ta.addEventListener('input', updatePreview);
+            updatePreview();
 
-            const previewBtn = document.getElementById('faq-preview-toggle');
-            const previewEl = document.getElementById('faq-preview');
-            if (previewBtn && previewEl) {
-              previewBtn.addEventListener('click', () => {
-                const showing = !previewEl.hidden;
-                previewEl.hidden = showing;
-                previewBtn.textContent = showing ? 'Preview' : 'Hide Preview';
-                if (!showing) previewEl.innerHTML = ta.value || '<em>Nothing to preview</em>';
-              });
-            }
+            ta.closest('.field').querySelector('.blog-toolbar').addEventListener('click', (e) => {
+              const cmd = e.target.closest('[data-cmd]');
+              if (cmd) blogToolbarAction(ta, cmd.dataset.cmd);
+            });
           },
         },
         {
-          title: 'Review',
           review: true,
-          onMount(data) {
-            const reviewArea = document.getElementById('review-area');
-            if (!reviewArea) return;
-            reviewArea.innerHTML = `
-              <div class="review-grid">
-                <div class="review-item"><strong>Question</strong><p>${esc(data.question || '')}</p></div>
-                <div class="review-item"><strong>Answer</strong><div class="content-preview">${data.answer || ''}</div></div>
-                <div class="review-item"><strong>Display Order</strong><p>${data.display_order ?? 0}</p></div>
-                <div class="review-item"><strong>Status</strong><p>${data.active === 'true' || data.active === true ? 'Active' : 'Inactive'}</p></div>
-              </div>
-            `;
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            const d = config.formData;
+            let html = '<div class="review-fields">';
+            [
+              ['Question', d.question],
+              ['Display Order', d.display_order],
+              ['Status', d.active === 'true' || d.active === true ? 'Active' : 'Inactive'],
+            ].forEach(([label, v]) => {
+              html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
+            });
+            html += '</div>';
+            html += '<div class="field" style="margin-top:20px"><label>Answer Preview</label><div class="blog-preview">' + (d.answer || '<span class="text-muted">No answer</span>') + '</div></div>';
+            wrap.innerHTML = html;
           },
         },
       ],
@@ -2564,6 +2593,7 @@
           active: data.active === 'true' || data.active === true,
         };
       },
+      onBack: loadFaqs,
     });
   }
 
@@ -3301,7 +3331,7 @@
 
       document.getElementById('add-btn').addEventListener('click', showAddAdmin);
 
-      content.addEventListener('click', async (e) => {
+      addContentListener('click', async (e) => {
         const removeId = e.target.dataset.removeAdmin;
         if (removeId) {
           const ok = await confirmDialog('Remove this admin? This cannot be undone.');

@@ -90,18 +90,6 @@ def delete_message(message_id: str):
     return bool(result.data)
 
 
-def count_by_product(product_id: str) -> int:
-    db = get_supabase()
-    result = (
-        db.table("product_chat_messages")
-        .select("id")
-        .eq("product_id", product_id)
-        .eq("is_admin", False)
-        .execute()
-    )
-    return len(result.data) if result.data else 0
-
-
 def count_by_products(product_ids: list[str]):
     db = get_supabase()
     result = (
