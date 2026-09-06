@@ -35,3 +35,5 @@ class BlogResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     published_at: Optional[datetime] = None
+    last_edited_by: Optional[str] = None
+    last_edited_at: Optional[datetime] = None

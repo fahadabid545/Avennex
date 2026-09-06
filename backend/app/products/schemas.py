@@ -52,3 +52,5 @@ class ProductResponse(BaseModel):
     tech_stack: Optional[str] = None
     chat_enabled: Optional[bool] = False
     cover_image: Optional[str] = None
+    last_edited_by: Optional[str] = None
+    last_edited_at: Optional[datetime] = None

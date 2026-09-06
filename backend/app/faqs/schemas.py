@@ -25,3 +25,5 @@ class FaqResponse(BaseModel):
     active: bool
     created_at: datetime
     updated_at: datetime
+    last_edited_by: Optional[str] = None
+    last_edited_at: Optional[datetime] = None

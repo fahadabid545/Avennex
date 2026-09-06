@@ -52,6 +52,8 @@ class LaunchpadResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    last_edited_by: Optional[str] = None
+    last_edited_at: Optional[datetime] = None
 
 
 class LaunchpadDetailResponse(LaunchpadResponse):

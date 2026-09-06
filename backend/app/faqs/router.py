@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.dependencies import get_current_user
@@ -20,7 +22,10 @@ def list_all_faqs(_user: dict = Depends(get_current_user)):
 
 @router.post("", response_model=FaqResponse, status_code=status.HTTP_201_CREATED)
 def create_faq(body: FaqCreate, _user: dict = Depends(get_current_user)):
-    result = service.create(body.model_dump(exclude_none=True))
+    data = body.model_dump(exclude_none=True)
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    result = service.create(data)
     log_activity(_user["email"], "create", "faq", result["id"], result["question"][:50])
     return result
 
@@ -30,6 +35,8 @@ def update_faq(id: str, body: FaqUpdate, _user: dict = Depends(get_current_user)
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="FAQ not found")

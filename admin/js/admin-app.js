@@ -49,6 +49,24 @@
     return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
+  function timeAgo(d) {
+    if (!d) return '';
+    const diff = Date.now() - new Date(d).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + 'd ago';
+    return Math.floor(days / 30) + 'mo ago';
+  }
+
+  function editedBy(item) {
+    if (!item.last_edited_by) return '';
+    return `<div class="edited-by">${esc(item.last_edited_by)} &middot; ${timeAgo(item.last_edited_at)}</div>`;
+  }
+
   function badge(text, color) {
     return `<span class="badge badge-${color}">${text}</span>`;
   }
@@ -388,7 +406,7 @@
             <tbody>${blogs.map((b, i) => `
               <tr>
                 <td>${i + 1}</td>
-                <td class="row-title">${esc(b.title)}</td>
+                <td class="row-title">${esc(b.title)}${editedBy(b)}</td>
                 <td>${statusBadge(b.status)}</td>
                 <td>${formatDate(b.created_at)}</td>
                 <td class="row-actions">
@@ -666,7 +684,7 @@
     const isClosed = j.status === 'closed' || isExpired;
     return `
       <tr>
-        <td class="row-title">${esc(j.title)}</td>
+        <td class="row-title">${esc(j.title)}${editedBy(j)}</td>
         <td>${j.type || ''}${j.commitment ? ' / ' + j.commitment : ''}</td>
         <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] || 0}${j.max_applications ? '/' + j.max_applications : ''} apps</button></td>
         <td>${isExpired && j.status !== 'closed' ? badge('expired', 'red') : statusBadge(j.status)}</td>
@@ -1121,7 +1139,7 @@
               <tbody>${products.map((p, i) => `
                 <tr>
                   <td>${i + 1}</td>
-                  <td class="row-title">${esc(p.name)}</td>
+                  <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
                   <td>${statusBadge(p.status)}</td>
                   <td>${p.progress}%</td>
                   <td>
@@ -1679,7 +1697,7 @@
           <tbody>${entries.map((e, i) => `
             <tr>
               <td>${i + 1}</td>
-              <td class="row-title">${esc(e.title)}</td>
+              <td class="row-title">${esc(e.title)}${editedBy(e)}</td>
               <td>${statusBadge(e.stage)}</td>
               <td>${statusBadge(e.status)}</td>
               <td><button class="btn btn-secondary btn-sm" data-comments="${e.id}">${commentCounts[e.id] || 0} comments</button></td>
@@ -2402,7 +2420,7 @@
           <tbody>${faqs.map((f, i) => `
             <tr>
               <td>${i + 1}</td>
-              <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}</td>
+              <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}${editedBy(f)}</td>
               <td>
                 <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
                   ${f.active ? 'Active' : 'Inactive'}
@@ -2881,12 +2899,15 @@
 
   // ── Dashboard ──
 
+  let dashChartDays = 7;
+  let dashChartInstances = [];
+
   async function loadDashboard() {
     showLoading();
     try {
       const [statsRes, chartsRes, logs] = await Promise.all([
         AdminAPI.request('/api/admin/stats'),
-        AdminAPI.request('/api/admin/charts'),
+        AdminAPI.request(`/api/admin/charts?days=${dashChartDays}`),
         AdminAPI.request('/api/admin/activity?limit=20'),
       ]);
 
@@ -2895,6 +2916,8 @@
 
       const lp = s.launchpad || {};
       const lpSummary = Object.entries(lp).map(([k, v]) => `${k}: ${v}`).join(', ') || 'none';
+
+      const rangeOptions = [1, 3, 7, 30];
 
       content.innerHTML = `
         <div class="content-header"><h1 class="content-title">Dashboard</h1></div>
@@ -2942,18 +2965,34 @@
           </div>
         </div>
 
-        <div class="dash-charts">
+        <div class="dash-range-bar">
+          ${rangeOptions.map((d) => `<button class="btn btn-sm ${d === dashChartDays ? 'btn-primary' : 'btn-secondary'}" data-range="${d}">${d === 1 ? '1 Day' : d + ' Days'}</button>`).join('')}
+        </div>
+
+        <div class="dash-charts dash-charts-6">
           <div class="dash-chart-card">
-            <h3>Applications (30 days)</h3>
+            <h3>User Chat Messages</h3>
+            <canvas id="chart-user-chats"></canvas>
+          </div>
+          <div class="dash-chart-card">
+            <h3>Job Applications</h3>
             <canvas id="chart-applications"></canvas>
           </div>
           <div class="dash-chart-card">
-            <h3>Chat Messages (30 days)</h3>
-            <canvas id="chart-chat"></canvas>
+            <h3>Launchpad Comments</h3>
+            <canvas id="chart-lp-comments"></canvas>
           </div>
           <div class="dash-chart-card">
-            <h3>Admin Activity (30 days)</h3>
+            <h3>Admin Actions</h3>
             <canvas id="chart-activity"></canvas>
+          </div>
+          <div class="dash-chart-card">
+            <h3>Content Published</h3>
+            <canvas id="chart-content"></canvas>
+          </div>
+          <div class="dash-chart-card">
+            <h3>Product Chat Messages</h3>
+            <canvas id="chart-product-chats"></canvas>
           </div>
         </div>
 
@@ -2975,7 +3014,20 @@
           </div>` : '<p class="admin-empty">No activity yet.</p>'}
         </div>`;
 
+      content.querySelectorAll('[data-range]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          dashChartDays = parseInt(btn.dataset.range);
+          loadDashboard();
+        });
+      });
+
+      dashChartInstances.forEach((ch) => ch.destroy());
+      dashChartInstances = [];
+
       if (typeof Chart !== 'undefined') {
+        const labels = getLastNDays(dashChartDays);
+        const shortLabels = labels.map((d) => d.slice(5));
+
         const chartOpts = {
           responsive: true,
           plugins: { legend: { display: false } },
@@ -2985,23 +3037,36 @@
           },
         };
 
-        function buildChart(canvasId, data, color) {
-          const labels = getLast30Days();
+        function lineChart(canvasId, data, color) {
           const values = labels.map((d) => data[d] || 0);
-          new Chart(document.getElementById(canvasId), {
+          const ch = new Chart(document.getElementById(canvasId), {
+            type: 'line',
+            data: {
+              labels: shortLabels,
+              datasets: [{ data: values, borderColor: color, backgroundColor: color + '22', tension: 0.3, fill: true, pointRadius: 2 }],
+            },
+            options: chartOpts,
+          });
+          dashChartInstances.push(ch);
+        }
+
+        function barChart(canvasId, data, color) {
+          const values = labels.map((d) => data[d] || 0);
+          const ch = new Chart(document.getElementById(canvasId), {
             type: 'bar',
             data: {
-              labels: labels.map((d) => d.slice(5)),
+              labels: shortLabels,
               datasets: [{ data: values, backgroundColor: color, borderRadius: 3 }],
             },
             options: chartOpts,
           });
+          dashChartInstances.push(ch);
         }
 
-        function getLast30Days() {
+        function getLastNDays(n) {
           const days = [];
           const now = new Date();
-          for (let i = 29; i >= 0; i--) {
+          for (let i = n - 1; i >= 0; i--) {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             days.push(d.toISOString().slice(0, 10));
@@ -3009,9 +3074,35 @@
           return days;
         }
 
-        buildChart('chart-applications', c.applications || {}, '#3b82f6');
-        buildChart('chart-chat', c.chat_messages || {}, '#10b981');
-        buildChart('chart-activity', c.activity || {}, '#f59e0b');
+        lineChart('chart-user-chats', c.user_chats || {}, '#3b82f6');
+        lineChart('chart-applications', c.applications || {}, '#8b5cf6');
+        lineChart('chart-lp-comments', c.launchpad_comments || {}, '#06b6d4');
+        barChart('chart-activity', c.activity || {}, '#f59e0b');
+
+        const cp = c.content_published || {};
+        const stackOpts = {
+          responsive: true,
+          plugins: { legend: { display: true, labels: { color: '#888', boxWidth: 12 } } },
+          scales: {
+            x: { stacked: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', font: { size: 10 } } },
+            y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', stepSize: 1 } },
+          },
+        };
+        const contentChart = new Chart(document.getElementById('chart-content'), {
+          type: 'bar',
+          data: {
+            labels: shortLabels,
+            datasets: [
+              { label: 'Blogs', data: labels.map((d) => (cp.blogs || {})[d] || 0), backgroundColor: '#10b981', borderRadius: 3 },
+              { label: 'Products', data: labels.map((d) => (cp.products || {})[d] || 0), backgroundColor: '#3b82f6', borderRadius: 3 },
+              { label: 'Launchpad', data: labels.map((d) => (cp.launchpad || {})[d] || 0), backgroundColor: '#f59e0b', borderRadius: 3 },
+            ],
+          },
+          options: stackOpts,
+        });
+        dashChartInstances.push(contentChart);
+
+        lineChart('chart-product-chats', c.product_chats || {}, '#10b981');
       }
 
       if (!jobsCleanedUp) {

@@ -28,9 +28,9 @@ def get_stats(_user: dict = Depends(get_current_user)):
 
 
 @router.get("/charts")
-def get_charts(_user: dict = Depends(get_current_user)):
+def get_charts(days: int = Query(7, ge=1, le=90), _user: dict = Depends(get_current_user)):
     try:
-        return {"success": True, "data": service.get_charts()}
+        return {"success": True, "data": service.get_charts(days)}
     except Exception as e:
         logger.error("Charts fetch failed: %s", e)
         return {"success": False, "data": {}, "warnings": ["Failed to load charts"]}

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -42,7 +44,10 @@ def get_entry(slug: str):
 
 @router.post("", response_model=LaunchpadResponse, status_code=status.HTTP_201_CREATED)
 def create_entry(body: LaunchpadCreate, _user: dict = Depends(get_current_user)):
-    result = service.create(body.model_dump(exclude_none=True))
+    data = body.model_dump(exclude_none=True)
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    result = service.create(data)
     log_activity(_user["email"], "create", "launchpad", result["id"], result["title"])
     return result
 
@@ -52,6 +57,8 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Entry not found")

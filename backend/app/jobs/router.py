@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
@@ -60,7 +61,10 @@ def get_job(slug: str):
 
 @router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 def create_job(body: JobCreate, _user: dict = Depends(get_current_user)):
-    result = service.create(body.model_dump(exclude_none=True))
+    data = body.model_dump(exclude_none=True)
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    result = service.create(data)
     log_activity(_user["email"], "create", "job", result["id"], result["title"])
     return result
 
@@ -70,6 +74,8 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Job not found")

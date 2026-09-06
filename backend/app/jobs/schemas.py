@@ -50,6 +50,8 @@ class JobResponse(BaseModel):
     max_applications: Optional[int] = None
     created_at: datetime
     updated_at: datetime
+    last_edited_by: Optional[str] = None
+    last_edited_at: Optional[datetime] = None
 
 
 class JobApplication(BaseModel):

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.auth.dependencies import get_current_user
@@ -23,7 +25,10 @@ def get_product(slug: str):
 
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(body: ProductCreate, _user: dict = Depends(get_current_user)):
-    result = service.create(body.model_dump(exclude_none=True))
+    data = body.model_dump(exclude_none=True)
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    result = service.create(data)
     log_activity(_user["email"], "create", "product", result["id"], result["name"])
     return result
 
@@ -33,6 +38,8 @@ def update_product(id: str, body: ProductUpdate, _user: dict = Depends(get_curre
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    data["last_edited_by"] = _user["email"]
+    data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Product not found")

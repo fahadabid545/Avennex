@@ -369,7 +369,7 @@
 /* FAQ */
 
 .faq-list {
-  max-width: 760px;
+  max-width: 900px;
   margin: var(--space-2xl) auto 0;
 }
 
@@ -475,7 +475,7 @@
 /* Chat board */
 
 .chat-board {
-  max-width: 760px;
+  max-width: 900px;
   margin: 0 auto;
   background: var(--bg-card);
   border: 1px solid var(--border);

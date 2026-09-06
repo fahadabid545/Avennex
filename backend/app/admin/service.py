@@ -127,15 +127,19 @@ def get_stats():
     return stats
 
 
-def get_charts():
+def get_charts(days: int = 7):
     db = get_supabase()
     now = datetime.now(timezone.utc)
-    thirty_days_ago = (now - timedelta(days=30)).isoformat()
+    since = (now - timedelta(days=days)).isoformat()
     charts = {}
 
-    def daily_counts(table, date_col="created_at"):
+    def daily_counts(table, date_col="created_at", filters=None):
         try:
-            result = db.table(table).select(date_col).gte(date_col, thirty_days_ago).execute()
+            q = db.table(table).select(date_col).gte(date_col, since)
+            if filters:
+                for k, v in filters.items():
+                    q = q.eq(k, v)
+            result = q.execute()
             counts = {}
             for row in (result.data or []):
                 day = row[date_col][:10]
@@ -144,8 +148,25 @@ def get_charts():
         except Exception:
             return {}
 
+    charts["user_chats"] = daily_counts("chat_messages", filters={"is_admin": False})
     charts["applications"] = daily_counts("job_applications")
-    charts["chat_messages"] = daily_counts("chat_messages")
+    charts["launchpad_comments"] = daily_counts("launchpad_comments")
     charts["activity"] = daily_counts("activity_log")
+
+    try:
+        blogs_data = daily_counts("blogs", filters={"status": "published"})
+        products_data = daily_counts("products")
+        launchpad_data = daily_counts("launchpad_entries")
+        all_days = set(list(blogs_data.keys()) + list(products_data.keys()) + list(launchpad_data.keys()))
+        charts["content_published"] = {
+            "blogs": blogs_data,
+            "products": products_data,
+            "launchpad": launchpad_data,
+            "days": sorted(all_days),
+        }
+    except Exception:
+        charts["content_published"] = {"blogs": {}, "products": {}, "launchpad": {}, "days": []}
+
+    charts["product_chats"] = daily_counts("product_chat_messages")
 
     return charts

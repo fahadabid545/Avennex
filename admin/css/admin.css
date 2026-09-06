@@ -943,6 +943,10 @@ a {
   .dash-charts {
     grid-template-columns: 1fr;
   }
+
+  .dash-charts-6 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dash-grid {
@@ -999,6 +1003,22 @@ a {
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 12px;
+}
+
+.dash-charts-6 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.dash-range-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.edited-by {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 .dash-activity {
