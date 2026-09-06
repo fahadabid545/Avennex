@@ -138,8 +138,19 @@ async def upload_document(
         raise
     except Exception as e:
         logger.error("Document processing failed: %s", e)
-        db.table("chatbot_documents").update({"status": "failed"}).eq("id", doc_id).execute()
-        raise HTTPException(status_code=500, detail="Failed to process document")
+        error_reason = str(e)
+        if "api_key" in error_reason.lower() or "authentication" in error_reason.lower():
+            error_reason = "OpenAI API key not configured or invalid"
+        elif "faiss" in error_reason.lower() or "index" in error_reason.lower():
+            error_reason = f"FAISS index error: {error_reason}"
+        try:
+            db.table("chatbot_documents").update({
+                "status": "failed",
+                "error": error_reason,
+            }).eq("id", doc_id).execute()
+        except Exception:
+            db.table("chatbot_documents").update({"status": "failed"}).eq("id", doc_id).execute()
+        raise HTTPException(status_code=500, detail=error_reason)
 
 
 @router.get("/documents")

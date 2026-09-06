@@ -25,6 +25,7 @@
       faqs: loadFaqs,
       chatbot: loadChatbot,
       dashboard: loadDashboard,
+      settings: loadSettings,
       team: loadTeam,
     };
     if (loaders[mod]) loaders[mod]();
@@ -59,6 +60,7 @@
       active: 'green', inactive: 'gray', archived: 'gray',
       'in-development': 'blue', launched: 'green', paused: 'yellow',
       concept: 'gray', planning: 'yellow', 'open-for-feedback': 'blue', building: 'green',
+      ready: 'green', processing: 'yellow', failed: 'red',
     };
     return badge(status, map[status] || 'gray');
   }
@@ -2569,8 +2571,25 @@
     const defaultModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4.1-nano'];
     const isCustomModel = !defaultModels.includes(model);
 
+    let chatbotVisible = false;
+    try {
+      const vis = await AdminAPI.request('/api/settings/chatbot_visible');
+      chatbotVisible = vis && vis.value === 'true';
+    } catch {}
+
     content.innerHTML = `
       <div class="content-header"><h1 class="content-title">Chatbot</h1></div>
+
+      <div class="chatbot-admin-section">
+        <div class="toggle-row">
+          <span class="toggle-label">Chatbot visible on website</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cb-visible-toggle" ${chatbotVisible ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="form-msg" id="cb-visible-msg" style="margin-left:12px"></span>
+        </div>
+      </div>
 
       <div class="chatbot-admin-section">
         <h3>Settings</h3>
@@ -2580,7 +2599,7 @@
             ${defaultModels.map((m) => `<option value="${m}" ${m === model && !isCustomModel ? 'selected' : ''}>${m}</option>`).join('')}
             <option value="custom" ${isCustomModel ? 'selected' : ''}>Custom</option>
           </select>
-          <input type="text" id="cb-model-custom" placeholder="Enter model name" value="${isCustomModel ? esc(model) : ''}" style="${isCustomModel ? '' : 'display:none'}">
+          <input type="text" id="cb-model-custom" placeholder="Enter model name" value="${isCustomModel ? esc(model) : ''}" style="margin-top:8px;${isCustomModel ? '' : 'display:none'}">
         </div>
         <div class="field">
           <label for="cb-temp">Temperature: <span id="cb-temp-val">${esc(temp)}</span></label>
@@ -2642,6 +2661,26 @@
 
     modelSelect.addEventListener('change', () => {
       modelCustom.style.display = modelSelect.value === 'custom' ? '' : 'none';
+    });
+
+    document.getElementById('cb-visible-toggle').addEventListener('change', async (e) => {
+      const cb = e.target;
+      const msg = document.getElementById('cb-visible-msg');
+      cb.disabled = true;
+      try {
+        await AdminAPI.request('/api/settings/chatbot_visible', {
+          method: 'PUT',
+          body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
+        });
+        msg.textContent = 'Saved';
+        msg.className = 'form-msg form-msg-success';
+        setTimeout(() => { msg.textContent = ''; }, 2000);
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'form-msg form-msg-error';
+        cb.checked = !cb.checked;
+      }
+      cb.disabled = false;
     });
 
     tempSlider.addEventListener('input', () => {
@@ -2903,31 +2942,6 @@
           </div>
         </div>
 
-        <div class="dash-controls">
-          <h3>Controls</h3>
-          <div class="toggle-row">
-            <span class="toggle-label">Chatbot on website</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggle-chatbot" ${s.chatbot_visible ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-label">Email notifications</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggle-emails" ${s.emails_enabled ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-label">Show profession/company in chat</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggle-chat-details" ${s.chat_show_details ? 'checked' : ''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-
         <div class="dash-charts">
           <div class="dash-chart-card">
             <h3>Applications (30 days)</h3>
@@ -2960,26 +2974,6 @@
               </div>`).join('')}
           </div>` : '<p class="admin-empty">No activity yet.</p>'}
         </div>`;
-
-      function bindToggle(id, key) {
-        document.getElementById(id).addEventListener('change', async (e) => {
-          const cb = e.target;
-          cb.disabled = true;
-          try {
-            await AdminAPI.request(`/api/settings/${key}`, {
-              method: 'PUT',
-              body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
-            });
-          } catch (err) {
-            alert(err.message);
-            cb.checked = !cb.checked;
-          }
-          cb.disabled = false;
-        });
-      }
-      bindToggle('toggle-chatbot', 'chatbot_visible');
-      bindToggle('toggle-emails', 'emails_enabled');
-      bindToggle('toggle-chat-details', 'chat_show_details');
 
       if (typeof Chart !== 'undefined') {
         const chartOpts = {
@@ -3027,6 +3021,162 @@
     } catch {
       showEmpty('Failed to load dashboard.');
     }
+  }
+
+  // ── Settings ──
+
+  async function loadSettings() {
+    showLoading();
+    const keys = [
+      'chatbot_visible', 'product_chat_enabled', 'chat_show_details', 'emails_enabled',
+      'site_theme', 'space_bg_enabled', 'animations_enabled',
+      'game_enabled', 'ai_brain_enabled', 'pipeline_enabled', 'stats_enabled', 'home_chat_enabled', 'faq_enabled',
+      'default_blog_status', 'default_job_expiry_days',
+    ];
+
+    const vals = {};
+    try {
+      const results = await Promise.all(keys.map((k) => AdminAPI.request(`/api/settings/${k}`).catch(() => null)));
+      keys.forEach((k, i) => { vals[k] = results[i] ? results[i].value : null; });
+    } catch {}
+
+    function isOn(key, fallback) {
+      if (vals[key] === null || vals[key] === undefined) return fallback !== 'false';
+      return vals[key] === 'true';
+    }
+
+    function toggleRow(id, label, key, fallback) {
+      return `
+        <div class="toggle-row">
+          <span class="toggle-label">${label}</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="settings-toggle" data-key="${key}" id="${id}" ${isOn(key, fallback) ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="form-msg settings-msg" data-msg-for="${id}" style="margin-left:12px"></span>
+        </div>`;
+    }
+
+    content.innerHTML = `
+      <div class="content-header"><h1 class="content-title">Settings</h1></div>
+
+      <div class="chatbot-admin-section">
+        <h3>Website Controls</h3>
+        ${toggleRow('s-chatbot', 'Chatbot visible on website', 'chatbot_visible', 'false')}
+        ${toggleRow('s-product-chat', 'Product chat enabled globally', 'product_chat_enabled', 'false')}
+        ${toggleRow('s-chat-details', 'Show profession/company in home chat', 'chat_show_details', 'false')}
+        ${toggleRow('s-emails', 'Email notifications enabled', 'emails_enabled', 'false')}
+      </div>
+
+      <div class="chatbot-admin-section">
+        <h3>Appearance</h3>
+        <div class="toggle-row">
+          <span class="toggle-label">Dark theme</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="s-theme" data-key="site_theme" ${(vals.site_theme || 'dark') === 'dark' ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="form-msg settings-msg" data-msg-for="s-theme" style="margin-left:12px"></span>
+        </div>
+        ${toggleRow('s-space-bg', 'Show space background', 'space_bg_enabled', 'true')}
+        ${toggleRow('s-animations', 'Show scroll animations', 'animations_enabled', 'true')}
+      </div>
+
+      <div class="chatbot-admin-section">
+        <h3>Homepage Controls</h3>
+        ${toggleRow('s-game', 'Show mini game in hero', 'game_enabled', 'true')}
+        ${toggleRow('s-ai-brain', 'Show AI brain section', 'ai_brain_enabled', 'true')}
+        ${toggleRow('s-pipeline', 'Show pipeline section', 'pipeline_enabled', 'true')}
+        ${toggleRow('s-stats', 'Show stats section', 'stats_enabled', 'true')}
+        ${toggleRow('s-home-chat', 'Show home chat section', 'home_chat_enabled', 'true')}
+        ${toggleRow('s-faq', 'Show FAQ section', 'faq_enabled', 'true')}
+      </div>
+
+      <div class="chatbot-admin-section">
+        <h3>Content Defaults</h3>
+        <div class="field" style="max-width:300px">
+          <label for="s-blog-status">Default blog status</label>
+          <select id="s-blog-status">
+            <option value="draft" ${(vals.default_blog_status || 'draft') === 'draft' ? 'selected' : ''}>Draft</option>
+            <option value="published" ${vals.default_blog_status === 'published' ? 'selected' : ''}>Published</option>
+          </select>
+          <span class="form-msg settings-msg" data-msg-for="s-blog-status" style="margin-top:4px"></span>
+        </div>
+        <div class="field" style="max-width:300px">
+          <label for="s-job-expiry">Default job expiry (days)</label>
+          <input type="number" id="s-job-expiry" min="1" max="365" value="${vals.default_job_expiry_days || '30'}">
+          <span class="form-msg settings-msg" data-msg-for="s-job-expiry" style="margin-top:4px"></span>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary btn-sm" id="s-save-defaults">Save Defaults</button>
+        </div>
+      </div>`;
+
+    function showMsg(id, text, success) {
+      const msg = document.querySelector(`[data-msg-for="${id}"]`);
+      if (!msg) return;
+      msg.textContent = text;
+      msg.className = 'form-msg settings-msg ' + (success ? 'form-msg-success' : 'form-msg-error');
+      if (success) setTimeout(() => { msg.textContent = ''; }, 2000);
+    }
+
+    content.querySelectorAll('.settings-toggle').forEach((cb) => {
+      cb.addEventListener('change', async () => {
+        cb.disabled = true;
+        try {
+          await AdminAPI.request(`/api/settings/${cb.dataset.key}`, {
+            method: 'PUT',
+            body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
+          });
+          showMsg(cb.id, 'Saved', true);
+        } catch (err) {
+          showMsg(cb.id, err.message, false);
+          cb.checked = !cb.checked;
+        }
+        cb.disabled = false;
+      });
+    });
+
+    document.getElementById('s-theme').addEventListener('change', async (e) => {
+      const cb = e.target;
+      cb.disabled = true;
+      try {
+        await AdminAPI.request('/api/settings/site_theme', {
+          method: 'PUT',
+          body: JSON.stringify({ value: cb.checked ? 'dark' : 'light' }),
+        });
+        showMsg('s-theme', 'Saved', true);
+      } catch (err) {
+        showMsg('s-theme', err.message, false);
+        cb.checked = !cb.checked;
+      }
+      cb.disabled = false;
+    });
+
+    document.getElementById('s-save-defaults').addEventListener('click', async () => {
+      const btn = document.getElementById('s-save-defaults');
+      btn.disabled = true;
+      const blogStatus = document.getElementById('s-blog-status').value;
+      const jobExpiry = document.getElementById('s-job-expiry').value;
+
+      try {
+        await Promise.all([
+          AdminAPI.request('/api/settings/default_blog_status', {
+            method: 'PUT',
+            body: JSON.stringify({ value: blogStatus }),
+          }),
+          AdminAPI.request('/api/settings/default_job_expiry_days', {
+            method: 'PUT',
+            body: JSON.stringify({ value: jobExpiry }),
+          }),
+        ]);
+        showMsg('s-blog-status', 'Saved', true);
+        showMsg('s-job-expiry', 'Saved', true);
+      } catch (err) {
+        showMsg('s-blog-status', err.message, false);
+      }
+      btn.disabled = false;
+    });
   }
 
   // ── Team ──
