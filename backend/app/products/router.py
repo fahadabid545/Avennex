@@ -40,6 +40,33 @@ def update_product(id: str, body: ProductUpdate, _user: dict = Depends(get_curre
     return result
 
 
+@router.get("/admin/chat-stats")
+def product_chat_stats(_user: dict = Depends(get_current_user)):
+    from app.product_chat import service as chat_service
+    products = service.list_all(1, 50)
+    if not products:
+        return []
+    ids = [p["id"] for p in products]
+    counts = chat_service.count_by_products(ids)
+    stats = []
+    for p in products:
+        daily = {}
+        try:
+            daily = chat_service.count_by_product_daily(p["id"])
+        except Exception:
+            pass
+        stats.append({
+            "product_id": p["id"],
+            "name": p["name"],
+            "slug": p["slug"],
+            "status": p["status"],
+            "progress": p["progress"],
+            "chat_count": counts.get(p["id"], 0),
+            "chat_daily": daily,
+        })
+    return stats
+
+
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(id: str, _user: dict = Depends(get_current_user)):
     product = service.get_by_id(id)

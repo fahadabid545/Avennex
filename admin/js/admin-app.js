@@ -124,7 +124,7 @@
     const paths = {
       blog: `/blog-post.html?slug=${slug}`,
       job: `/job-post.html?slug=${slug}`,
-      product: `/products.html`,
+      product: `/product-detail.html?slug=${slug}`,
       launchpad: `/launchpad.html`,
     };
     const url = SITE_URL + (paths[type] || '/');
@@ -239,6 +239,13 @@
     if (reqEl) config.formData.requirements = reqEl.value.trim();
     const gthEl = document.getElementById('f-good-to-have');
     if (gthEl) config.formData.good_to_have = gthEl.value.trim();
+    const tsEl = document.getElementById('f-techstack');
+    if (tsEl) config.formData.tech_stack = tsEl.value.trim();
+    const tlEl = document.getElementById('f-timeline');
+    if (tlEl) config.formData.timeline = tlEl.value.trim();
+    const chatEl = document.getElementById('f-chat-enabled');
+    if (chatEl) config.formData.chat_enabled = chatEl.checked;
+    if (typeof productFeatures !== 'undefined') config.formData.features = [...productFeatures];
   }
 
   function renderField(f, data) {
@@ -1060,33 +1067,278 @@
   // ── Products ──
 
   let productFeatures = [];
+  let productsTab = 'list';
 
   async function loadProducts() {
     showLoading();
     try {
       const products = await AdminAPI.request('/api/products?limit=50');
       cachedItems.products = products;
-      if (!products || !products.length) return showEmpty('No products yet.');
+
+      let chatCounts = {};
+      if (products && products.length) {
+        try {
+          const stats = await AdminAPI.request('/api/products/admin/chat-stats');
+          stats.forEach((s) => { chatCounts[s.product_id] = s.chat_count; });
+          cachedItems.productStats = stats;
+        } catch {}
+      }
+
       content.innerHTML = listHeader('Products', 'New Product') + `
-        <table class="admin-table">
-          <thead><tr><th>Name</th><th>Progress</th><th>Status</th><th>Order</th><th></th></tr></thead>
-          <tbody>${products.map((p) => `
-            <tr>
-              <td class="row-title">${esc(p.name)}</td>
-              <td>${p.progress}%</td>
-              <td>${statusBadge(p.status)}</td>
-              <td>${p.display_order}</td>
-              <td class="row-actions">
-                <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete="${p.id}">Delete</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
-      bindListActions('products', productForm);
+        <div class="tab-bar">
+          <button class="tab-btn ${productsTab === 'list' ? 'active' : ''}" data-ptab="list">Products</button>
+          <button class="tab-btn ${productsTab === 'dashboard' ? 'active' : ''}" data-ptab="dashboard">Dashboard</button>
+        </div>`;
+
+      if (productsTab === 'dashboard') {
+        renderProductDashboard();
+      } else {
+        if (!products || !products.length) {
+          content.innerHTML += '<div class="admin-empty">No products yet.</div>';
+        } else {
+          content.innerHTML += `
+            <table class="admin-table">
+              <thead><tr><th>#</th><th>Name</th><th>Status</th><th>Progress</th><th>Chat</th><th></th></tr></thead>
+              <tbody>${products.map((p, i) => `
+                <tr>
+                  <td>${i + 1}</td>
+                  <td class="row-title">${esc(p.name)}</td>
+                  <td>${statusBadge(p.status)}</td>
+                  <td>${p.progress}%</td>
+                  <td>
+                    <button class="btn btn-sm ${p.chat_enabled ? 'btn-primary' : 'btn-secondary'}" data-toggle-chat="${p.id}" data-chat-on="${p.chat_enabled ? 'true' : 'false'}">
+                      ${p.chat_enabled ? 'On' : 'Off'}
+                    </button>
+                  </td>
+                  <td class="row-actions">
+                    <button class="btn btn-secondary btn-sm" data-product-chat="${p.id}">Chat (${chatCounts[p.id] || 0})</button>
+                    <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
+                    <button class="btn btn-danger btn-sm" data-delete="${p.id}">Delete</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>`;
+        }
+        bindListActions('products', productForm);
+
+        content.addEventListener('click', async (e) => {
+          const toggleId = e.target.dataset.toggleChat;
+          if (toggleId) {
+            const isOn = e.target.dataset.chatOn === 'true';
+            try {
+              await AdminAPI.request(`/api/products/${toggleId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ chat_enabled: !isOn }),
+              });
+              loadProducts();
+            } catch (err) { alert(err.message); }
+          }
+
+          const chatId = e.target.dataset.productChat;
+          if (chatId) {
+            const product = (cachedItems.products || []).find((p) => p.id === chatId);
+            if (product) showProductChat(product);
+          }
+        });
+      }
+
+      content.addEventListener('click', (e) => {
+        const tab = e.target.dataset.ptab;
+        if (tab) {
+          productsTab = tab;
+          loadProducts();
+        }
+      });
     } catch (err) {
       showEmpty('Failed to load products.');
     }
+  }
+
+  function renderProductDashboard() {
+    const stats = cachedItems.productStats || [];
+    if (!stats.length) {
+      content.innerHTML += '<div class="admin-empty">No products to show.</div>';
+      return;
+    }
+
+    let html = '<div class="dash-grid">';
+    stats.forEach((s) => {
+      html += `
+        <div class="dash-card">
+          <div class="dash-card-label">${esc(s.name)}</div>
+          <div class="dash-card-value">${s.progress}%</div>
+          <div class="dash-card-sub">${statusBadge(s.status)} ${s.chat_count} messages</div>
+        </div>`;
+    });
+    html += '</div>';
+
+    html += '<div class="dash-charts">';
+    stats.forEach((s, i) => {
+      html += `
+        <div class="dash-chart-card">
+          <h3>${esc(s.name)}</h3>
+          <div style="display:flex;gap:20px;align-items:center">
+            <div style="flex:1"><canvas id="pchart-msgs-${i}"></canvas></div>
+            <div style="width:120px;height:120px"><canvas id="pchart-prog-${i}"></canvas></div>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+    content.innerHTML += html;
+
+    if (typeof Chart !== 'undefined') {
+      const chartOpts = {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', font: { size: 10 } } },
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', stepSize: 1 } },
+        },
+      };
+
+      function getLast30Days() {
+        const days = [];
+        const now = new Date();
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          days.push(d.toISOString().slice(0, 10));
+        }
+        return days;
+      }
+
+      stats.forEach((s, i) => {
+        const labels = getLast30Days();
+        const values = labels.map((d) => (s.chat_daily || {})[d] || 0);
+        new Chart(document.getElementById(`pchart-msgs-${i}`), {
+          type: 'bar',
+          data: {
+            labels: labels.map((d) => d.slice(5)),
+            datasets: [{ data: values, backgroundColor: '#3b82f6', borderRadius: 3 }],
+          },
+          options: chartOpts,
+        });
+
+        new Chart(document.getElementById(`pchart-prog-${i}`), {
+          type: 'doughnut',
+          data: {
+            labels: ['Done', 'Remaining'],
+            datasets: [{
+              data: [s.progress, 100 - s.progress],
+              backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.06)'],
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false },
+            },
+          },
+        });
+      });
+    }
+  }
+
+  async function showProductChat(product) {
+    showLoading();
+    try {
+      const messages = await AdminAPI.request(`/api/products/${product.slug}/chat/admin/messages`);
+      cachedItems.productChatMessages = messages;
+
+      content.innerHTML = `
+        <div class="form-card" style="max-width:900px">
+          <div class="form-card-header">
+            <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+            <h2 class="form-card-title">Chat: ${esc(product.name)}</h2>
+          </div>
+          ${!messages || !messages.length ? '<div class="admin-empty">No messages yet.</div>' : `
+            <div class="chat-admin-list">
+              ${messages.map((m) => `
+                <div class="comment-item">
+                  <div class="comment-header">
+                    <span class="comment-author">${esc(m.author_name)}</span>
+                    <span class="comment-date">${formatTime(m.created_at)}</span>
+                    ${m.author_email ? `<span style="color:var(--text-muted);font-size:0.78rem">${esc(m.author_email)}</span>` : ''}
+                  </div>
+                  <p class="comment-body">${esc(m.message)}</p>
+                  ${m.has_reply ? `<span style="font-size:0.75rem;color:var(--accent)">Replied</span>` : ''}
+                  <div style="margin-top:8px;display:flex;gap:6px">
+                    ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-pchat-reply="${m.id}">Reply</button>` : ''}
+                    <button class="btn btn-danger btn-sm" data-pchat-delete="${m.id}">Delete</button>
+                  </div>
+                </div>`).join('')}
+            </div>`}
+        </div>`;
+
+      document.getElementById('back-btn').addEventListener('click', loadProducts);
+
+      content.addEventListener('click', async (e) => {
+        const replyId = e.target.dataset.pchatReply;
+        if (replyId) showProductChatReply(product, replyId);
+
+        const delId = e.target.dataset.pchatDelete;
+        if (delId) {
+          const ok = await confirmDialog('Delete this message and its replies?');
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/products/${product.slug}/chat/${delId}`, { method: 'DELETE' });
+            showProductChat(product);
+          } catch (err) { alert(err.message); }
+        }
+      });
+    } catch {
+      showEmpty('Failed to load product chat.');
+    }
+  }
+
+  function showProductChatReply(product, messageId) {
+    const msg = (cachedItems.productChatMessages || []).find((m) => m.id === messageId);
+    content.innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <h2 class="form-card-title">Reply to ${msg ? esc(msg.author_name) : 'message'}</h2>
+        </div>
+        ${msg ? `<div class="comment-item" style="margin-bottom:16px"><p class="comment-body">${esc(msg.message)}</p></div>` : ''}
+        <form id="crud-form">
+          <div class="field">
+            <label for="f-reply">Your reply <span class="field-req">Required</span></label>
+            <textarea id="f-reply" rows="4" required></textarea>
+            <span class="field-hint">An email notification will be sent to the sender</span>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Send Reply</button>
+          </div>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+      </div>`;
+
+    document.getElementById('back-btn').addEventListener('click', () => showProductChat(product));
+    document.getElementById('crud-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formMsg = document.getElementById('form-msg');
+      const btn = document.querySelector('#crud-form button[type="submit"]');
+      btn.disabled = true;
+      formMsg.textContent = '';
+
+      try {
+        const result = await AdminAPI.request(`/api/products/${product.slug}/chat/${messageId}/reply`, {
+          method: 'POST',
+          body: JSON.stringify({ message: val('f-reply') }),
+        });
+        const warn = result && result.warnings && result.warnings.length;
+        formMsg.textContent = warn ? 'Reply saved, but email notification failed.' : 'Reply sent.';
+        formMsg.classList.add(warn ? 'form-msg-error' : 'form-msg-success');
+        setTimeout(() => showProductChat(product), 800);
+      } catch (err) {
+        formMsg.textContent = err.message;
+        formMsg.classList.add('form-msg-error');
+        btn.disabled = false;
+      }
+    });
   }
 
   function renderFeatures() {
@@ -1109,10 +1361,15 @@
       slug: p.slug || '',
       tagline: p.tagline || '',
       description: p.description || '',
+      content: p.content || '',
       features: productFeatures,
       progress: p.progress ?? 0,
       status: p.status || 'in-development',
       display_order: p.display_order ?? 0,
+      tech_stack: p.tech_stack || '',
+      timeline: p.timeline || '',
+      chat_enabled: p.chat_enabled || false,
+      cover_image: p.cover_image || '',
     };
 
     renderStepForm({
@@ -1128,23 +1385,54 @@
           fields: [
             { name: 'name', id: 'f-name', label: 'Name', required: true },
             { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'Auto-generated from name' },
-            { name: 'tagline', id: 'f-tagline', label: 'Tagline', hint: 'Short one-liner' },
-            { name: 'description', id: 'f-description', label: 'Description', type: 'textarea', rows: 6 },
-          ],
-        },
-        {
-          fields: [
-            { name: 'features', id: 'f-features', label: 'Features', type: 'features', hint: 'Each feature has an icon name and text' },
-            { name: 'progress', id: 'f-progress', label: 'Progress', type: 'range' },
+            { name: 'tagline', id: 'f-tagline', label: 'Tagline', required: true, hint: 'One-liner shown on cards (max 120 chars)' },
             { name: 'status', id: 'f-status', label: 'Status', type: 'select', options: [
               { value: 'in-development', label: 'In Development' },
               { value: 'launched', label: 'Launched' },
               { value: 'paused', label: 'Paused' },
             ]},
+            { name: 'progress', id: 'f-progress', label: 'Progress', type: 'range' },
             { name: 'display_order', id: 'f-order', label: 'Display Order', type: 'number', hint: 'Lower numbers appear first' },
+            { name: 'cover_image', id: 'f-cover', label: 'Cover Image URL', placeholder: 'https://...' },
           ],
           onMount: (config) => {
-            renderFeatures();
+            const nameInput = document.getElementById('f-name');
+            const slugInput = document.getElementById('f-slug');
+            if (nameInput && slugInput) {
+              nameInput.addEventListener('input', () => {
+                if (!slugInput.dataset.edited) slugInput.value = blogSlugify(nameInput.value);
+              });
+              slugInput.addEventListener('input', () => { slugInput.dataset.edited = 'true'; });
+              if (!config.formData.slug && config.formData.name) {
+                slugInput.value = blogSlugify(config.formData.name);
+              }
+            }
+
+            const nameEl = document.getElementById('f-name');
+            if (nameEl) {
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              counter.textContent = `${nameEl.value.length}/80`;
+              nameEl.parentNode.appendChild(counter);
+              nameEl.setAttribute('maxlength', '80');
+              nameEl.addEventListener('input', () => {
+                counter.textContent = `${nameEl.value.length}/80`;
+                counter.classList.toggle('field-char-warn', nameEl.value.length > 70);
+              });
+            }
+
+            const taglineEl = document.getElementById('f-tagline');
+            if (taglineEl) {
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              counter.textContent = `${taglineEl.value.length}/120`;
+              taglineEl.parentNode.appendChild(counter);
+              taglineEl.setAttribute('maxlength', '120');
+              taglineEl.addEventListener('input', () => {
+                counter.textContent = `${taglineEl.value.length}/120`;
+                counter.classList.toggle('field-char-warn', taglineEl.value.length > 110);
+              });
+            }
 
             const progressInput = document.getElementById('f-progress');
             const progressVal = document.getElementById('f-progress-val');
@@ -1154,6 +1442,98 @@
               });
             }
 
+            const coverInput = document.getElementById('f-cover');
+            if (coverInput && coverInput.value) {
+              const preview = document.createElement('img');
+              preview.src = coverInput.value;
+              preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
+              preview.id = 'cover-preview';
+              coverInput.parentNode.appendChild(preview);
+            }
+            if (coverInput) {
+              coverInput.addEventListener('input', () => {
+                let preview = document.getElementById('cover-preview');
+                if (coverInput.value) {
+                  if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'cover-preview';
+                    preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
+                    coverInput.parentNode.appendChild(preview);
+                  }
+                  preview.src = coverInput.value;
+                } else if (preview) {
+                  preview.remove();
+                }
+              });
+            }
+          },
+        },
+        {
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+
+            const chatChecked = config.formData.chat_enabled ? 'checked' : '';
+            wrap.innerHTML = `
+              <div class="field">
+                <label for="f-content">Description</label>
+                <div class="blog-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                  <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                  <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
+                  <button type="button" data-cmd="img" title="Image">Img</button>
+                  <button type="button" data-cmd="code" title="Code">Code</button>
+                </div>
+                <textarea id="f-content" class="blog-content-editor" rows="12">${esc(config.formData.content)}</textarea>
+              </div>
+              <div class="field">
+                <label>Description Preview</label>
+                <div class="blog-preview" id="content-preview"></div>
+              </div>
+              <div class="field">
+                <label>Features</label>
+                <span class="field-hint">Each feature has an icon name (lucide) and description</span>
+                <div id="features-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-feature" style="margin-top:8px">Add Feature</button>
+              </div>
+              <div class="field">
+                <label for="f-techstack">Tech Stack <span class="field-opt">Optional</span></label>
+                <span class="field-hint">Comma-separated or one per line</span>
+                <textarea id="f-techstack" rows="3">${esc(config.formData.tech_stack)}</textarea>
+              </div>
+              <div class="field">
+                <label for="f-timeline">Timeline <span class="field-opt">Optional</span></label>
+                <span class="field-hint">Key milestones</span>
+                <textarea id="f-timeline" rows="4">${esc(config.formData.timeline)}</textarea>
+              </div>
+              <div class="field">
+                <label style="display:flex;align-items:center;gap:8px">
+                  <input type="checkbox" id="f-chat-enabled" ${chatChecked} style="width:auto">
+                  Chat enabled for this product
+                </label>
+              </div>`;
+
+            const contentTextarea = document.getElementById('f-content');
+            const contentPreview = document.getElementById('content-preview');
+            function updatePreview() {
+              contentPreview.innerHTML = contentTextarea.value || '<span class="text-muted">Nothing to preview</span>';
+            }
+            contentTextarea.addEventListener('input', updatePreview);
+            updatePreview();
+
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
+              const cmd = e.target.closest('[data-cmd]');
+              if (cmd) blogToolbarAction(contentTextarea, cmd.dataset.cmd);
+            });
+
+            renderFeatures();
             document.getElementById('add-feature').addEventListener('click', () => {
               productFeatures.push({ icon: '', text: '' });
               renderFeatures();
@@ -1174,22 +1554,65 @@
                 productFeatures[Number(idx)][field] = e.target.value;
               }
             });
-
-            config.formData.features = productFeatures;
           },
         },
-        { review: true, fields: [] },
+        {
+          review: true,
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            const d = config.formData;
+            let html = '<div class="review-fields">';
+            [
+              ['Name', d.name],
+              ['Slug', d.slug],
+              ['Tagline', d.tagline],
+              ['Status', d.status],
+              ['Progress', d.progress + '%'],
+              ['Display Order', d.display_order],
+              ['Cover Image', d.cover_image],
+              ['Tech Stack', d.tech_stack],
+              ['Timeline', d.timeline],
+              ['Chat Enabled', d.chat_enabled ? 'Yes' : 'No'],
+              ['Features', productFeatures.filter((f) => f.text).map((f) => `${f.icon ? f.icon + ': ' : ''}${f.text}`).join(', ')],
+            ].forEach(([label, v]) => {
+              html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
+            });
+            html += '</div>';
+            if (d.content) {
+              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + d.content + '</div></div>';
+            }
+            wrap.innerHTML = html;
+          },
+        },
       ],
-      onSubmit: (d) => ({
-        name: d.name,
-        slug: d.slug || undefined,
-        tagline: d.tagline || undefined,
-        description: d.description || undefined,
-        features: productFeatures.filter((f) => f.text),
-        progress: parseInt(d.progress, 10),
-        status: d.status,
-        display_order: parseInt(d.display_order, 10) || 0,
-      }),
+      onSubmit: (d) => {
+        const contentEl = document.getElementById('f-content');
+        if (contentEl) d.content = contentEl.value.trim();
+        const tsEl = document.getElementById('f-techstack');
+        if (tsEl) d.tech_stack = tsEl.value.trim();
+        const tlEl = document.getElementById('f-timeline');
+        if (tlEl) d.timeline = tlEl.value.trim();
+        const chatEl = document.getElementById('f-chat-enabled');
+        if (chatEl) d.chat_enabled = chatEl.checked;
+
+        return {
+          name: d.name,
+          slug: d.slug || undefined,
+          tagline: d.tagline || undefined,
+          description: d.description || undefined,
+          content: d.content || undefined,
+          features: productFeatures.filter((f) => f.text),
+          progress: parseInt(d.progress, 10),
+          status: d.status,
+          display_order: parseInt(d.display_order, 10) || 0,
+          tech_stack: d.tech_stack || undefined,
+          timeline: d.timeline || undefined,
+          chat_enabled: d.chat_enabled,
+          cover_image: d.cover_image || undefined,
+        };
+      },
       onBack: loadProducts,
     });
   }

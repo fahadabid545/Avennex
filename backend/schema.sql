@@ -56,15 +56,36 @@ create table products (
   slug text unique not null,
   tagline text,
   description text,
+  content text,
   features jsonb,
   progress integer default 0 check (progress >= 0 and progress <= 100),
   status text default 'in-development' check (status in ('in-development', 'launched', 'paused')),
   display_order integer default 0,
+  timeline text,
+  tech_stack text,
+  chat_enabled boolean default false,
+  cover_image text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 alter table products disable row level security;
+
+-- Product chat messages
+create table product_chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid references products(id) on delete cascade,
+  author_name text,
+  author_email text,
+  message text not null,
+  is_admin boolean default false,
+  parent_id uuid references product_chat_messages(id) on delete cascade,
+  email_status text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table product_chat_messages disable row level security;
 
 -- Launchpad entries
 create table launchpad_entries (

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
-PUBLIC_KEYS = {"chatbot_visible", "chat_show_details"}
+PUBLIC_KEYS = {"chatbot_visible", "chat_show_details", "product_chat_enabled"}
 _optional_bearer = HTTPBearer(auto_error=False)
 
 

@@ -24,7 +24,7 @@
 
       html += '<div class="product-info">';
       html += '<span class="badge ' + statusBadgeClass(p.status) + '"><span class="badge-dot ' + statusDotClass(p.status) + '"></span> ' + statusLabel(p.status) + '</span>';
-      html += '<h2 class="product-name">' + API.escHtml(p.name) + '</h2>';
+      html += '<h2 class="product-name"><a href="product-detail.html?slug=' + encodeURIComponent(p.slug) + '">' + API.escHtml(p.name) + '</a></h2>';
 
       if (p.description) {
         var paragraphs = p.description.split(/\n\n+/);
@@ -56,10 +56,15 @@
         html += '</div>';
       }
 
+      html += '<a href="product-detail.html?slug=' + encodeURIComponent(p.slug) + '" class="text-link">View details <span class="text-link-arrow">&rarr;</span></a>';
       html += '</div>';
 
       html += '<div class="product-visual">';
-      html += '<div class="product-placeholder">--product screenshot or mockup--</div>';
+      if (p.cover_image) {
+        html += '<a href="product-detail.html?slug=' + encodeURIComponent(p.slug) + '"><img src="' + API.escHtml(p.cover_image) + '" alt="' + API.escHtml(p.name) + '" class="product-cover-img"></a>';
+      } else {
+        html += '<div class="product-placeholder">--product screenshot or mockup--</div>';
+      }
       html += '</div>';
 
       html += '</div>';
