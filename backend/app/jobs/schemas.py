@@ -8,8 +8,10 @@ class JobCreate(BaseModel):
     slug: Optional[str] = None
     description: Optional[str] = None
     requirements: Optional[str] = None
+    good_to_have: Optional[str] = None
     type: Optional[str] = None
     commitment: Optional[str] = None
+    location: Optional[str] = None
     status: Optional[str] = "open"
     expires_at: Optional[datetime] = None
     custom_questions: Optional[list[str]] = None
@@ -21,12 +23,15 @@ class JobUpdate(BaseModel):
     slug: Optional[str] = None
     description: Optional[str] = None
     requirements: Optional[str] = None
+    good_to_have: Optional[str] = None
     type: Optional[str] = None
     commitment: Optional[str] = None
+    location: Optional[str] = None
     status: Optional[str] = None
     expires_at: Optional[datetime] = None
     custom_questions: Optional[list[str]] = None
     max_applications: Optional[int] = None
+    created_at: Optional[datetime] = None
 
 
 class JobResponse(BaseModel):
@@ -35,8 +40,10 @@ class JobResponse(BaseModel):
     slug: str
     description: Optional[str] = None
     requirements: Optional[str] = None
+    good_to_have: Optional[str] = None
     type: Optional[str] = None
     commitment: Optional[str] = None
+    location: Optional[str] = None
     status: str
     expires_at: Optional[datetime] = None
     custom_questions: Optional[list[str]] = None

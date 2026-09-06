@@ -35,10 +35,14 @@ create table jobs (
   slug text unique not null,
   description text,
   requirements text,
-  type text check (type in ('remote', 'onsite')),
-  commitment text check (commitment in ('full-time', 'part-time')),
+  good_to_have text,
+  type text check (type in ('remote', 'onsite', 'hybrid')),
+  commitment text check (commitment in ('full-time', 'part-time', 'contract', 'internship')),
+  location text,
   status text default 'open' check (status in ('open', 'closed')),
   expires_at timestamptz,
+  custom_questions jsonb,
+  max_applications integer,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

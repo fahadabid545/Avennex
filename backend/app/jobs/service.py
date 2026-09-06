@@ -1,7 +1,10 @@
-from datetime import datetime, timezone
+import logging
+from datetime import datetime, timezone, timedelta
 
 from app.database import get_supabase
 from app.blogs.service import slugify
+
+logger = logging.getLogger(__name__)
 
 
 def list_all(page: int, limit: int):
@@ -166,8 +169,10 @@ def repost_job(job_id: str, overrides: dict = None):
         "title": job["title"],
         "description": job.get("description"),
         "requirements": job.get("requirements"),
+        "good_to_have": job.get("good_to_have"),
         "type": job.get("type"),
         "commitment": job.get("commitment"),
+        "location": job.get("location"),
         "custom_questions": job.get("custom_questions"),
         "max_applications": job.get("max_applications"),
         "status": "open",
@@ -180,3 +185,57 @@ def repost_job(job_id: str, overrides: dict = None):
 
     result = db.table("jobs").insert(new_data).execute()
     return result.data[0] if result.data else None
+
+
+def cleanup_old_closed_jobs():
+    db = get_supabase()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    deleted_count = 0
+    warnings = []
+
+    try:
+        closed_old = (
+            db.table("jobs")
+            .select("id")
+            .eq("status", "closed")
+            .lt("updated_at", cutoff)
+            .execute()
+        )
+        expired_old = (
+            db.table("jobs")
+            .select("id")
+            .lt("expires_at", cutoff)
+            .execute()
+        )
+
+        job_ids = list({r["id"] for r in (closed_old.data or []) + (expired_old.data or [])})
+        if not job_ids:
+            return {"deleted": 0, "warnings": []}
+
+        for job_id in job_ids:
+            try:
+                apps = (
+                    db.table("job_applications")
+                    .select("id, resume_url")
+                    .eq("job_id", job_id)
+                    .execute()
+                )
+                for app in (apps.data or []):
+                    if app.get("resume_url") and "/resumes/" in app["resume_url"]:
+                        try:
+                            path = app["resume_url"].split("/resumes/", 1)[-1]
+                            db.storage.from_("resumes").remove([path])
+                        except Exception as e:
+                            warnings.append(f"Failed to delete resume for app {app['id']}: {e}")
+
+                db.table("job_applications").delete().eq("job_id", job_id).execute()
+                db.table("jobs").delete().eq("id", job_id).execute()
+                deleted_count += 1
+            except Exception as e:
+                warnings.append(f"Failed to delete job {job_id}: {e}")
+
+    except Exception as e:
+        logger.error("Job cleanup failed: %s", e)
+        warnings.append(f"Cleanup query failed: {e}")
+
+    return {"deleted": deleted_count, "warnings": warnings}

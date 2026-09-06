@@ -233,6 +233,12 @@
     });
     const contentEl = document.getElementById('f-content');
     if (contentEl) config.formData.content = contentEl.value.trim();
+    const descEl = document.getElementById('f-description');
+    if (descEl) config.formData.description = descEl.value.trim();
+    const reqEl = document.getElementById('f-requirements');
+    if (reqEl) config.formData.requirements = reqEl.value.trim();
+    const gthEl = document.getElementById('f-good-to-have');
+    if (gthEl) config.formData.good_to_have = gthEl.value.trim();
   }
 
   function renderField(f, data) {
@@ -301,6 +307,7 @@
   }
 
   let cachedItems = {};
+  let jobsCleanedUp = false;
 
   function bindListActions(module, formFn) {
     const addBtn = document.getElementById('add-btn');
@@ -603,48 +610,149 @@
 
   let jobsTab = 'open';
 
+  function isJobExpired(j) {
+    if (!j.expires_at) return false;
+    return new Date(j.expires_at) <= new Date();
+  }
+
+  function splitJobs(allJobs) {
+    const open = [];
+    const closed = [];
+    allJobs.forEach((j) => {
+      if (j.status === 'closed' || isJobExpired(j)) closed.push(j);
+      else open.push(j);
+    });
+    return { open, closed };
+  }
+
+  function groupJobsByDate(jobs) {
+    const groups = {};
+    jobs.forEach((j) => {
+      const dateKey = j.created_at ? j.created_at.slice(0, 10) : 'Unknown';
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(j);
+    });
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }
+
+  function renderJobRow(j, appCounts) {
+    const isExpired = isJobExpired(j);
+    const isClosed = j.status === 'closed' || isExpired;
+    return `
+      <tr>
+        <td class="row-title">${esc(j.title)}</td>
+        <td>${j.type || ''}${j.commitment ? ' / ' + j.commitment : ''}</td>
+        <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] || 0}${j.max_applications ? '/' + j.max_applications : ''} apps</button></td>
+        <td>${isExpired && j.status !== 'closed' ? badge('expired', 'red') : statusBadge(j.status)}</td>
+        <td>${formatDate(j.expires_at)}</td>
+        <td class="row-actions">
+          ${isClosed ? `<button class="btn btn-primary btn-sm" data-republish="${j.id}">Republish</button>` : ''}
+          <button class="btn btn-secondary btn-sm" data-edit="${j.id}">Edit</button>
+          <button class="btn btn-danger btn-sm" data-delete="${j.id}">Delete</button>
+        </td>
+      </tr>`;
+  }
+
+  function showRepublishModal(job) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-box" style="max-width:420px">
+        <h3 style="margin-bottom:16px">Republish Job</h3>
+        <div class="field" style="margin-bottom:12px">
+          <label>Title</label>
+          <input type="text" value="${esc(job.title)}" disabled style="opacity:0.6">
+        </div>
+        <div class="field">
+          <label for="republish-date">New Expiry Date <span class="field-req">Required</span></label>
+          <input type="date" id="republish-date" required>
+        </div>
+        <div class="form-msg" id="republish-msg"></div>
+        <div class="confirm-actions" style="margin-top:16px">
+          <button class="btn btn-secondary btn-sm" data-action="cancel">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="republish-submit">Republish</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target.dataset.action === 'cancel') document.body.removeChild(overlay);
+    });
+
+    document.getElementById('republish-submit').addEventListener('click', async () => {
+      const dateVal = document.getElementById('republish-date').value;
+      const msg = document.getElementById('republish-msg');
+      if (!dateVal) { msg.textContent = 'Pick an expiry date.'; msg.className = 'form-msg form-msg-error'; return; }
+
+      const btn = document.getElementById('republish-submit');
+      btn.disabled = true;
+      msg.textContent = '';
+
+      try {
+        await AdminAPI.request(`/api/jobs/${job.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            status: 'open',
+            expires_at: new Date(dateVal).toISOString(),
+            created_at: new Date().toISOString(),
+          }),
+        });
+        document.body.removeChild(overlay);
+        jobsTab = 'open';
+        loadJobs();
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'form-msg form-msg-error';
+        btn.disabled = false;
+      }
+    });
+  }
+
   async function loadJobs() {
     showLoading();
     try {
-      const openJobs = await AdminAPI.request('/api/jobs/admin/all?limit=50');
-      let closedJobs = [];
-      try { closedJobs = await AdminAPI.request('/api/jobs/admin/closed'); } catch {}
+      const allJobs = await AdminAPI.request('/api/jobs/admin/all?limit=50');
+      const { open, closed } = splitJobs(allJobs);
+      cachedItems.jobs = allJobs;
 
-      const jobs = jobsTab === 'closed' ? closedJobs : openJobs;
-      cachedItems.jobs = [...openJobs, ...closedJobs];
+      const displayJobs = jobsTab === 'closed' ? closed : open;
 
       let appCounts = {};
-      if (jobs.length) {
+      if (displayJobs.length) {
         try {
-          const allApps = await Promise.all(jobs.map((j) =>
+          const allApps = await Promise.all(displayJobs.map((j) =>
             AdminAPI.request(`/api/jobs/${j.id}/applications`).then((apps) => ({ id: j.id, count: apps.length })).catch(() => ({ id: j.id, count: 0 }))
           ));
           allApps.forEach((a) => { appCounts[a.id] = a.count; });
         } catch {}
       }
 
+      let tableHtml = '';
+      if (!displayJobs.length) {
+        tableHtml = '<div class="admin-empty">No ' + jobsTab + ' jobs.</div>';
+      } else if (jobsTab === 'open') {
+        const groups = groupJobsByDate(displayJobs);
+        tableHtml = groups.map(([dateKey, jobs]) => `
+          <div class="job-date-group">
+            <div class="job-date-header">${formatDate(dateKey + 'T00:00:00Z')}</div>
+            <table class="admin-table">
+              <thead><tr><th>Title</th><th>Type</th><th>Apps</th><th>Status</th><th>Expires</th><th></th></tr></thead>
+              <tbody>${jobs.map((j) => renderJobRow(j, appCounts)).join('')}</tbody>
+            </table>
+          </div>`).join('');
+      } else {
+        tableHtml = `
+          <table class="admin-table">
+            <thead><tr><th>Title</th><th>Type</th><th>Apps</th><th>Status</th><th>Expires</th><th></th></tr></thead>
+            <tbody>${displayJobs.map((j) => renderJobRow(j, appCounts)).join('')}</tbody>
+          </table>`;
+      }
+
       content.innerHTML = listHeader('Job Listings', 'New Job') + `
         <div class="tab-bar">
-          <button class="tab-btn ${jobsTab === 'open' ? 'active' : ''}" data-tab="open">Open</button>
-          <button class="tab-btn ${jobsTab === 'closed' ? 'active' : ''}" data-tab="closed">Closed</button>
-        </div>
-        ${jobs.length ? `<table class="admin-table">
-          <thead><tr><th>Title</th><th>Type</th><th>Apps</th><th>Status</th><th>Expires</th><th></th></tr></thead>
-          <tbody>${jobs.map((j) => `
-            <tr>
-              <td class="row-title">${esc(j.title)}</td>
-              <td>${j.type || ''} ${j.commitment ? '/ ' + j.commitment : ''}</td>
-              <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] || 0}${j.max_applications ? '/' + j.max_applications : ''} apps</button></td>
-              <td>${statusBadge(j.status)}</td>
-              <td>${formatDate(j.expires_at)}</td>
-              <td class="row-actions">
-                ${j.status === 'closed' ? `<button class="btn btn-primary btn-sm" data-repost="${j.id}">Repost</button>` : ''}
-                <button class="btn btn-secondary btn-sm" data-edit="${j.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete="${j.id}">Delete</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>` : '<div class="admin-empty">No ' + jobsTab + ' jobs.</div>'}`;
+          <button class="tab-btn ${jobsTab === 'open' ? 'active' : ''}" data-tab="open">Open (${open.length})</button>
+          <button class="tab-btn ${jobsTab === 'closed' ? 'active' : ''}" data-tab="closed">Closed (${closed.length})</button>
+        </div>` + tableHtml;
 
       bindListActions('jobs', jobForm);
 
@@ -652,13 +760,10 @@
         const appsId = e.target.dataset.apps;
         if (appsId) showApplications(appsId);
 
-        const repostId = e.target.dataset.repost;
-        if (repostId) {
-          try {
-            await AdminAPI.request(`/api/jobs/${repostId}/repost`, { method: 'POST' });
-            jobsTab = 'open';
-            loadJobs();
-          } catch (err) { alert(err.message); }
+        const republishId = e.target.dataset.republish;
+        if (republishId) {
+          const job = (cachedItems.jobs || []).find((j) => j.id === republishId);
+          if (job) showRepublishModal(job);
         }
 
         const tab = e.target.dataset.tab;
@@ -766,8 +871,10 @@
       slug: j.slug || '',
       type: j.type || '',
       commitment: j.commitment || '',
+      location: j.location || '',
       description: j.description || '',
       requirements: j.requirements || '',
+      good_to_have: j.good_to_have || '',
       max_applications: j.max_applications || '',
       status: j.status || 'open',
       expires_at: j.expires_at ? j.expires_at.slice(0, 10) : '',
@@ -785,30 +892,41 @@
         {
           fields: [
             { name: 'title', id: 'f-title', label: 'Title', required: true },
-            { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'Auto-generated from title' },
+            { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'url-friendly-text' },
             { name: 'type', id: 'f-type', label: 'Type', type: 'select', options: [
               { value: '', label: '--' },
               { value: 'remote', label: 'Remote' },
               { value: 'onsite', label: 'Onsite' },
+              { value: 'hybrid', label: 'Hybrid' },
             ]},
             { name: 'commitment', id: 'f-commitment', label: 'Commitment', type: 'select', options: [
               { value: '', label: '--' },
               { value: 'full-time', label: 'Full-time' },
               { value: 'part-time', label: 'Part-time' },
+              { value: 'contract', label: 'Contract' },
+              { value: 'internship', label: 'Internship' },
             ]},
+            { name: 'location', id: 'f-location', label: 'Location', placeholder: 'e.g. Pakistan, Remote' },
             { name: 'max_applications', id: 'f-maxapps', label: 'Max Applications', type: 'number', hint: 'Leave empty for unlimited' },
+            { name: 'expires_at', id: 'f-expires', label: 'Expiry Date', type: 'date', required: true },
           ],
-        },
-        {
-          fields: [
-            { name: 'description', id: 'f-description', label: 'Description', type: 'textarea', rows: 8 },
-            { name: 'requirements', id: 'f-requirements', label: 'Requirements', type: 'textarea', rows: 6 },
-            { name: 'status', id: 'f-status', label: 'Status', type: 'select', options: [
-              { value: 'open', label: 'Open' },
-              { value: 'closed', label: 'Closed' },
-            ]},
-            { name: 'expires_at', id: 'f-expires', label: 'Expires', type: 'date' },
-          ],
+          onMount: (config) => {
+            const titleInput = document.getElementById('f-title');
+            const slugInput = document.getElementById('f-slug');
+            if (titleInput && slugInput) {
+              titleInput.addEventListener('input', () => {
+                if (!slugInput.dataset.edited) {
+                  slugInput.value = blogSlugify(titleInput.value);
+                }
+              });
+              slugInput.addEventListener('input', () => {
+                slugInput.dataset.edited = 'true';
+              });
+              if (!config.formData.slug && config.formData.title) {
+                slugInput.value = blogSlugify(config.formData.title);
+              }
+            }
+          },
         },
         {
           fields: [],
@@ -817,19 +935,57 @@
             if (!wrap) return;
             wrap.innerHTML = `
               <div class="field">
+                <label for="f-description">Description</label>
+                <div class="blog-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                  <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                  <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
+                </div>
+                <textarea id="f-description" class="blog-content-editor" rows="10">${esc(config.formData.description)}</textarea>
+              </div>
+              <div class="field">
+                <label>Description Preview</label>
+                <div class="blog-preview" id="desc-preview"></div>
+              </div>
+              <div class="field">
+                <label for="f-requirements">Must-have Requirements <span class="field-hint" style="display:inline">(one per line)</span></label>
+                <textarea id="f-requirements" rows="6">${esc(config.formData.requirements)}</textarea>
+              </div>
+              <div class="field">
+                <label for="f-good-to-have">Good-to-have <span class="field-hint" style="display:inline">(one per line)</span></label>
+                <textarea id="f-good-to-have" rows="4">${esc(config.formData.good_to_have)}</textarea>
+              </div>
+              <div class="field">
                 <label>Custom Questions</label>
                 <span class="field-hint">Questions applicants answer in the form</span>
                 <div id="custom-questions-list"></div>
                 <button type="button" class="btn btn-secondary btn-sm" id="add-question" style="margin-top:8px">Add Question</button>
               </div>`;
 
-            renderJobQuestions();
+            const descTextarea = document.getElementById('f-description');
+            const descPreview = document.getElementById('desc-preview');
+            function updateDescPreview() {
+              descPreview.innerHTML = descTextarea.value || '<span class="text-muted">Nothing to preview</span>';
+            }
+            descTextarea.addEventListener('input', updateDescPreview);
+            updateDescPreview();
 
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
+              const cmd = e.target.closest('[data-cmd]');
+              if (cmd) blogToolbarAction(descTextarea, cmd.dataset.cmd);
+            });
+
+            renderJobQuestions();
             document.getElementById('add-question').addEventListener('click', () => {
               jobCustomQuestions.push('');
               renderJobQuestions();
             });
-
             wrap.addEventListener('click', (e) => {
               const rm = e.target.dataset.removeQ;
               if (rm !== undefined) {
@@ -837,7 +993,6 @@
                 renderJobQuestions();
               }
             });
-
             wrap.addEventListener('input', (e) => {
               const idx = e.target.dataset.idx;
               if (idx !== undefined) {
@@ -846,20 +1001,58 @@
             });
           },
         },
-        { review: true, fields: [] },
+        {
+          review: true,
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            const d = config.formData;
+            let html = '<div class="review-fields">';
+            [
+              ['Title', d.title],
+              ['Slug', d.slug],
+              ['Type', d.type],
+              ['Commitment', d.commitment],
+              ['Location', d.location],
+              ['Max Applications', d.max_applications],
+              ['Expiry Date', d.expires_at],
+              ['Must-have Requirements', d.requirements],
+              ['Good-to-have', d.good_to_have],
+              ['Custom Questions', jobCustomQuestions.filter((q) => q.trim()).join(', ')],
+            ].forEach(([label, v]) => {
+              html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
+            });
+            html += '</div>';
+            if (d.description) {
+              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + d.description + '</div></div>';
+            }
+            wrap.innerHTML = html;
+          },
+        },
       ],
-      onSubmit: (d) => ({
-        title: d.title,
-        slug: d.slug || undefined,
-        description: d.description || undefined,
-        requirements: d.requirements || undefined,
-        type: d.type || undefined,
-        commitment: d.commitment || undefined,
-        status: d.status,
-        max_applications: d.max_applications ? parseInt(d.max_applications, 10) : null,
-        custom_questions: jobCustomQuestions.filter((q) => q.trim()),
-        expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : undefined,
-      }),
+      onSubmit: (d) => {
+        const descEl = document.getElementById('f-description');
+        if (descEl) d.description = descEl.value.trim();
+        const reqEl = document.getElementById('f-requirements');
+        if (reqEl) d.requirements = reqEl.value.trim();
+        const gthEl = document.getElementById('f-good-to-have');
+        if (gthEl) d.good_to_have = gthEl.value.trim();
+        return {
+          title: d.title,
+          slug: d.slug || undefined,
+          description: d.description || undefined,
+          requirements: d.requirements || undefined,
+          good_to_have: d.good_to_have || undefined,
+          type: d.type || undefined,
+          commitment: d.commitment || undefined,
+          location: d.location || undefined,
+          status: 'open',
+          max_applications: d.max_applications ? parseInt(d.max_applications, 10) : null,
+          custom_questions: jobCustomQuestions.filter((q) => q.trim()),
+          expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : undefined,
+        };
+      },
       onBack: loadJobs,
     });
   }
@@ -2113,6 +2306,11 @@
         buildChart('chart-applications', c.applications || {}, '#3b82f6');
         buildChart('chart-chat', c.chat_messages || {}, '#10b981');
         buildChart('chart-activity', c.activity || {}, '#f59e0b');
+      }
+
+      if (!jobsCleanedUp) {
+        jobsCleanedUp = true;
+        AdminAPI.request('/api/jobs/admin/cleanup', { method: 'DELETE' }).catch(() => {});
       }
     } catch {
       showEmpty('Failed to load dashboard.');

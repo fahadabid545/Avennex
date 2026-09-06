@@ -1252,6 +1252,19 @@ a {
   margin: 12px 0;
 }
 
+.job-date-group {
+  margin-bottom: 24px;
+}
+
+.job-date-header {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
+}
+
 .field-char-count {
   display: block;
   font-size: 0.72rem;

@@ -43,6 +43,13 @@ def list_closed_jobs(
     return service.list_closed(page, limit)
 
 
+@router.delete("/admin/cleanup")
+def cleanup_old_jobs(_user: dict = Depends(get_current_user)):
+    result = service.cleanup_old_closed_jobs()
+    log_activity(_user["email"], "cleanup", "jobs", "", f"Deleted {result['deleted']} old jobs")
+    return {"success": True, "deleted": result["deleted"], "warnings": result.get("warnings", [])}
+
+
 @router.get("/{slug}", response_model=JobResponse)
 def get_job(slug: str):
     job = service.get_by_slug(slug)
