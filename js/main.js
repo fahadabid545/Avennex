@@ -60,18 +60,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  var faqItems = document.querySelectorAll('.faq-item');
-  faqItems.forEach(function (item) {
-    var btn = item.querySelector('.faq-question');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      var wasOpen = item.classList.contains('is-open');
-      faqItems.forEach(function (other) {
-        other.classList.remove('is-open');
-      });
-      if (!wasOpen) {
-        item.classList.add('is-open');
-      }
-    });
-  });
 });

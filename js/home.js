@@ -38,12 +38,12 @@
       var html = '';
       for (var i = 0; i < faqs.length; i++) {
         var f = faqs[i];
-        html += '<div class="faq-item">';
+        html += '<div class="faq-item' + (i === 0 ? ' is-open' : '') + '">';
         html += '<button class="faq-question">';
-        html += '<span>' + escFaq(f.question) + '</span>';
+        html += '<span>' + API.escHtml(f.question) + '</span>';
         html += '<i data-lucide="chevron-down" width="18" height="18" class="faq-icon"></i>';
         html += '</button>';
-        html += '<div class="faq-answer"><p>' + escFaq(f.answer) + '</p></div>';
+        html += '<div class="faq-answer"><div class="faq-answer-content">' + (f.answer || '') + '</div></div>';
         html += '</div>';
       }
       faqList.innerHTML = html;
@@ -53,15 +53,15 @@
         var btn = e.target.closest('.faq-question');
         if (!btn) return;
         var item = btn.parentElement;
-        item.classList.toggle('is-open');
+        var wasOpen = item.classList.contains('is-open');
+        var items = faqList.querySelectorAll('.faq-item');
+        for (var j = 0; j < items.length; j++) {
+          items[j].classList.remove('is-open');
+        }
+        if (!wasOpen) item.classList.add('is-open');
       });
     }).catch(function () {
       faqSection.style.display = 'none';
     });
-  }
-
-  function escFaq(s) {
-    if (!s) return '';
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 })();

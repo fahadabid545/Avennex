@@ -261,6 +261,8 @@
     if (typeof launchpadDiagrams !== 'undefined') {
       config.formData.diagrams = launchpadDiagrams.filter(Boolean).join('\n');
     }
+    const faqAnswerEl = document.getElementById('f-faq-answer');
+    if (faqAnswerEl) config.formData.answer = faqAnswerEl.value.trim();
   }
 
   function renderField(f, data) {
@@ -2394,9 +2396,10 @@
 
       content.innerHTML = listHeader('FAQs', 'New FAQ') + `
         <table class="admin-table">
-          <thead><tr><th>Question</th><th>Status</th><th>Order</th><th></th></tr></thead>
-          <tbody>${faqs.map((f) => `
+          <thead><tr><th>#</th><th>Question</th><th>Status</th><th>Order</th><th></th></tr></thead>
+          <tbody>${faqs.map((f, i) => `
             <tr>
+              <td>${i + 1}</td>
               <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}</td>
               <td>
                 <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
@@ -2451,69 +2454,96 @@
 
   function faqForm(item) {
     const f = item || {};
-    content.innerHTML = `
-      <div class="form-card">
-        <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
-          <h2 class="form-card-title">${f.id ? 'Edit FAQ' : 'New FAQ'}</h2>
-        </div>
-        <form id="crud-form">
-          <div class="field">
-            <label for="f-question">Question <span class="field-req">Required</span></label>
-            <input type="text" id="f-question" value="${esc(f.question)}" required>
-          </div>
-          <div class="field">
-            <label for="f-answer">Answer <span class="field-req">Required</span></label>
-            <textarea id="f-answer" rows="4" required>${esc(f.answer)}</textarea>
-          </div>
-          <div class="field">
-            <label for="f-order">Display Order</label>
-            <input type="number" id="f-order" value="${f.display_order ?? 0}">
-          </div>
-          <div class="field">
-            <label for="f-active">Active</label>
-            <select id="f-active">
-              <option value="true" ${f.active !== false ? 'selected' : ''}>Active</option>
-              <option value="false" ${f.active === false ? 'selected' : ''}>Inactive</option>
-            </select>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">${f.id ? 'Update' : 'Create'}</button>
-          </div>
-          <div class="form-msg" id="form-msg"></div>
-        </form>
-      </div>`;
+    renderStepForm({
+      item: f,
+      entityType: 'faq',
+      apiPath: '/api/faqs',
+      reloadFn: loadFaqs,
+      steps: [
+        {
+          title: 'Content',
+          fields: [
+            { name: 'question', id: 'f-question', label: 'Question', type: 'text', required: true },
+            { name: 'display_order', id: 'f-order', label: 'Display Order', type: 'number' },
+            { name: 'active', id: 'f-active', label: 'Status', type: 'select', options: [
+              { value: 'true', label: 'Active' },
+              { value: 'false', label: 'Inactive' },
+            ] },
+          ],
+          onMount() {
+            const qInput = document.getElementById('f-question');
+            if (qInput) {
+              const counter = document.createElement('div');
+              counter.className = 'char-counter';
+              counter.textContent = (qInput.value || '').length + ' / 200';
+              qInput.parentElement.appendChild(counter);
+              qInput.setAttribute('maxlength', '200');
+              qInput.addEventListener('input', () => {
+                counter.textContent = qInput.value.length + ' / 200';
+                counter.style.color = qInput.value.length > 180 ? 'var(--danger)' : '';
+              });
+            }
 
-    document.getElementById('back-btn').addEventListener('click', loadFaqs);
-    document.getElementById('crud-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('form-msg');
-      const btn = document.querySelector('#crud-form button[type="submit"]');
-      btn.disabled = true;
-      msg.textContent = '';
+            const orderField = document.getElementById('f-order');
+            if (orderField) orderField.closest('.field').insertAdjacentHTML('beforebegin', `
+              <div class="field">
+                <label for="f-faq-answer">Answer <span class="field-req">Required</span></label>
+                <div class="toolbar">${['bold','italic','heading','link','ul','ol','blockquote','code'].map(a =>
+                  `<button type="button" class="toolbar-btn" data-action="${a}">${a}</button>`
+                ).join('')}</div>
+                <textarea id="f-faq-answer" rows="8" required>${esc(f.answer)}</textarea>
+                <div class="field-hint">Supports rich text formatting</div>
+                <div style="margin-top:var(--space-sm)">
+                  <button type="button" class="btn btn-secondary btn-sm" id="faq-preview-toggle">Preview</button>
+                  <div id="faq-preview" class="content-preview" hidden></div>
+                </div>
+              </div>
+            `);
 
-      const data = {
-        question: val('f-question'),
-        answer: val('f-answer'),
-        display_order: parseInt(val('f-order'), 10) || 0,
-        active: val('f-active') === 'true',
-      };
+            const ta = document.getElementById('f-faq-answer');
+            if (ta) {
+              ta.closest('.field').querySelectorAll('.toolbar-btn').forEach(btn => {
+                btn.addEventListener('click', () => blogToolbarAction(ta, btn.dataset.action));
+              });
+            }
 
-      try {
-        if (f.id) {
-          await AdminAPI.request(`/api/faqs/${f.id}`, { method: 'PUT', body: JSON.stringify(data) });
-          msg.textContent = 'Updated.';
-        } else {
-          await AdminAPI.request('/api/faqs', { method: 'POST', body: JSON.stringify(data) });
-          msg.textContent = 'Created.';
-        }
-        msg.classList.add('form-msg-success');
-        setTimeout(loadFaqs, 800);
-      } catch (err) {
-        msg.textContent = err.message;
-        msg.classList.add('form-msg-error');
-        btn.disabled = false;
-      }
+            const previewBtn = document.getElementById('faq-preview-toggle');
+            const previewEl = document.getElementById('faq-preview');
+            if (previewBtn && previewEl) {
+              previewBtn.addEventListener('click', () => {
+                const showing = !previewEl.hidden;
+                previewEl.hidden = showing;
+                previewBtn.textContent = showing ? 'Preview' : 'Hide Preview';
+                if (!showing) previewEl.innerHTML = ta.value || '<em>Nothing to preview</em>';
+              });
+            }
+          },
+        },
+        {
+          title: 'Review',
+          review: true,
+          onMount(data) {
+            const reviewArea = document.getElementById('review-area');
+            if (!reviewArea) return;
+            reviewArea.innerHTML = `
+              <div class="review-grid">
+                <div class="review-item"><strong>Question</strong><p>${esc(data.question || '')}</p></div>
+                <div class="review-item"><strong>Answer</strong><div class="content-preview">${data.answer || ''}</div></div>
+                <div class="review-item"><strong>Display Order</strong><p>${data.display_order ?? 0}</p></div>
+                <div class="review-item"><strong>Status</strong><p>${data.active === 'true' || data.active === true ? 'Active' : 'Inactive'}</p></div>
+              </div>
+            `;
+          },
+        },
+      ],
+      onSubmit(data) {
+        return {
+          question: data.question,
+          answer: data.answer,
+          display_order: parseInt(data.display_order, 10) || 0,
+          active: data.active === 'true' || data.active === true,
+        };
+      },
     });
   }
 
