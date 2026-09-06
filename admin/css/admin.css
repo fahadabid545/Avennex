@@ -1021,6 +1021,11 @@ a {
   margin-top: 2px;
 }
 
+.team-you {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
 .dash-activity {
   margin-top: 8px;
 }

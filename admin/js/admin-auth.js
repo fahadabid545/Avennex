@@ -2,6 +2,64 @@
   const loginForm = document.getElementById('login-form');
 
   if (loginForm) {
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get('reset');
+
+    if (resetToken) {
+      loginForm.style.display = 'none';
+      const resetForm = document.getElementById('reset-form');
+      resetForm.style.display = 'block';
+
+      const resetMsg = document.getElementById('reset-msg');
+      const resetSubmit = document.getElementById('reset-submit');
+      const resetBack = document.getElementById('reset-back-to-login');
+
+      resetSubmit.addEventListener('click', async () => {
+        const newPw = document.getElementById('new-password').value;
+        const confirmPw = document.getElementById('confirm-password').value;
+        resetMsg.textContent = '';
+        resetMsg.className = 'form-msg';
+
+        if (newPw.length < 8) {
+          resetMsg.textContent = 'Password must be at least 8 characters.';
+          resetMsg.classList.add('form-msg-error');
+          return;
+        }
+        if (newPw !== confirmPw) {
+          resetMsg.textContent = 'Passwords do not match.';
+          resetMsg.classList.add('form-msg-error');
+          return;
+        }
+
+        resetSubmit.disabled = true;
+        try {
+          await AdminAPI.requestRaw('/api/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ token: resetToken, new_password: newPw }),
+          });
+          resetMsg.textContent = 'Password updated. You can now log in.';
+          resetMsg.classList.add('form-msg-success');
+          resetSubmit.style.display = 'none';
+          document.getElementById('new-password').disabled = true;
+          document.getElementById('confirm-password').disabled = true;
+          window.history.replaceState({}, '', window.location.pathname);
+        } catch {
+          resetMsg.textContent = 'This reset link is invalid or expired.';
+          resetMsg.classList.add('form-msg-error');
+          resetSubmit.disabled = false;
+        }
+      });
+
+      resetBack.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetForm.style.display = 'none';
+        loginForm.style.display = 'block';
+        window.history.replaceState({}, '', window.location.pathname);
+      });
+
+      return;
+    }
+
     if (AdminAPI.getToken()) {
       window.location.href = 'dashboard.html';
       return;
@@ -59,11 +117,11 @@
           method: 'POST',
           body: JSON.stringify({ email }),
         });
-        forgotMsg.textContent = 'If that email exists, a reset link has been sent.';
+        forgotMsg.textContent = "If this email is registered, you'll receive a reset link shortly.";
         forgotMsg.classList.add('form-msg-success');
       } catch {
-        forgotMsg.textContent = 'Something went wrong. Try again.';
-        forgotMsg.classList.add('form-msg-error');
+        forgotMsg.textContent = "If this email is registered, you'll receive a reset link shortly.";
+        forgotMsg.classList.add('form-msg-success');
       }
       forgotSubmit.disabled = false;
     });

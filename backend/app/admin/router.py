@@ -18,6 +18,10 @@ class AdminCreate(BaseModel):
     name: Optional[str] = None
 
 
+class AdminUpdate(BaseModel):
+    name: str
+
+
 @router.get("/stats")
 def get_stats(_user: dict = Depends(get_current_user)):
     try:
@@ -55,6 +59,14 @@ def create_admin(body: AdminCreate, _user: dict = Depends(get_current_user)):
     result = service.create_admin(body.email, body.password, body.name)
     if not result:
         raise HTTPException(status_code=400, detail="Email already exists")
+    return {"id": result["id"], "email": result["email"], "name": result["name"]}
+
+
+@router.put("/users/{id}")
+def update_admin(id: str, body: AdminUpdate, _user: dict = Depends(get_current_user)):
+    result = service.update_admin(id, body.name)
+    if not result:
+        raise HTTPException(status_code=404, detail="Admin not found")
     return {"id": result["id"], "email": result["email"], "name": result["name"]}
 
 

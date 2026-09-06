@@ -3280,16 +3280,22 @@
 
       content.innerHTML = listHeader('Team', 'Add Admin') + `
         <table class="admin-table">
-          <thead><tr><th>Email</th><th>Name</th><th>Joined</th><th></th></tr></thead>
-          <tbody>${admins.map((a) => `
+          <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Last Active</th><th></th></tr></thead>
+          <tbody>${admins.map((a) => {
+            const isYou = a.email === currentEmail;
+            const lastActive = a.last_login_at ? timeAgo(a.last_login_at) : 'Never';
+            return `
             <tr>
-              <td class="row-title">${esc(a.email)}${a.email === currentEmail ? ' (you)' : ''}</td>
+              <td class="row-title">${esc(a.email)}${isYou ? ' <span class="team-you">(you)</span>' : ''}</td>
               <td>${esc(a.name)}</td>
-              <td>${formatDate(a.created_at)}</td>
+              <td>Admin</td>
+              <td>${lastActive}</td>
               <td class="row-actions">
-                ${a.email !== currentEmail ? `<button class="btn btn-danger btn-sm" data-remove-admin="${a.id}">Remove</button>` : ''}
+                <button class="btn btn-secondary btn-sm" data-edit-admin="${a.id}" data-admin-name="${esc(a.name)}">Edit</button>
+                ${!isYou ? `<button class="btn btn-danger btn-sm" data-remove-admin="${a.id}">Delete</button>` : ''}
               </td>
-            </tr>`).join('')}
+            </tr>`;
+          }).join('')}
           </tbody>
         </table>`;
 
@@ -3298,7 +3304,7 @@
       content.addEventListener('click', async (e) => {
         const removeId = e.target.dataset.removeAdmin;
         if (removeId) {
-          const ok = await confirmDialog('Remove this admin?');
+          const ok = await confirmDialog('Remove this admin? This cannot be undone.');
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/admin/users/${removeId}`, { method: 'DELETE' });
@@ -3307,10 +3313,59 @@
             alert(err.message);
           }
         }
+
+        const editId = e.target.dataset.editAdmin;
+        if (editId) {
+          showEditAdmin(editId, e.target.dataset.adminName);
+        }
       });
     } catch {
       showEmpty('Failed to load team.');
     }
+  }
+
+  function showEditAdmin(id, currentName) {
+    content.innerHTML = `
+      <div class="form-card">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <h2 class="form-card-title">Edit Admin</h2>
+        </div>
+        <form id="crud-form">
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input type="text" id="f-name" required value="${currentName}">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+          <div class="form-msg" id="form-msg"></div>
+        </form>
+      </div>`;
+
+    document.getElementById('back-btn').addEventListener('click', loadTeam);
+    document.getElementById('crud-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('form-msg');
+      const btn = document.querySelector('#crud-form button[type="submit"]');
+      btn.disabled = true;
+      msg.textContent = '';
+      msg.className = 'form-msg';
+
+      try {
+        await AdminAPI.request(`/api/admin/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name: val('f-name') }),
+        });
+        msg.textContent = 'Admin updated.';
+        msg.classList.add('form-msg-success');
+        setTimeout(loadTeam, 800);
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.classList.add('form-msg-error');
+        btn.disabled = false;
+      }
+    });
   }
 
   function showAddAdmin() {

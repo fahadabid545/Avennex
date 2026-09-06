@@ -32,7 +32,7 @@ def list_activity(page: int, limit: int):
 
 def list_admins():
     db = get_supabase()
-    result = db.table("admins").select("id, email, name, created_at").order("created_at").execute()
+    result = db.table("admins").select("id, email, name, created_at, last_login_at").order("created_at").execute()
     return result.data
 
 
@@ -50,6 +50,12 @@ def create_admin(email: str, password: str, name: str):
         "password_hash": password_hash,
         "name": name or "Admin",
     }).execute()
+    return result.data[0] if result.data else None
+
+
+def update_admin(admin_id: str, name: str):
+    db = get_supabase()
+    result = db.table("admins").update({"name": name}).eq("id", admin_id).execute()
     return result.data[0] if result.data else None
 
 

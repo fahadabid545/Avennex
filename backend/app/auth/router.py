@@ -84,6 +84,13 @@ def login(body: LoginRequest, request: Request):
         "expires_at": expires_at.isoformat(),
     }).execute()
 
+    try:
+        db.table("admins").update({
+            "last_login_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", admin["id"]).execute()
+    except Exception as e:
+        logger.warning("Failed to update last_login_at for %s: %s", admin["email"], e)
+
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -133,7 +140,6 @@ class ResetPasswordRequest(BaseModel):
 def forgot_password(body: ForgotPasswordRequest, request: Request):
     db = get_supabase()
     result = db.table("admins").select("id, email").eq("email", body.email).execute()
-    warnings = []
     if result.data:
         admin = result.data[0]
         token, expires_at = create_reset_token()
@@ -142,27 +148,31 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
             "reset_token_expires": expires_at.isoformat(),
         }).eq("id", admin["id"]).execute()
 
+        reset_link = f"https://avennex.com/admin/?reset={token}"
         try:
             from app.email.service import send_email
-            from app.config import get_settings
-            settings = get_settings()
             html = f"""
-            <h2>Password Reset</h2>
-            <p>Your password reset token is: <strong>{token}</strong></p>
-            <p>This token expires in 1 hour.</p>
+            <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+              <h2 style="margin-bottom: 16px;">Password Reset</h2>
+              <p>You requested a password reset for your Avennex admin account.</p>
+              <p style="margin: 24px 0;">
+                <a href="{reset_link}"
+                   style="display: inline-block; padding: 12px 24px; background: #3b82f6;
+                          color: #fff; text-decoration: none; border-radius: 6px;">
+                  Reset Password
+                </a>
+              </p>
+              <p style="color: #666; font-size: 14px;">This link expires in 1 hour.</p>
+              <p style="color: #666; font-size: 14px;">If you didn't request this, ignore this email.</p>
+            </div>
             """
-            sent = send_email(admin["email"], "Avennex Password Reset", html)
+            sent = send_email(admin["email"], "Reset your Avennex admin password", html)
             if not sent:
-                logger.warning("Password reset requested for %s but email not configured", admin["email"])
-                warnings.append("Email service not configured")
+                logger.warning("Password reset for %s, email not configured. Token: %s", admin["email"], token)
         except Exception as e:
-            logger.error("Password reset email failed for %s: %s", admin["email"], e)
-            warnings.append("Email delivery failed")
+            logger.error("Password reset email failed for %s: %s. Token: %s", admin["email"], e, token)
 
-    response = {"success": True, "message": "If that email exists, a reset link has been sent."}
-    if warnings:
-        response["warnings"] = warnings
-    return response
+    return {"success": True, "message": "If this email is registered, you'll receive a reset link shortly."}
 
 
 @router.post("/reset-password")

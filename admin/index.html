@@ -38,6 +38,20 @@
         <button class="btn btn-primary btn-full" id="forgot-submit">Send Reset Link</button>
         <p class="forgot-link"><a href="#" id="back-to-login">Back to login</a></p>
       </div>
+      <div id="reset-form" style="display:none">
+        <p class="login-subtitle" style="margin-bottom:16px">Set a new password</p>
+        <div class="field">
+          <label for="new-password">New Password</label>
+          <input type="password" id="new-password" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="confirm-password">Confirm Password</label>
+          <input type="password" id="confirm-password" required minlength="8" autocomplete="new-password">
+        </div>
+        <div id="reset-msg" class="form-msg"></div>
+        <button class="btn btn-primary btn-full" id="reset-submit">Update Password</button>
+        <p class="forgot-link"><a href="#" id="reset-back-to-login">Back to login</a></p>
+      </div>
     </div>
   </div>
   <script src="js/admin-api.js"></script>
