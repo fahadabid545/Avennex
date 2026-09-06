@@ -1276,3 +1276,31 @@ a {
 .field-char-count.field-char-warn {
   color: var(--danger);
 }
+
+.admin-stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-stat-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.admin-stat-chip.chip-gray { background: var(--bg-elevated); color: var(--text-muted); }
+.admin-stat-chip.chip-yellow { background: #fef3c7; color: #92400e; }
+.admin-stat-chip.chip-blue { background: #dbeafe; color: #1e40af; }
+.admin-stat-chip.chip-green { background: #d1fae5; color: #065f46; }
+
+.comment-email {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}

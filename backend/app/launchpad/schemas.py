@@ -8,9 +8,13 @@ class LaunchpadCreate(BaseModel):
     slug: Optional[str] = None
     tagline: Optional[str] = None
     description: Optional[str] = None
+    content: Optional[str] = None
     timeline: Optional[str] = None
     funding_needed: Optional[str] = None
     team_needed: Optional[str] = None
+    tech_stack: Optional[str] = None
+    collaboration_details: Optional[str] = None
+    diagrams: Optional[str] = None
     stage: Optional[str] = "concept"
     status: Optional[str] = "active"
 
@@ -20,9 +24,13 @@ class LaunchpadUpdate(BaseModel):
     slug: Optional[str] = None
     tagline: Optional[str] = None
     description: Optional[str] = None
+    content: Optional[str] = None
     timeline: Optional[str] = None
     funding_needed: Optional[str] = None
     team_needed: Optional[str] = None
+    tech_stack: Optional[str] = None
+    collaboration_details: Optional[str] = None
+    diagrams: Optional[str] = None
     stage: Optional[str] = None
     status: Optional[str] = None
 
@@ -33,9 +41,13 @@ class LaunchpadResponse(BaseModel):
     slug: str
     tagline: Optional[str] = None
     description: Optional[str] = None
+    content: Optional[str] = None
     timeline: Optional[str] = None
     funding_needed: Optional[str] = None
     team_needed: Optional[str] = None
+    tech_stack: Optional[str] = None
+    collaboration_details: Optional[str] = None
+    diagrams: Optional[str] = None
     stage: str
     status: str
     created_at: datetime

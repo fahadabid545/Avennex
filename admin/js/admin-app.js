@@ -246,6 +246,21 @@
     const chatEl = document.getElementById('f-chat-enabled');
     if (chatEl) config.formData.chat_enabled = chatEl.checked;
     if (typeof productFeatures !== 'undefined') config.formData.features = [...productFeatures];
+    const lpContentEl = document.getElementById('f-lp-content');
+    if (lpContentEl) config.formData.content = lpContentEl.value.trim();
+    const lpTimelineEl = document.getElementById('f-lp-timeline');
+    if (lpTimelineEl) config.formData.timeline = lpTimelineEl.value.trim();
+    const lpFundingEl = document.getElementById('f-lp-funding');
+    if (lpFundingEl) config.formData.funding_needed = lpFundingEl.value.trim();
+    const lpTeamEl = document.getElementById('f-lp-team');
+    if (lpTeamEl) config.formData.team_needed = lpTeamEl.value.trim();
+    const lpTsEl = document.getElementById('f-lp-techstack');
+    if (lpTsEl) config.formData.tech_stack = lpTsEl.value.trim();
+    const lpCollabEl = document.getElementById('f-lp-collab');
+    if (lpCollabEl) config.formData.collaboration_details = lpCollabEl.value.trim();
+    if (typeof launchpadDiagrams !== 'undefined') {
+      config.formData.diagrams = launchpadDiagrams.filter(Boolean).join('\n');
+    }
   }
 
   function renderField(f, data) {
@@ -1619,6 +1634,8 @@
 
   // ── Launchpad ──
 
+  let launchpadDiagrams = [];
+
   async function loadLaunchpad() {
     showLoading();
     try {
@@ -1627,23 +1644,41 @@
       if (!entries || !entries.length) return showEmpty('No launchpad entries yet.');
 
       let commentCounts = {};
+      let totalComments = 0;
       try {
         const entryIds = entries.map((e) => e.id);
         const allComments = await Promise.all(entryIds.map((id) =>
           AdminAPI.request(`/api/launchpad/${id}/comments`).then((c) => ({ id, count: c.length })).catch(() => ({ id, count: 0 }))
         ));
-        allComments.forEach((c) => { commentCounts[c.id] = c.count; });
+        allComments.forEach((c) => {
+          commentCounts[c.id] = c.count;
+          totalComments += c.count;
+        });
       } catch {}
 
-      content.innerHTML = listHeader('Launchpad', 'New Entry') + `
+      const stageCounts = { concept: 0, planning: 0, 'open-for-feedback': 0, building: 0 };
+      entries.forEach((e) => { if (stageCounts[e.stage] !== undefined) stageCounts[e.stage]++; });
+
+      const statsHtml = `
+        <div class="admin-stats-bar">
+          <span class="admin-stat-chip">${entries.length} entries</span>
+          <span class="admin-stat-chip chip-gray">${stageCounts.concept} concept</span>
+          <span class="admin-stat-chip chip-yellow">${stageCounts.planning} planning</span>
+          <span class="admin-stat-chip chip-blue">${stageCounts['open-for-feedback']} feedback</span>
+          <span class="admin-stat-chip chip-green">${stageCounts.building} building</span>
+          <span class="admin-stat-chip">${totalComments} comments</span>
+        </div>`;
+
+      content.innerHTML = listHeader('Launchpad', 'New Entry') + statsHtml + `
         <table class="admin-table">
-          <thead><tr><th>Title</th><th>Stage</th><th>Comments</th><th>Status</th><th>Created</th><th></th></tr></thead>
-          <tbody>${entries.map((e) => `
+          <thead><tr><th>#</th><th>Title</th><th>Stage</th><th>Status</th><th>Comments</th><th>Created</th><th></th></tr></thead>
+          <tbody>${entries.map((e, i) => `
             <tr>
+              <td>${i + 1}</td>
               <td class="row-title">${esc(e.title)}</td>
               <td>${statusBadge(e.stage)}</td>
-              <td><button class="btn btn-secondary btn-sm" data-comments="${e.id}">${commentCounts[e.id] || 0} comments</button></td>
               <td>${statusBadge(e.status)}</td>
+              <td><button class="btn btn-secondary btn-sm" data-comments="${e.id}">${commentCounts[e.id] || 0} comments</button></td>
               <td>${formatDate(e.created_at)}</td>
               <td class="row-actions">
                 <button class="btn btn-secondary btn-sm" data-edit="${e.id}">Edit</button>
@@ -1656,14 +1691,14 @@
 
       content.addEventListener('click', (e) => {
         const commentsId = e.target.dataset.comments;
-        if (commentsId) showComments(commentsId);
+        if (commentsId) showLaunchpadComments(commentsId);
       });
     } catch (err) {
       showEmpty('Failed to load launchpad entries.');
     }
   }
 
-  async function showComments(entryId) {
+  async function showLaunchpadComments(entryId) {
     showLoading();
     try {
       const comments = await AdminAPI.request(`/api/launchpad/${entryId}/comments`);
@@ -1675,10 +1710,12 @@
             <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
             <h2 class="form-card-title">Comments${entry ? ': ' + esc(entry.title) : ''}</h2>
           </div>
+          <p class="text-muted" style="margin-bottom:16px">${comments.length} comment${comments.length !== 1 ? 's' : ''} total</p>
           ${comments.length ? `<div class="comments-list">${comments.map((c) => `
             <div class="comment-item">
               <div class="comment-header">
                 <span class="comment-author">${esc(c.author_name)}</span>
+                ${c.author_email ? `<span class="comment-email">${esc(c.author_email)}</span>` : ''}
                 <span class="comment-date">${formatTime(c.created_at)}</span>
                 <button class="btn btn-danger btn-sm" data-delete-comment="${c.id}">Delete</button>
               </div>
@@ -1696,7 +1733,7 @@
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/launchpad/comments/${commentId}`, { method: 'DELETE' });
-            showComments(entryId);
+            showLaunchpadComments(entryId);
           } catch (err) {
             alert(err.message);
           }
@@ -1707,16 +1744,38 @@
     }
   }
 
+  function renderLaunchpadDiagrams() {
+    const list = document.getElementById('lp-diagrams-list');
+    if (!list) return;
+    let html = '';
+    launchpadDiagrams.forEach((url, i) => {
+      html += `<div class="lp-diagram-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+        <input type="text" value="${esc(url)}" data-idx="${i}" data-field="url" placeholder="https://..." style="flex:1">
+        <button type="button" class="btn btn-danger btn-sm" data-remove="${i}">Remove</button>
+      </div>`;
+      if (url) {
+        html += `<img src="${esc(url)}" style="max-width:300px;border-radius:8px;margin-bottom:12px;display:block" onerror="this.style.display='none'">`;
+      }
+    });
+    list.innerHTML = html;
+  }
+
   function launchpadForm(item) {
     const lp = item || {};
+    launchpadDiagrams = lp.diagrams ? lp.diagrams.split('\n').filter(Boolean) : [];
+
     const formData = {
       title: lp.title || '',
       slug: lp.slug || '',
       tagline: lp.tagline || '',
       description: lp.description || '',
+      content: lp.content || '',
       timeline: lp.timeline || '',
       funding_needed: lp.funding_needed || '',
       team_needed: lp.team_needed || '',
+      tech_stack: lp.tech_stack || '',
+      collaboration_details: lp.collaboration_details || '',
+      diagrams: lp.diagrams || '',
       stage: lp.stage || 'concept',
       status: lp.status || 'active',
     };
@@ -1734,15 +1793,7 @@
           fields: [
             { name: 'title', id: 'f-title', label: 'Title', required: true },
             { name: 'slug', id: 'f-slug', label: 'Slug', placeholder: 'Auto-generated from title' },
-            { name: 'tagline', id: 'f-tagline', label: 'Tagline' },
-          ],
-        },
-        {
-          fields: [
-            { name: 'description', id: 'f-description', label: 'Description', type: 'textarea', rows: 6 },
-            { name: 'timeline', id: 'f-timeline', label: 'Timeline' },
-            { name: 'funding_needed', id: 'f-funding', label: 'Funding Needed' },
-            { name: 'team_needed', id: 'f-team', label: 'Team Needed' },
+            { name: 'tagline', id: 'f-tagline', label: 'Tagline', required: true, hint: 'One-liner shown on cards (max 150 chars)' },
             { name: 'stage', id: 'f-stage', label: 'Stage', type: 'select', options: [
               { value: 'concept', label: 'Concept' },
               { value: 'planning', label: 'Planning' },
@@ -1751,23 +1802,231 @@
             ]},
             { name: 'status', id: 'f-status', label: 'Status', type: 'select', options: [
               { value: 'active', label: 'Active' },
-              { value: 'archived', label: 'Archived' },
+              { value: 'closed', label: 'Closed' },
             ]},
           ],
+          onMount: (config) => {
+            const titleInput = document.getElementById('f-title');
+            const slugInput = document.getElementById('f-slug');
+            if (titleInput && slugInput) {
+              titleInput.addEventListener('input', () => {
+                if (!slugInput.dataset.edited) slugInput.value = blogSlugify(titleInput.value);
+              });
+              slugInput.addEventListener('input', () => { slugInput.dataset.edited = 'true'; });
+              if (!config.formData.slug && config.formData.title) {
+                slugInput.value = blogSlugify(config.formData.title);
+              }
+            }
+
+            if (titleInput) {
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              counter.textContent = `${titleInput.value.length}/100`;
+              titleInput.parentNode.appendChild(counter);
+              titleInput.setAttribute('maxlength', '100');
+              titleInput.addEventListener('input', () => {
+                counter.textContent = `${titleInput.value.length}/100`;
+                counter.classList.toggle('field-char-warn', titleInput.value.length > 90);
+              });
+            }
+
+            const taglineEl = document.getElementById('f-tagline');
+            if (taglineEl) {
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              counter.textContent = `${taglineEl.value.length}/150`;
+              taglineEl.parentNode.appendChild(counter);
+              taglineEl.setAttribute('maxlength', '150');
+              taglineEl.addEventListener('input', () => {
+                counter.textContent = `${taglineEl.value.length}/150`;
+                counter.classList.toggle('field-char-warn', taglineEl.value.length > 140);
+              });
+            }
+          },
         },
-        { review: true, fields: [] },
+        {
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+
+            wrap.innerHTML = `
+              <div class="field">
+                <label for="f-lp-content">Description</label>
+                <div class="blog-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                  <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                  <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
+                  <button type="button" data-cmd="img" title="Image">Img</button>
+                  <button type="button" data-cmd="code" title="Code">Code</button>
+                </div>
+                <textarea id="f-lp-content" class="blog-content-editor" rows="10">${esc(config.formData.content)}</textarea>
+              </div>
+              <div class="field">
+                <label>Description Preview</label>
+                <div class="blog-preview" id="lp-content-preview"></div>
+              </div>
+              <div class="field">
+                <label for="f-lp-timeline">Timeline <span class="field-opt">Optional</span></label>
+                <span class="field-hint">e.g. Q1 2027 (estimated)</span>
+                <input type="text" id="f-lp-timeline" value="${esc(config.formData.timeline)}">
+              </div>
+              <div class="field">
+                <label for="f-lp-funding">Funding Needed <span class="field-opt">Optional</span></label>
+                <span class="field-hint">e.g. $5,000 - $10,000</span>
+                <input type="text" id="f-lp-funding" value="${esc(config.formData.funding_needed)}">
+              </div>
+              <div class="field">
+                <label for="f-lp-team">Team Needed <span class="field-opt">Optional</span></label>
+                <span class="field-hint">e.g. 1 NLP engineer, 1 frontend dev</span>
+                <input type="text" id="f-lp-team" value="${esc(config.formData.team_needed)}">
+              </div>
+              <div class="field">
+                <label for="f-lp-techstack">Tech Stack <span class="field-opt">Optional</span></label>
+                <span class="field-hint">One per line or comma separated</span>
+                <textarea id="f-lp-techstack" rows="3">${esc(config.formData.tech_stack)}</textarea>
+              </div>
+              <div class="field">
+                <label for="f-lp-collab">Collaboration Details <span class="field-opt">Optional</span></label>
+                <span class="field-hint">What contributors can expect, profit sharing, open source terms</span>
+                <div class="blog-toolbar" id="collab-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                  <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                </div>
+                <textarea id="f-lp-collab" class="blog-content-editor" rows="6">${esc(config.formData.collaboration_details)}</textarea>
+              </div>
+              <div class="field">
+                <label>Diagrams <span class="field-opt">Optional</span></label>
+                <span class="field-hint">Image URLs for architecture or flow diagrams</span>
+                <div id="lp-diagrams-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-diagram" style="margin-top:8px">Add Diagram</button>
+              </div>`;
+
+            const contentTextarea = document.getElementById('f-lp-content');
+            const contentPreview = document.getElementById('lp-content-preview');
+            function updatePreview() {
+              contentPreview.innerHTML = contentTextarea.value || '<span class="text-muted">Nothing to preview</span>';
+            }
+            contentTextarea.addEventListener('input', updatePreview);
+            updatePreview();
+
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
+              const cmd = e.target.closest('[data-cmd]');
+              if (cmd) blogToolbarAction(contentTextarea, cmd.dataset.cmd);
+            });
+
+            const collabTextarea = document.getElementById('f-lp-collab');
+            document.getElementById('collab-toolbar').addEventListener('click', (e) => {
+              const cmd = e.target.closest('[data-cmd]');
+              if (cmd) blogToolbarAction(collabTextarea, cmd.dataset.cmd);
+            });
+
+            renderLaunchpadDiagrams();
+            document.getElementById('add-diagram').addEventListener('click', () => {
+              launchpadDiagrams.push('');
+              renderLaunchpadDiagrams();
+            });
+
+            document.getElementById('lp-diagrams-list').addEventListener('click', (e) => {
+              const rm = e.target.dataset.remove;
+              if (rm !== undefined) {
+                launchpadDiagrams.splice(Number(rm), 1);
+                renderLaunchpadDiagrams();
+              }
+            });
+
+            document.getElementById('lp-diagrams-list').addEventListener('input', (e) => {
+              const idx = e.target.dataset.idx;
+              if (idx !== undefined) {
+                launchpadDiagrams[Number(idx)] = e.target.value.trim();
+              }
+            });
+          },
+        },
+        {
+          review: true,
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            const d = config.formData;
+            let html = '<div class="review-fields">';
+            [
+              ['Title', d.title],
+              ['Slug', d.slug],
+              ['Tagline', d.tagline],
+              ['Stage', d.stage],
+              ['Status', d.status],
+              ['Timeline', d.timeline],
+              ['Funding Needed', d.funding_needed],
+              ['Team Needed', d.team_needed],
+              ['Tech Stack', d.tech_stack],
+            ].forEach(([label, v]) => {
+              html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
+            });
+            html += '</div>';
+            if (d.content) {
+              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + d.content + '</div></div>';
+            }
+            if (d.collaboration_details) {
+              html += '<div class="field" style="margin-top:20px"><label>Collaboration Details Preview</label><div class="blog-preview">' + d.collaboration_details + '</div></div>';
+            }
+            const diagramUrls = launchpadDiagrams.filter(Boolean);
+            if (diagramUrls.length) {
+              html += '<div class="field" style="margin-top:20px"><label>Diagrams</label>';
+              diagramUrls.forEach((url) => {
+                html += `<img src="${esc(url)}" style="max-width:400px;border-radius:8px;margin-bottom:12px;display:block" onerror="this.style.display='none'">`;
+              });
+              html += '</div>';
+            }
+            wrap.innerHTML = html;
+          },
+        },
       ],
-      onSubmit: (d) => ({
-        title: d.title,
-        slug: d.slug || undefined,
-        tagline: d.tagline || undefined,
-        description: d.description || undefined,
-        timeline: d.timeline || undefined,
-        funding_needed: d.funding_needed || undefined,
-        team_needed: d.team_needed || undefined,
-        stage: d.stage,
-        status: d.status,
-      }),
+      onSubmit: (d) => {
+        const contentEl = document.getElementById('f-lp-content');
+        if (contentEl) d.content = contentEl.value.trim();
+        const tlEl = document.getElementById('f-lp-timeline');
+        if (tlEl) d.timeline = tlEl.value.trim();
+        const fundingEl = document.getElementById('f-lp-funding');
+        if (fundingEl) d.funding_needed = fundingEl.value.trim();
+        const teamEl = document.getElementById('f-lp-team');
+        if (teamEl) d.team_needed = teamEl.value.trim();
+        const tsEl = document.getElementById('f-lp-techstack');
+        if (tsEl) d.tech_stack = tsEl.value.trim();
+        const collabEl = document.getElementById('f-lp-collab');
+        if (collabEl) d.collaboration_details = collabEl.value.trim();
+
+        const diagramStr = launchpadDiagrams.filter(Boolean).join('\n');
+
+        return {
+          title: d.title,
+          slug: d.slug || undefined,
+          tagline: d.tagline || undefined,
+          description: d.description || undefined,
+          content: d.content || undefined,
+          timeline: d.timeline || undefined,
+          funding_needed: d.funding_needed || undefined,
+          team_needed: d.team_needed || undefined,
+          tech_stack: d.tech_stack || undefined,
+          collaboration_details: d.collaboration_details || undefined,
+          diagrams: diagramStr || undefined,
+          stage: d.stage,
+          status: d.status,
+        };
+      },
       onBack: loadLaunchpad,
     });
   }

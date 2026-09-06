@@ -93,7 +93,7 @@ def list_comments(entry_id: str):
     db = get_supabase()
     result = (
         db.table("launchpad_comments")
-        .select("id, entry_id, author_name, content, created_at")
+        .select("id, entry_id, author_name, author_email, content, created_at")
         .eq("entry_id", entry_id)
         .order("created_at", desc=True)
         .execute()
