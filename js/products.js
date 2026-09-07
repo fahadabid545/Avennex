@@ -78,6 +78,23 @@
 
     container.innerHTML = html;
     if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    var animatedEls = container.querySelectorAll('[data-animate]');
+    if (animatedEls.length) {
+      if ('IntersectionObserver' in window) {
+        var productAnimObs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('animate-visible');
+              productAnimObs.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 });
+        animatedEls.forEach(function (el) { productAnimObs.observe(el); });
+      } else {
+        animatedEls.forEach(function (el) { el.classList.add('animate-visible'); });
+      }
+    }
   }).catch(function () {
     API.showError(container, 'Couldn\'t load products right now. Try refreshing in a minute.');
   });
