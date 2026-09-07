@@ -31,4 +31,11 @@ CREATE TABLE IF NOT EXISTS chatbot_requests (
 );
 ALTER TABLE chatbot_requests DISABLE ROW LEVEL SECURITY;
 
+-- Product detail page expansion: media, links, docs, investor/technical metrics
+ALTER TABLE products ADD COLUMN IF NOT EXISTS video_url text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS gallery jsonb DEFAULT '[]';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS external_links jsonb DEFAULT '[]';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS documents jsonb DEFAULT '[]';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS metrics jsonb DEFAULT '[]';
+
 NOTIFY pgrst, 'reload schema';

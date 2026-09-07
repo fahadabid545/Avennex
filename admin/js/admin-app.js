@@ -301,6 +301,12 @@
     }
     const faqAnswerEl = document.getElementById('f-faq-answer');
     if (faqAnswerEl) config.formData.answer = faqAnswerEl.value.trim();
+    const videoUrlEl = document.getElementById('f-video-url');
+    if (videoUrlEl) config.formData.video_url = videoUrlEl.value.trim();
+    if (typeof productGallery !== 'undefined') config.formData.gallery = [...productGallery];
+    if (typeof productLinks !== 'undefined') config.formData.external_links = [...productLinks];
+    if (typeof productDocuments !== 'undefined') config.formData.documents = [...productDocuments];
+    if (typeof productMetrics !== 'undefined') config.formData.metrics = [...productMetrics];
   }
 
   function renderField(f, data) {
@@ -1122,7 +1128,10 @@
   // ── Products ──
 
   let productFeatures = [];
-  let productsTab = 'list';
+  let productGallery = [];
+  let productLinks = [];
+  let productDocuments = [];
+  let productMetrics = [];
 
   async function loadProducts() {
     showLoading();
@@ -1139,161 +1148,57 @@
         } catch {}
       }
 
-      content.innerHTML = listHeader('Products', 'New Product') + `
-        <div class="tab-bar">
-          <button class="tab-btn ${productsTab === 'list' ? 'active' : ''}" data-ptab="list">Products</button>
-          <button class="tab-btn ${productsTab === 'dashboard' ? 'active' : ''}" data-ptab="dashboard">Dashboard</button>
-        </div>`;
+      content.innerHTML = listHeader('Products', 'New Product');
 
-      if (productsTab === 'dashboard') {
-        renderProductDashboard();
+      if (!products || !products.length) {
+        content.innerHTML += '<div class="admin-empty">No products yet.</div>';
       } else {
-        if (!products || !products.length) {
-          content.innerHTML += '<div class="admin-empty">No products yet.</div>';
-        } else {
-          content.innerHTML += `
-            <table class="admin-table">
-              <thead><tr><th>#</th><th>Name</th><th>Status</th><th>Progress</th><th>Chat</th><th></th></tr></thead>
-              <tbody>${products.map((p, i) => `
-                <tr>
-                  <td>${i + 1}</td>
-                  <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
-                  <td>${statusBadge(p.status)}</td>
-                  <td>${p.progress}%</td>
-                  <td>
-                    <button class="btn btn-sm ${p.chat_enabled ? 'btn-primary' : 'btn-secondary'}" data-toggle-chat="${p.id}" data-chat-on="${p.chat_enabled ? 'true' : 'false'}">
-                      ${p.chat_enabled ? 'On' : 'Off'}
-                    </button>
-                  </td>
-                  <td class="row-actions">
-                    <button class="btn btn-secondary btn-sm" data-product-chat="${p.id}">Chat (${chatCounts[p.id] || 0})</button>
-                    <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
-                    <button class="btn btn-danger btn-sm" data-delete="${p.id}">Delete</button>
-                  </td>
-                </tr>`).join('')}
-              </tbody>
-            </table>`;
-        }
-        bindListActions('products', productForm);
-
-        addContentListener('click', async (e) => {
-          const toggleId = e.target.dataset.toggleChat;
-          if (toggleId) {
-            const isOn = e.target.dataset.chatOn === 'true';
-            try {
-              await AdminAPI.request(`/api/products/${toggleId}`, {
-                method: 'PUT',
-                body: JSON.stringify({ chat_enabled: !isOn }),
-              });
-              loadProducts();
-            } catch (err) { alert(err.message); }
-          }
-
-          const chatId = e.target.dataset.productChat;
-          if (chatId) {
-            const product = (cachedItems.products || []).find((p) => p.id === chatId);
-            if (product) showProductChat(product);
-          }
-        });
+        content.innerHTML += `
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>Name</th><th>Status</th><th>Progress</th><th>Chat</th><th></th></tr></thead>
+            <tbody>${products.map((p, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td>${p.progress}%</td>
+                <td>
+                  <button class="btn btn-sm ${p.chat_enabled ? 'btn-primary' : 'btn-secondary'}" data-toggle-chat="${p.id}" data-chat-on="${p.chat_enabled ? 'true' : 'false'}">
+                    ${p.chat_enabled ? 'On' : 'Off'}
+                  </button>
+                </td>
+                <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-product-chat="${p.id}">Chat (${chatCounts[p.id] || 0})</button>
+                  <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
+                  <button class="btn btn-danger btn-sm" data-delete="${p.id}">Delete</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
       }
+      bindListActions('products', productForm);
 
-      addContentListener('click', (e) => {
-        const tab = e.target.dataset.ptab;
-        if (tab) {
-          productsTab = tab;
-          loadProducts();
+      addContentListener('click', async (e) => {
+        const toggleId = e.target.dataset.toggleChat;
+        if (toggleId) {
+          const isOn = e.target.dataset.chatOn === 'true';
+          try {
+            await AdminAPI.request(`/api/products/${toggleId}`, {
+              method: 'PUT',
+              body: JSON.stringify({ chat_enabled: !isOn }),
+            });
+            loadProducts();
+          } catch (err) { alert(err.message); }
+        }
+
+        const chatId = e.target.dataset.productChat;
+        if (chatId) {
+          const product = (cachedItems.products || []).find((p) => p.id === chatId);
+          if (product) showProductChat(product);
         }
       });
     } catch (err) {
       showEmpty('Failed to load products.');
-    }
-  }
-
-  function renderProductDashboard() {
-    const stats = cachedItems.productStats || [];
-    if (!stats.length) {
-      content.innerHTML += '<div class="admin-empty">No products to show.</div>';
-      return;
-    }
-
-    let html = '<div class="dash-grid">';
-    stats.forEach((s) => {
-      html += `
-        <div class="dash-card">
-          <div class="dash-card-label">${esc(s.name)}</div>
-          <div class="dash-card-value">${s.progress}%</div>
-          <div class="dash-card-sub">${statusBadge(s.status)} ${s.chat_count} messages</div>
-        </div>`;
-    });
-    html += '</div>';
-
-    html += '<div class="dash-charts">';
-    stats.forEach((s, i) => {
-      html += `
-        <div class="dash-chart-card">
-          <h3>${esc(s.name)}</h3>
-          <div style="display:flex;gap:20px;align-items:center">
-            <div style="flex:1"><canvas id="pchart-msgs-${i}"></canvas></div>
-            <div style="width:120px;height:120px"><canvas id="pchart-prog-${i}"></canvas></div>
-          </div>
-        </div>`;
-    });
-    html += '</div>';
-    content.innerHTML += html;
-
-    if (typeof Chart !== 'undefined') {
-      const chartOpts = {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', font: { size: 10 } } },
-          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', stepSize: 1 } },
-        },
-      };
-
-      function getLast30Days() {
-        const days = [];
-        const now = new Date();
-        for (let i = 29; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(d.getDate() - i);
-          days.push(d.toISOString().slice(0, 10));
-        }
-        return days;
-      }
-
-      stats.forEach((s, i) => {
-        const labels = getLast30Days();
-        const values = labels.map((d) => (s.chat_daily || {})[d] || 0);
-        new Chart(document.getElementById(`pchart-msgs-${i}`), {
-          type: 'bar',
-          data: {
-            labels: labels.map((d) => d.slice(5)),
-            datasets: [{ data: values, backgroundColor: '#3b82f6', borderRadius: 3 }],
-          },
-          options: chartOpts,
-        });
-
-        new Chart(document.getElementById(`pchart-prog-${i}`), {
-          type: 'doughnut',
-          data: {
-            labels: ['Done', 'Remaining'],
-            datasets: [{
-              data: [s.progress, 100 - s.progress],
-              backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.06)'],
-              borderWidth: 0,
-            }],
-          },
-          options: {
-            responsive: true,
-            cutout: '70%',
-            plugins: {
-              legend: { display: false },
-              tooltip: { enabled: false },
-            },
-          },
-        });
-      });
     }
   }
 
@@ -1407,9 +1312,72 @@
       </div>`).join('');
   }
 
+  function renderProductGallery() {
+    const list = document.getElementById('gallery-list');
+    if (!list) return;
+    list.innerHTML = productGallery.map((url, i) => `
+      <div class="feature-row">
+        <input type="text" value="${esc(url)}" placeholder="https://..." data-idx="${i}">
+        <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
+      </div>`).join('');
+  }
+
+  function renderProductLinks() {
+    const list = document.getElementById('links-list');
+    if (!list) return;
+    list.innerHTML = productLinks.map((l, i) => `
+      <div class="feature-row">
+        <input type="text" value="${esc(l.label)}" placeholder="Label (e.g. Live Demo)" data-idx="${i}" data-field="label">
+        <input type="text" value="${esc(l.url)}" placeholder="https://..." data-idx="${i}" data-field="url">
+        <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
+      </div>`).join('');
+  }
+
+  function renderProductDocuments() {
+    const list = document.getElementById('documents-list');
+    if (!list) return;
+    list.innerHTML = productDocuments.map((d, i) => `
+      <div class="feature-row">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.name)}</span>
+        <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
+      </div>`).join('');
+  }
+
+  function renderProductMetrics() {
+    const list = document.getElementById('metrics-list');
+    if (!list) return;
+    list.innerHTML = productMetrics.map((m, i) => `
+      <div class="metric-row" data-idx="${i}">
+        <div class="feature-row">
+          <input type="text" value="${esc(m.name)}" placeholder="Metric name (e.g. Monthly Active Users)" data-idx="${i}" data-field="name">
+          <input type="text" value="${esc(m.unit)}" placeholder="Unit (optional, e.g. %, $, users)" data-idx="${i}" data-field="unit" style="max-width:160px">
+          <select data-idx="${i}" data-field="chart_type" style="max-width:130px">
+            <option value="stat" ${m.chart_type === 'stat' ? 'selected' : ''}>Stat</option>
+            <option value="line" ${m.chart_type === 'line' ? 'selected' : ''}>Line (trend)</option>
+            <option value="bar" ${m.chart_type === 'bar' ? 'selected' : ''}>Bar (compare)</option>
+            <option value="donut" ${m.chart_type === 'donut' ? 'selected' : ''}>Donut (%)</option>
+          </select>
+          <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
+        </div>
+        ${m.chart_type === 'line' ? `
+          <div class="field" style="margin-top:4px">
+            <label>Data points <span class="field-opt">One per line: date,value</span></label>
+            <textarea rows="3" data-idx="${i}" data-field="points" placeholder="2026-01-01,120&#10;2026-01-08,145">${esc((m.points || []).map((pt) => `${pt.date},${pt.value}`).join('\n'))}</textarea>
+          </div>` : `
+          <div class="field" style="margin-top:4px;max-width:200px">
+            <label>Value</label>
+            <input type="number" value="${m.value ?? ''}" data-idx="${i}" data-field="value">
+          </div>`}
+      </div>`).join('');
+  }
+
   function productForm(item) {
     const p = item || {};
     productFeatures = Array.isArray(p.features) ? [...p.features] : [];
+    productGallery = Array.isArray(p.gallery) ? [...p.gallery] : [];
+    productLinks = Array.isArray(p.external_links) ? [...p.external_links] : [];
+    productDocuments = Array.isArray(p.documents) ? [...p.documents] : [];
+    productMetrics = Array.isArray(p.metrics) ? [...p.metrics] : [];
 
     const formData = {
       name: p.name || '',
@@ -1425,6 +1393,7 @@
       timeline: p.timeline || '',
       chat_enabled: p.chat_enabled || false,
       cover_image: p.cover_image || '',
+      video_url: p.video_url || '',
     };
 
     renderStepForm({
@@ -1612,6 +1581,149 @@
           },
         },
         {
+          fields: [],
+          onMount: (config) => {
+            const wrap = document.querySelector('.step-content');
+            if (!wrap) return;
+            wrap.innerHTML = `
+              <div class="field">
+                <label for="f-video-url">Video URL <span class="field-opt">Optional</span></label>
+                <span class="field-hint">YouTube link for a product demo video</span>
+                <input type="text" id="f-video-url" value="${esc(config.formData.video_url)}" placeholder="https://youtube.com/watch?v=...">
+              </div>
+              <div class="field">
+                <label>Image Gallery <span class="field-opt">Optional</span></label>
+                <span class="field-hint">Additional screenshots or mockups (image URLs)</span>
+                <div id="gallery-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-gallery" style="margin-top:8px">Add Image</button>
+              </div>
+              <div class="field">
+                <label>External Links <span class="field-opt">Optional</span></label>
+                <span class="field-hint">e.g. Live Demo, GitHub, Documentation</span>
+                <div id="links-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-link" style="margin-top:8px">Add Link</button>
+              </div>
+              <div class="field">
+                <label>Documentation (PDF) <span class="field-opt">Optional</span></label>
+                <span class="field-hint">Uploaded PDFs show as a scrollable document viewer on the product page</span>
+                <div id="documents-list"></div>
+                <input type="file" id="doc-upload-input" accept="application/pdf" style="display:none">
+                <button type="button" class="btn btn-secondary btn-sm" id="add-document" style="margin-top:8px">Upload PDF</button>
+                <span class="form-msg" id="doc-upload-msg"></span>
+              </div>
+              <div class="field">
+                <label>Investor &amp; Technical Metrics <span class="field-opt">Optional</span></label>
+                <span class="field-hint">Drives the charts shown on the product page</span>
+                <div id="metrics-list"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-metric" style="margin-top:8px">Add Metric</button>
+              </div>`;
+
+            renderProductGallery();
+            document.getElementById('add-gallery').addEventListener('click', () => {
+              productGallery.push('');
+              renderProductGallery();
+            });
+            document.getElementById('gallery-list').addEventListener('click', (e) => {
+              const rm = e.target.dataset.remove;
+              if (rm !== undefined) { productGallery.splice(Number(rm), 1); renderProductGallery(); }
+            });
+            document.getElementById('gallery-list').addEventListener('input', (e) => {
+              const idx = e.target.dataset.idx;
+              if (idx !== undefined) productGallery[Number(idx)] = e.target.value;
+            });
+
+            renderProductLinks();
+            document.getElementById('add-link').addEventListener('click', () => {
+              productLinks.push({ label: '', url: '' });
+              renderProductLinks();
+            });
+            document.getElementById('links-list').addEventListener('click', (e) => {
+              const rm = e.target.dataset.remove;
+              if (rm !== undefined) { productLinks.splice(Number(rm), 1); renderProductLinks(); }
+            });
+            document.getElementById('links-list').addEventListener('input', (e) => {
+              const idx = e.target.dataset.idx;
+              const field = e.target.dataset.field;
+              if (idx !== undefined && field) productLinks[Number(idx)][field] = e.target.value;
+            });
+
+            renderProductDocuments();
+            document.getElementById('add-document').addEventListener('click', () => {
+              document.getElementById('doc-upload-input').click();
+            });
+            document.getElementById('doc-upload-input').addEventListener('change', async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              const msg = document.getElementById('doc-upload-msg');
+              msg.textContent = 'Uploading...';
+              msg.className = 'form-msg';
+              try {
+                if (!config.item.id) throw new Error('Save the product once before uploading documents');
+                const formData = new FormData();
+                formData.append('file', file);
+                const token = AdminAPI.getToken();
+                const res = await fetch(`https://avennex.onrender.com/api/products/${config.item.id}/upload-document`, {
+                  method: 'POST',
+                  headers: { 'Authorization': 'Bearer ' + token },
+                  body: formData,
+                });
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}));
+                  throw new Error(err.detail || 'Upload failed');
+                }
+                const result = await res.json();
+                productDocuments.push({ name: result.name, url: result.url });
+                renderProductDocuments();
+                msg.textContent = 'Uploaded.';
+                msg.classList.add('form-msg-success');
+              } catch (err) {
+                msg.textContent = err.message;
+                msg.classList.add('form-msg-error');
+              }
+              e.target.value = '';
+            });
+            document.getElementById('documents-list').addEventListener('click', (e) => {
+              const rm = e.target.dataset.remove;
+              if (rm !== undefined) { productDocuments.splice(Number(rm), 1); renderProductDocuments(); }
+            });
+
+            renderProductMetrics();
+            document.getElementById('add-metric').addEventListener('click', () => {
+              productMetrics.push({ name: '', value: 0, unit: '', chart_type: 'stat', points: [] });
+              renderProductMetrics();
+            });
+            document.getElementById('metrics-list').addEventListener('click', (e) => {
+              const rm = e.target.dataset.remove;
+              if (rm !== undefined) { productMetrics.splice(Number(rm), 1); renderProductMetrics(); }
+            });
+            document.getElementById('metrics-list').addEventListener('change', (e) => {
+              const idx = e.target.dataset.idx;
+              const field = e.target.dataset.field;
+              if (idx === undefined || !field) return;
+              if (field === 'chart_type') {
+                productMetrics[Number(idx)].chart_type = e.target.value;
+                renderProductMetrics();
+              }
+            });
+            document.getElementById('metrics-list').addEventListener('input', (e) => {
+              const idx = e.target.dataset.idx;
+              const field = e.target.dataset.field;
+              if (idx === undefined || !field || field === 'chart_type') return;
+              const m = productMetrics[Number(idx)];
+              if (field === 'points') {
+                m.points = e.target.value.split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
+                  const [date, value] = line.split(',').map((s) => s.trim());
+                  return { date, value: parseFloat(value) || 0 };
+                });
+              } else if (field === 'value') {
+                m.value = parseFloat(e.target.value) || 0;
+              } else {
+                m[field] = e.target.value;
+              }
+            });
+          },
+        },
+        {
           review: true,
           fields: [],
           onMount: (config) => {
@@ -1631,6 +1743,11 @@
               ['Timeline', d.timeline],
               ['Chat Enabled', d.chat_enabled ? 'Yes' : 'No'],
               ['Features', productFeatures.filter((f) => f.text).map((f) => `${f.icon ? f.icon + ': ' : ''}${f.text}`).join(', ')],
+              ['Video URL', d.video_url],
+              ['Gallery Images', productGallery.filter(Boolean).length],
+              ['External Links', productLinks.filter((l) => l.label && l.url).length],
+              ['Documents', productDocuments.length],
+              ['Metrics', productMetrics.filter((m) => m.name).length],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
@@ -1651,6 +1768,8 @@
         if (tlEl) d.timeline = tlEl.value.trim();
         const chatEl = document.getElementById('f-chat-enabled');
         if (chatEl) d.chat_enabled = chatEl.checked;
+        const videoEl = document.getElementById('f-video-url');
+        if (videoEl) d.video_url = videoEl.value.trim();
 
         return {
           name: d.name,
@@ -1664,6 +1783,11 @@
           display_order: parseInt(d.display_order, 10) || 0,
           tech_stack: d.tech_stack || undefined,
           timeline: d.timeline || undefined,
+          video_url: d.video_url || undefined,
+          gallery: productGallery.filter(Boolean),
+          external_links: productLinks.filter((l) => l.label && l.url),
+          documents: productDocuments,
+          metrics: productMetrics.filter((m) => m.name),
           chat_enabled: d.chat_enabled,
           cover_image: d.cover_image || undefined,
         };

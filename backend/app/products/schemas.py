@@ -17,6 +17,11 @@ class ProductCreate(BaseModel):
     tech_stack: Optional[str] = None
     chat_enabled: Optional[bool] = False
     cover_image: Optional[str] = None
+    video_url: Optional[str] = None
+    gallery: Optional[Any] = None
+    external_links: Optional[Any] = None
+    documents: Optional[Any] = None
+    metrics: Optional[Any] = None
 
 
 class ProductUpdate(BaseModel):
@@ -33,6 +38,11 @@ class ProductUpdate(BaseModel):
     tech_stack: Optional[str] = None
     chat_enabled: Optional[bool] = None
     cover_image: Optional[str] = None
+    video_url: Optional[str] = None
+    gallery: Optional[Any] = None
+    external_links: Optional[Any] = None
+    documents: Optional[Any] = None
+    metrics: Optional[Any] = None
 
 
 class ProductResponse(BaseModel):
@@ -54,3 +64,8 @@ class ProductResponse(BaseModel):
     cover_image: Optional[str] = None
     last_edited_by: Optional[str] = None
     last_edited_at: Optional[datetime] = None
+    video_url: Optional[str] = None
+    gallery: Optional[Any] = []
+    external_links: Optional[Any] = []
+    documents: Optional[Any] = []
+    metrics: Optional[Any] = []

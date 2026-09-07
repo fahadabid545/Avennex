@@ -1,13 +1,21 @@
+import logging
+import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 
 from app.auth.dependencies import get_current_user
+from app.database import get_supabase
 from app.products import service
 from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.admin.service import log_activity
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/products", tags=["products"])
+
+DOCS_BUCKET = "product-docs"
+MAX_DOC_SIZE = 20 * 1024 * 1024
 
 
 @router.get("", response_model=list[ProductResponse])
@@ -72,6 +80,33 @@ def product_chat_stats(_user: dict = Depends(get_current_user)):
             "chat_daily": daily,
         })
     return stats
+
+
+@router.post("/{id}/upload-document")
+async def upload_document(
+    id: str,
+    file: UploadFile = File(...),
+    _user: dict = Depends(get_current_user),
+):
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    content = await file.read()
+    if len(content) > MAX_DOC_SIZE:
+        raise HTTPException(status_code=400, detail="File must be under 20MB")
+
+    db = get_supabase()
+    filename = file.filename or "document.pdf"
+    path = f"{id}/{uuid.uuid4().hex}-{filename}"
+
+    try:
+        db.storage.from_(DOCS_BUCKET).upload(path, content, {"content-type": "application/pdf"})
+        url = db.storage.from_(DOCS_BUCKET).get_public_url(path)
+    except Exception as e:
+        logger.error("Failed to upload product document: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to upload document: {e}")
+
+    return {"success": True, "name": filename, "url": url}
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
