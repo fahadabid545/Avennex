@@ -90,24 +90,38 @@
 
       html += '<div class="academy-player" id="player-wrap"></div>';
 
-      if (videos.length) {
-        html += '<div class="academy-video-list">';
+      if (videos.length > 1) {
+        html += '<div class="academy-course-list">';
         for (var i = 0; i < videos.length; i++) {
-          var v = videos[i];
-          var thumbUrl = v.thumbnail_url || '';
-          html += '<div class="academy-video-item" data-url="' + escHtml(v.youtube_url) + '" data-idx="' + i + '">';
-          if (thumbUrl) {
-            html += '<img class="academy-video-thumb" src="' + thumbUrl + '" alt="' + escHtml(v.title) + '">';
-          } else {
-            html += '<div class="academy-video-thumb"></div>';
+          var cv = videos[i];
+          html += '<div class="academy-course-item' + (i === 0 ? ' is-active' : '') + '" data-url="' + escHtml(cv.youtube_url) + '" data-idx="' + i + '">';
+          html += '<button class="academy-course-header">';
+          html += '<span class="academy-course-num">' + (i + 1) + '</span>';
+          html += '<span class="academy-course-title">' + escHtml(cv.title) + '</span>';
+          html += '<i data-lucide="play-circle" width="18" height="18" class="academy-course-play-icon"></i>';
+          html += '</button>';
+          if (cv.description) {
+            html += '<p class="academy-course-desc">' + escHtml(cv.description) + '</p>';
           }
-          html += '<div class="academy-video-info">';
-          html += '<h3 class="academy-video-title">' + escHtml(v.title) + '</h3>';
-          if (v.description) {
-            html += '<p class="academy-video-desc">' + escHtml(v.description) + '</p>';
-          }
-          html += '</div></div>';
+          html += '</div>';
         }
+        html += '</div>';
+      } else if (videos.length === 1) {
+        html += '<div class="academy-video-list">';
+        var v = videos[0];
+        var thumbUrl = v.thumbnail_url || '';
+        html += '<div class="academy-video-item is-playing" data-url="' + escHtml(v.youtube_url) + '" data-idx="0">';
+        if (thumbUrl) {
+          html += '<img class="academy-video-thumb" src="' + thumbUrl + '" alt="' + escHtml(v.title) + '">';
+        } else {
+          html += '<div class="academy-video-thumb"></div>';
+        }
+        html += '<div class="academy-video-info">';
+        html += '<h3 class="academy-video-title">' + escHtml(v.title) + '</h3>';
+        if (v.description) {
+          html += '<p class="academy-video-desc">' + escHtml(v.description) + '</p>';
+        }
+        html += '</div></div>';
         html += '</div>';
       }
 
@@ -119,7 +133,7 @@
       }
 
       container.addEventListener('click', function (e) {
-        var item = e.target.closest('.academy-video-item');
+        var item = e.target.closest('.academy-video-item, .academy-course-item');
         if (item && item.dataset.url) {
           playVideo(item.dataset.url, parseInt(item.dataset.idx, 10));
         }
@@ -143,6 +157,11 @@
     var items = container.querySelectorAll('.academy-video-item');
     for (var i = 0; i < items.length; i++) {
       items[i].classList.toggle('is-playing', i === idx);
+    }
+
+    var courseItems = container.querySelectorAll('.academy-course-item');
+    for (var j = 0; j < courseItems.length; j++) {
+      courseItems[j].classList.toggle('is-active', j === idx);
     }
   }
 

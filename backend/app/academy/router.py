@@ -33,6 +33,18 @@ def list_playlists_admin(_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Failed to load playlists: {e}")
 
 
+@router.get("/playlists/admin/{id}")
+def get_playlist_admin(id: str, _user: dict = Depends(get_current_user)):
+    try:
+        playlist = service.get_playlist_admin(id)
+    except Exception as e:
+        logger.error("Failed to load playlist %s: %s", id, e)
+        raise HTTPException(status_code=500, detail=f"Failed to load playlist: {e}")
+    if not playlist:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    return playlist
+
+
 @router.get("/playlists/{slug}")
 def get_playlist(slug: str):
     playlist = service.get_playlist_by_slug(slug)

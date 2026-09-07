@@ -118,6 +118,25 @@ def get_playlist_by_slug(slug: str):
     return playlist
 
 
+def get_playlist_admin(playlist_id: str):
+    db = get_supabase()
+    result = db.table("playlists").select("*").eq("id", playlist_id).execute()
+    if not result.data:
+        return None
+
+    playlist = result.data[0]
+    videos = (
+        db.table("videos")
+        .select("*")
+        .eq("playlist_id", playlist_id)
+        .order("display_order")
+        .execute()
+    )
+    playlist["videos"] = videos.data or []
+    playlist["video_count"] = len(playlist["videos"])
+    return playlist
+
+
 def get_playlist_by_id(playlist_id: str):
     db = get_supabase()
     result = db.table("playlists").select("*").eq("id", playlist_id).execute()

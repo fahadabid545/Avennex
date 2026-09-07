@@ -2166,7 +2166,7 @@
     showLoading();
     try {
       const playlist = (cachedItems.academy || []).find((p) => p.id === playlistId);
-      const data = await AdminAPI.request(`/api/academy/playlists/${playlistId}`);
+      const data = await AdminAPI.request(`/api/academy/playlists/admin/${playlistId}`);
       const videos = data.videos || [];
 
       content.innerHTML = `
@@ -2178,11 +2178,13 @@
           </div>
           ${videos.length ? `<table class="admin-table">
             <thead><tr><th>Title</th><th>Order</th><th></th></tr></thead>
-            <tbody>${videos.map((v) => `
+            <tbody>${videos.map((v, i) => `
               <tr>
                 <td class="row-title">${esc(v.title)}</td>
                 <td>${v.display_order ?? 0}</td>
                 <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-move-video-up="${v.id}" ${i === 0 ? 'disabled' : ''}>Up</button>
+                  <button class="btn btn-secondary btn-sm" data-move-video-down="${v.id}" ${i === videos.length - 1 ? 'disabled' : ''}>Down</button>
                   <button class="btn btn-secondary btn-sm" data-edit-video="${v.id}">Edit</button>
                   <button class="btn btn-danger btn-sm" data-delete-video="${v.id}">Delete</button>
                 </td>
@@ -2197,9 +2199,36 @@
       const videoMap = {};
       videos.forEach((v) => { videoMap[v.id] = v; });
 
+      async function swapVideoOrder(idxA, idxB) {
+        const reordered = videos.slice();
+        const tmp = reordered[idxA];
+        reordered[idxA] = reordered[idxB];
+        reordered[idxB] = tmp;
+        await Promise.all(reordered.map((v, i) =>
+          AdminAPI.request(`/api/academy/videos/${v.id}`, { method: 'PUT', body: JSON.stringify({ display_order: i }) })
+        ));
+        showPlaylistVideos(playlistId);
+      }
+
       addContentListener('click', async (e) => {
         const editVid = e.target.dataset.editVideo;
         if (editVid && videoMap[editVid]) academyVideoForm(videoMap[editVid], playlistId);
+
+        const upVid = e.target.dataset.moveVideoUp;
+        if (upVid) {
+          const idx = videos.findIndex((v) => v.id === upVid);
+          if (idx > 0) {
+            try { await swapVideoOrder(idx, idx - 1); } catch (err) { alert(err.message); }
+          }
+        }
+
+        const downVid = e.target.dataset.moveVideoDown;
+        if (downVid) {
+          const idx = videos.findIndex((v) => v.id === downVid);
+          if (idx >= 0 && idx < videos.length - 1) {
+            try { await swapVideoOrder(idx, idx + 1); } catch (err) { alert(err.message); }
+          }
+        }
 
         const delVid = e.target.dataset.deleteVideo;
         if (delVid) {
@@ -2230,12 +2259,13 @@
         </div>
         <form id="crud-form">
           <div class="field">
-            <label for="f-title">Title <span class="field-req">Required</span></label>
-            <input type="text" id="f-title" value="${esc(v.title)}" required>
-          </div>
-          <div class="field">
             <label for="f-url">YouTube URL <span class="field-req">Required</span></label>
             <input type="text" id="f-url" value="${esc(v.youtube_url)}" required placeholder="https://youtube.com/watch?v=...">
+            <span class="field-hint" id="f-url-hint">Title is fetched automatically from the URL when possible.</span>
+          </div>
+          <div class="field">
+            <label for="f-title">Title <span class="field-req">Required</span></label>
+            <input type="text" id="f-title" value="${esc(v.title)}" required>
           </div>
           <div class="field">
             <label for="f-description">Description</label>
@@ -2253,6 +2283,24 @@
       </div>`;
 
     document.getElementById('back-btn').addEventListener('click', () => showPlaylistVideos(playlistId));
+
+    document.getElementById('f-url').addEventListener('blur', async () => {
+      const url = val('f-url');
+      const titleField = document.getElementById('f-title');
+      const hint = document.getElementById('f-url-hint');
+      if (!url || titleField.value.trim()) return;
+      try {
+        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data.title) {
+          titleField.value = data.title;
+          hint.textContent = 'Title fetched from YouTube.';
+        }
+      } catch {
+        hint.textContent = 'Could not auto-fetch title. Enter one manually.';
+      }
+    });
     document.getElementById('crud-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('form-msg');
