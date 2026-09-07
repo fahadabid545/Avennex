@@ -1676,7 +1676,12 @@
     try {
       const entries = await AdminAPI.request('/api/launchpad/admin/all?limit=50');
       cachedItems.launchpad = entries;
-      if (!entries || !entries.length) return showEmpty('No launchpad entries yet.');
+      if (!entries || !entries.length) {
+        content.innerHTML = listHeader('Launchpad', 'New Entry') + '<div class="admin-empty">No launchpad entries yet.</div>';
+        const addBtn = document.getElementById('add-btn');
+        if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
+        return;
+      }
 
       let commentCounts = {};
       let totalComments = 0;
@@ -1729,7 +1734,9 @@
         if (commentsId) showLaunchpadComments(commentsId);
       });
     } catch (err) {
-      showEmpty('Failed to load launchpad entries.');
+      content.innerHTML = listHeader('Launchpad', 'New Entry') + `<div class="admin-empty">Failed to load launchpad entries: ${esc(err.message)}</div>`;
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
     }
   }
 

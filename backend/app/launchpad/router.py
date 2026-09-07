@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -16,6 +17,8 @@ from app.launchpad.schemas import (
     CommentResponse,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/launchpad", tags=["launchpad"])
 limiter = Limiter(key_func=get_remote_address)
 
@@ -31,7 +34,11 @@ def list_all_entries(
     limit: int = Query(50, ge=1, le=100),
     _user: dict = Depends(get_current_user),
 ):
-    return service.list_all(page, limit)
+    try:
+        return service.list_all(page, limit)
+    except Exception as e:
+        logger.error("Failed to list admin launchpad entries: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to load launchpad entries: {e}")
 
 
 @router.get("/{slug}", response_model=LaunchpadDetailResponse)
@@ -47,7 +54,13 @@ def create_entry(body: LaunchpadCreate, _user: dict = Depends(get_current_user))
     data = body.model_dump(exclude_none=True)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
-    result = service.create(data)
+    try:
+        result = service.create(data)
+    except Exception as e:
+        logger.error("Failed to create launchpad entry: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to save entry: {e}")
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to save entry")
     log_activity(_user["email"], "create", "launchpad", result["id"], result["title"])
     return result
 
@@ -59,7 +72,11 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
-    result = service.update(id, data)
+    try:
+        result = service.update(id, data)
+    except Exception as e:
+        logger.error("Failed to update launchpad entry %s: %s", id, e)
+        raise HTTPException(status_code=500, detail=f"Failed to update entry: {e}")
     if not result:
         raise HTTPException(status_code=404, detail="Entry not found")
     log_activity(_user["email"], "update", "launchpad", result["id"], result["title"])
