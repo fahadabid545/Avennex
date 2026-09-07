@@ -49,6 +49,23 @@
     }
 
     container.innerHTML = html;
+
+    var animatedEls = container.querySelectorAll('[data-animate]');
+    if (animatedEls.length) {
+      if ('IntersectionObserver' in window) {
+        var lpAnimObs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('animate-visible');
+              lpAnimObs.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 });
+        animatedEls.forEach(function (el) { lpAnimObs.observe(el); });
+      } else {
+        animatedEls.forEach(function (el) { el.classList.add('animate-visible'); });
+      }
+    }
   }).catch(function () {
     API.showError(container, 'Couldn\'t load launchpad entries. Try refreshing.');
   });
