@@ -13,7 +13,7 @@ def list_public():
     db = get_supabase()
     result = (
         db.table("chat_messages")
-        .select("id, author_name, message, is_admin, parent_id, created_at")
+        .select("id, author_name, author_profession, author_company, message, is_admin, parent_id, created_at")
         .order("created_at", desc=True)
         .execute()
     )

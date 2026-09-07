@@ -3324,7 +3324,6 @@
             method: 'PUT',
             body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
           });
-          showMsg(cb.id, 'Saved', true);
         } catch (err) {
           showMsg(cb.id, err.message, false);
           cb.checked = !cb.checked;
@@ -3341,7 +3340,6 @@
           method: 'PUT',
           body: JSON.stringify({ value: cb.checked ? 'dark' : 'light' }),
         });
-        showMsg('s-theme', 'Saved', true);
       } catch (err) {
         showMsg('s-theme', err.message, false);
         cb.checked = !cb.checked;
