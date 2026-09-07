@@ -76,6 +76,7 @@ def create_reply(parent_id: str, product_id: str, message: str):
     db = get_supabase()
     result = db.table("product_chat_messages").insert({
         "message": message,
+        "author_name": "Avennex Team",
         "is_admin": True,
         "parent_id": parent_id,
         "product_id": product_id,
