@@ -1054,7 +1054,6 @@ a {
 .toggle-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
@@ -1064,6 +1063,9 @@ a {
 }
 
 .toggle-label {
+  flex: 1;
+  min-width: 0;
+  padding-right: 12px;
   font-size: 0.88rem;
   color: var(--text-primary);
 }
@@ -1072,6 +1074,7 @@ a {
   position: relative;
   width: 44px;
   height: 24px;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
