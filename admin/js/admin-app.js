@@ -2680,7 +2680,7 @@
         </div>
         <div id="cb-upload-status"></div>
         <table class="admin-table" id="cb-docs-table" style="display:none">
-          <thead><tr><th>Filename</th><th>Type</th><th>Chunks</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <thead><tr><th>Filename</th><th>Type</th><th>Chunks</th><th>Status</th><th>Error</th><th>Date</th><th></th></tr></thead>
           <tbody id="cb-docs-body"></tbody>
         </table>
         <div id="cb-docs-empty" class="admin-empty" style="display:none">No documents uploaded yet.</div>
@@ -2837,6 +2837,7 @@
             <td>${esc(d.file_type)}</td>
             <td>${d.chunk_count}</td>
             <td>${statusBadge(d.status)}</td>
+            <td class="row-error">${d.status === 'failed' && d.error ? `<span title="${esc(d.error)}">${esc(d.error)}</span>` : ''}</td>
             <td>${formatDate(d.created_at)}</td>
             <td class="row-actions"><button class="btn btn-danger btn-sm" data-delete-doc="${d.id}">Delete</button></td>
           </tr>`).join('');

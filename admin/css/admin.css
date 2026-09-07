@@ -1046,6 +1046,15 @@ a {
   vertical-align: middle;
 }
 
+.row-error {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
 .email-status-sent { background: #10b981; }
 .email-status-failed { background: #ef4444; }
 .email-status-skipped { background: #666; }

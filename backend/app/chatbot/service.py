@@ -26,6 +26,9 @@ BACKUP_META_PATH = "metadata.json"
 def _get_openai_client():
     import openai
     settings = get_settings()
+    if not settings.openai_api_key:
+        logger.error("OPENAI_API_KEY is not set")
+        raise RuntimeError("OpenAI API key not configured")
     return openai.OpenAI(api_key=settings.openai_api_key)
 
 
@@ -38,7 +41,8 @@ def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OV
         import tiktoken
         enc = tiktoken.encoding_for_model("gpt-4o-mini")
         tokens = enc.encode(text)
-    except Exception:
+    except Exception as e:
+        logger.warning("tiktoken unavailable, falling back to word chunking: %s", e)
         words = text.split()
         chunks = []
         i = 0
@@ -46,7 +50,9 @@ def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OV
             chunk = " ".join(words[i:i + chunk_size])
             chunks.append(chunk)
             i += chunk_size - overlap
-        return [c for c in chunks if c.strip()]
+        result = [c for c in chunks if c.strip()]
+        logger.info("Chunked text into %d chunks (word-based)", len(result))
+        return result
 
     chunks = []
     i = 0
@@ -55,28 +61,43 @@ def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OV
         chunk_text = enc.decode(chunk_tokens)
         chunks.append(chunk_text)
         i += chunk_size - overlap
-    return [c for c in chunks if c.strip()]
+    result = [c for c in chunks if c.strip()]
+    logger.info("Chunked text into %d chunks (token-based)", len(result))
+    return result
 
 
 def _extract_pdf(content: bytes) -> str:
     from PyPDF2 import PdfReader
-    reader = PdfReader(io.BytesIO(content))
-    text = ""
-    for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            text += page_text + "\n"
+    try:
+        reader = PdfReader(io.BytesIO(content))
+        text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    except Exception as e:
+        logger.error("PDF extraction failed: %s", e)
+        raise RuntimeError(f"Could not read PDF file: {e}") from e
+    logger.info("Extracted %d characters from PDF", len(text))
     return text
 
 
 def _extract_docx(content: bytes) -> str:
     from docx import Document
-    doc = Document(io.BytesIO(content))
-    return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+    try:
+        doc = Document(io.BytesIO(content))
+        text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+    except Exception as e:
+        logger.error("DOCX extraction failed: %s", e)
+        raise RuntimeError(f"Could not read DOCX file: {e}") from e
+    logger.info("Extracted %d characters from DOCX", len(text))
+    return text
 
 
 def _extract_txt(content: bytes) -> str:
-    return content.decode("utf-8", errors="replace")
+    text = content.decode("utf-8", errors="replace")
+    logger.info("Extracted %d characters from TXT", len(text))
+    return text
 
 
 class ChatbotService:
@@ -102,21 +123,34 @@ class ChatbotService:
 
     def _embed(self, texts: list[str]) -> np.ndarray:
         client = _get_openai_client()
-        response = client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+        logger.info("Requesting embeddings for %d chunk(s)", len(texts))
+        try:
+            response = client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+        except Exception as e:
+            logger.error("OpenAI embeddings request failed: %s", e)
+            raise
         embeddings = np.array([d.embedding for d in response.data], dtype="float32")
         norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
         norms[norms == 0] = 1
         embeddings = embeddings / norms
+        logger.info("Received %d embedding vector(s)", embeddings.shape[0])
         return embeddings
 
     def add_document(self, text: str, doc_id: str, filename: str) -> int:
+        logger.info("Adding document %s (%s)", filename, doc_id)
         chunks = _chunk_text(text)
         if not chunks:
+            logger.warning("Document %s produced no chunks", filename)
             return 0
 
         embeddings = self._embed(chunks)
-        start_id = self.next_id
-        self.index.add(embeddings)
+
+        try:
+            start_id = self.next_id
+            self.index.add(embeddings)
+        except Exception as e:
+            logger.error("FAISS index.add failed for document %s: %s", filename, e)
+            raise RuntimeError(f"FAISS index error: {e}") from e
 
         for i, chunk in enumerate(chunks):
             self.metadata[start_id + i] = {
@@ -126,6 +160,7 @@ class ChatbotService:
                 "chunk_index": i,
             }
         self.next_id += len(chunks)
+        logger.info("Indexed %d chunk(s) for document %s", len(chunks), filename)
         return len(chunks)
 
     def remove_document(self, doc_id: str):

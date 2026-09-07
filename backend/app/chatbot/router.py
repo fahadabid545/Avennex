@@ -102,6 +102,7 @@ async def upload_document(
 
     doc_id = uuid.uuid4().hex
     filename = file.filename or f"document.{file_type}"
+    logger.info("Upload received: %s (%s, %d bytes)", filename, file_type, len(content))
 
     db = get_supabase()
     db.table("chatbot_documents").insert({
@@ -113,9 +114,13 @@ async def upload_document(
     }).execute()
 
     try:
+        logger.info("Extracting text from %s", filename)
         text = extract_text(content, file_type)
         if not text.strip():
-            db.table("chatbot_documents").update({"status": "failed"}).eq("id", doc_id).execute()
+            db.table("chatbot_documents").update({
+                "status": "failed",
+                "error": "No text could be extracted from the file",
+            }).eq("id", doc_id).execute()
             raise HTTPException(status_code=400, detail="No text could be extracted from the file")
 
         svc = get_chatbot_service()
@@ -124,7 +129,9 @@ async def upload_document(
         db.table("chatbot_documents").update({
             "chunk_count": chunk_count,
             "status": "ready",
+            "error": None,
         }).eq("id", doc_id).execute()
+        logger.info("Document %s processed successfully (%d chunks)", filename, chunk_count)
 
         backup_setting = get_setting("chatbot_backup_enabled")
         if backup_setting and backup_setting.get("value") == "true":
@@ -137,11 +144,12 @@ async def upload_document(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Document processing failed: %s", e)
+        logger.error("Document processing failed for %s: %s", filename, e)
         error_reason = str(e)
-        if "api_key" in error_reason.lower() or "authentication" in error_reason.lower():
+        lowered = error_reason.lower()
+        if "api key" in lowered or "api_key" in lowered or "authentication" in lowered or "not configured" in lowered:
             error_reason = "OpenAI API key not configured or invalid"
-        elif "faiss" in error_reason.lower() or "index" in error_reason.lower():
+        elif "faiss" in lowered or "index" in lowered:
             error_reason = f"FAISS index error: {error_reason}"
         try:
             db.table("chatbot_documents").update({
