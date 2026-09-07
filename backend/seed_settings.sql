@@ -16,6 +16,11 @@ ON CONFLICT (key) DO NOTHING;
 -- Add error column to chatbot_documents if it doesn't exist
 ALTER TABLE chatbot_documents ADD COLUMN IF NOT EXISTS error text;
 
--- Add edit tracking columns to faqs if they don't exist
+-- Add missing columns to faqs if they don't exist
+ALTER TABLE faqs ADD COLUMN IF NOT EXISTS display_order integer DEFAULT 0;
+ALTER TABLE faqs ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+ALTER TABLE faqs ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+ALTER TABLE faqs ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 ALTER TABLE faqs ADD COLUMN IF NOT EXISTS last_edited_by text;
 ALTER TABLE faqs ADD COLUMN IF NOT EXISTS last_edited_at timestamptz;
+NOTIFY pgrst, 'reload schema';
