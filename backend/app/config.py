@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     chatbot_jwt_secret: str = "change-this-chatbot-secret"
 
+    resend_api_key: str = ""
+
     model_config = {"env_file": ".env"}
 
     @property

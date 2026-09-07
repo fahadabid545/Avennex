@@ -3,9 +3,13 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+import requests
+
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+RESEND_API_URL = "https://api.resend.com/emails"
 
 
 def is_email_enabled() -> bool:
@@ -20,8 +24,40 @@ def is_email_enabled() -> bool:
     return True
 
 
-def send_email(to: str, subject: str, body_html: str, email_type: str = "general") -> bool:
-    settings = get_settings()
+def _from_address(settings, email_type: str) -> str:
+    if email_type == "careers":
+        return settings.smtp_from_careers or "careers@avennex.com"
+    return settings.smtp_from_general or "hello@avennex.com"
+
+
+def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type: str) -> bool:
+    from_addr = _from_address(settings, email_type)
+    try:
+        response = requests.post(
+            RESEND_API_URL,
+            headers={
+                "Authorization": f"Bearer {settings.resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": from_addr,
+                "to": [to],
+                "subject": subject,
+                "html": body_html,
+            },
+            timeout=10,
+        )
+        if response.ok:
+            logger.info("Email sent to %s via Resend (%s)", to, subject)
+            return True
+        logger.error("Resend API rejected email to %s: %s %s", to, response.status_code, response.text)
+        return False
+    except requests.exceptions.RequestException as e:
+        logger.error("Resend API request failed for email to %s: %s", to, e)
+        return False
+
+
+def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: str) -> bool:
     if not settings.smtp_host:
         logger.warning("Email to %s not sent: SMTP_HOST is not configured", to)
         return False
@@ -59,7 +95,7 @@ def send_email(to: str, subject: str, body_html: str, email_type: str = "general
                 server.login(user, password)
                 server.send_message(msg)
 
-        logger.info("Email sent to %s (%s)", to, subject)
+        logger.info("Email sent to %s via SMTP (%s)", to, subject)
         return True
     except smtplib.SMTPAuthenticationError as e:
         logger.error("Email send failed to %s: SMTP authentication rejected: %s", to, e)
@@ -70,3 +106,10 @@ def send_email(to: str, subject: str, body_html: str, email_type: str = "general
     except Exception as e:
         logger.error("Email send failed to %s: %s", to, e)
         return False
+
+
+def send_email(to: str, subject: str, body_html: str, email_type: str = "general") -> bool:
+    settings = get_settings()
+    if settings.resend_api_key:
+        return _send_via_resend(settings, to, subject, body_html, email_type)
+    return _send_via_smtp(settings, to, subject, body_html, email_type)
