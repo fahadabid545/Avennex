@@ -58,7 +58,13 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
     if not original:
         raise HTTPException(status_code=404, detail="Message not found")
 
-    result = service.create_reply(id, body.message)
+    try:
+        result = service.create_reply(id, body.message)
+    except Exception as e:
+        logger.error("Failed to save chat reply for %s: %s", id, e)
+        raise HTTPException(status_code=500, detail=f"Failed to save reply: {e}")
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to save reply")
     warnings = []
 
     email_status = "skipped"
