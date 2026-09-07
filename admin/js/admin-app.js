@@ -2425,28 +2425,32 @@
     try {
       const faqs = await AdminAPI.request('/api/faqs/admin/all');
       cachedItems.faqs = faqs;
-      if (!faqs || !faqs.length) return showEmpty('No FAQs yet.');
 
-      content.innerHTML = listHeader('FAQs', 'New FAQ') + `
-        <table class="admin-table">
-          <thead><tr><th>#</th><th>Question</th><th>Status</th><th>Order</th><th></th></tr></thead>
-          <tbody>${faqs.map((f, i) => `
-            <tr>
-              <td>${i + 1}</td>
-              <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}${editedBy(f)}</td>
-              <td>
-                <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
-                  ${f.active ? 'Active' : 'Inactive'}
-                </button>
-              </td>
-              <td>${f.display_order ?? 0}</td>
-              <td class="row-actions">
-                <button class="btn btn-secondary btn-sm" data-edit-faq="${f.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete-faq="${f.id}">Delete</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
+      content.innerHTML = listHeader('FAQs', 'New FAQ');
+      if (!faqs || !faqs.length) {
+        content.innerHTML += '<div class="admin-empty">No FAQs yet.</div>';
+      } else {
+        content.innerHTML += `
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>Question</th><th>Status</th><th>Order</th><th></th></tr></thead>
+            <tbody>${faqs.map((f, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}${editedBy(f)}</td>
+                <td>
+                  <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
+                    ${f.active ? 'Active' : 'Inactive'}
+                  </button>
+                </td>
+                <td>${f.display_order ?? 0}</td>
+                <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-edit-faq="${f.id}">Edit</button>
+                  <button class="btn btn-danger btn-sm" data-delete-faq="${f.id}">Delete</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
 
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => faqForm(null));
