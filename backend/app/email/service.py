@@ -49,10 +49,15 @@ def send_email(to: str, subject: str, body_html: str, email_type: str = "general
         msg["To"] = to
         msg.attach(MIMEText(body_html, "html"))
 
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
-            server.starttls()
-            server.login(user, password)
-            server.send_message(msg)
+        if settings.smtp_port == 465:
+            with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port) as server:
+                server.login(user, password)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+                server.starttls()
+                server.login(user, password)
+                server.send_message(msg)
 
         logger.info("Email sent to %s (%s)", to, subject)
         return True
