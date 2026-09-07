@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,6 +7,8 @@ from app.auth.dependencies import get_current_user
 from app.faqs import service
 from app.faqs.schemas import FaqCreate, FaqUpdate, FaqResponse
 from app.admin.service import log_activity
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/faqs", tags=["faqs"])
 
@@ -25,7 +28,13 @@ def create_faq(body: FaqCreate, _user: dict = Depends(get_current_user)):
     data = body.model_dump(exclude_none=True)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
-    result = service.create(data)
+    try:
+        result = service.create(data)
+    except Exception as e:
+        logger.error("Failed to create FAQ: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to save FAQ: {e}")
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to save FAQ")
     log_activity(_user["email"], "create", "faq", result["id"], result["question"][:50])
     return result
 
@@ -37,7 +46,11 @@ def update_faq(id: str, body: FaqUpdate, _user: dict = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
-    result = service.update(id, data)
+    try:
+        result = service.update(id, data)
+    except Exception as e:
+        logger.error("Failed to update FAQ %s: %s", id, e)
+        raise HTTPException(status_code=500, detail=f"Failed to update FAQ: {e}")
     if not result:
         raise HTTPException(status_code=404, detail="FAQ not found")
     log_activity(_user["email"], "update", "faq", result["id"], result["question"][:50])
