@@ -91,8 +91,8 @@ def get_stats():
     stats["applications"] = safe_count("job_applications")
     stats["faqs_active"] = safe_count("faqs", {"active": True})
     stats["faqs_inactive"] = safe_count("faqs", {"active": False})
-    stats["playlists"] = safe_count("academy_playlists")
-    stats["videos"] = safe_count("academy_videos")
+    stats["playlists"] = safe_count("playlists")
+    stats["videos"] = safe_count("videos")
 
     try:
         chat_result = db.table("chat_messages").select("id", count="exact").is_("parent_id", "null").execute()

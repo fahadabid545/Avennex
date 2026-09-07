@@ -27,7 +27,7 @@ def get_thumbnail(youtube_url: str) -> str:
 def list_playlists():
     db = get_supabase()
     result = (
-        db.table("academy_playlists")
+        db.table("playlists")
         .select("*")
         .order("display_order")
         .execute()
@@ -38,7 +38,7 @@ def list_playlists():
 
     playlist_ids = [p["id"] for p in playlists]
     videos = (
-        db.table("academy_videos")
+        db.table("videos")
         .select("id, playlist_id, youtube_url, display_order")
         .in_("playlist_id", playlist_ids)
         .order("display_order")
@@ -63,7 +63,7 @@ def list_playlists():
 def list_playlists_admin():
     db = get_supabase()
     result = (
-        db.table("academy_playlists")
+        db.table("playlists")
         .select("*")
         .order("display_order")
         .execute()
@@ -74,7 +74,7 @@ def list_playlists_admin():
 
     playlist_ids = [p["id"] for p in playlists]
     videos = (
-        db.table("academy_videos")
+        db.table("videos")
         .select("id, playlist_id")
         .in_("playlist_id", playlist_ids)
         .execute()
@@ -94,7 +94,7 @@ def list_playlists_admin():
 def get_playlist_by_slug(slug: str):
     db = get_supabase()
     result = (
-        db.table("academy_playlists")
+        db.table("playlists")
         .select("*")
         .eq("slug", slug)
         .execute()
@@ -104,7 +104,7 @@ def get_playlist_by_slug(slug: str):
 
     playlist = result.data[0]
     videos = (
-        db.table("academy_videos")
+        db.table("videos")
         .select("*")
         .eq("playlist_id", playlist["id"])
         .order("display_order")
@@ -120,7 +120,7 @@ def get_playlist_by_slug(slug: str):
 
 def get_playlist_by_id(playlist_id: str):
     db = get_supabase()
-    result = db.table("academy_playlists").select("*").eq("id", playlist_id).execute()
+    result = db.table("playlists").select("*").eq("id", playlist_id).execute()
     return result.data[0] if result.data else None
 
 
@@ -128,28 +128,28 @@ def create_playlist(data: dict):
     db = get_supabase()
     if not data.get("slug"):
         data["slug"] = slugify(data["title"])
-    result = db.table("academy_playlists").insert(data).execute()
+    result = db.table("playlists").insert(data).execute()
     return result.data[0] if result.data else None
 
 
 def update_playlist(playlist_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    result = db.table("academy_playlists").update(data).eq("id", playlist_id).execute()
+    result = db.table("playlists").update(data).eq("id", playlist_id).execute()
     return result.data[0] if result.data else None
 
 
 def delete_playlist(playlist_id: str):
     db = get_supabase()
-    db.table("academy_videos").delete().eq("playlist_id", playlist_id).execute()
-    result = db.table("academy_playlists").delete().eq("id", playlist_id).execute()
+    db.table("videos").delete().eq("playlist_id", playlist_id).execute()
+    result = db.table("playlists").delete().eq("id", playlist_id).execute()
     return bool(result.data)
 
 
 def create_video(data: dict):
     db = get_supabase()
     data["thumbnail_url"] = get_thumbnail(data.get("youtube_url", ""))
-    result = db.table("academy_videos").insert(data).execute()
+    result = db.table("videos").insert(data).execute()
     return result.data[0] if result.data else None
 
 
@@ -158,17 +158,17 @@ def update_video(video_id: str, data: dict):
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
     if "youtube_url" in data:
         data["thumbnail_url"] = get_thumbnail(data["youtube_url"])
-    result = db.table("academy_videos").update(data).eq("id", video_id).execute()
+    result = db.table("videos").update(data).eq("id", video_id).execute()
     return result.data[0] if result.data else None
 
 
 def delete_video(video_id: str):
     db = get_supabase()
-    result = db.table("academy_videos").delete().eq("id", video_id).execute()
+    result = db.table("videos").delete().eq("id", video_id).execute()
     return bool(result.data)
 
 
 def get_video_by_id(video_id: str):
     db = get_supabase()
-    result = db.table("academy_videos").select("*").eq("id", video_id).execute()
+    result = db.table("videos").select("*").eq("id", video_id).execute()
     return result.data[0] if result.data else None
