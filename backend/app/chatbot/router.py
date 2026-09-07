@@ -73,6 +73,11 @@ def chat(body: ChatRequest, request: Request, x_chat_token: Optional[str] = Head
         logger.error("Chatbot chat failed: %s", e)
         raise HTTPException(status_code=500, detail="Failed to generate response")
 
+    try:
+        get_supabase().table("chatbot_requests").insert({}).execute()
+    except Exception as e:
+        logger.warning("Failed to log chatbot request: %s", e)
+
     new_token, new_session_id = create_chat_session_token(session_id)
 
     return ChatResponse(

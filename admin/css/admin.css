@@ -1009,6 +1009,19 @@ a {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.dash-section {
+  margin-bottom: 40px;
+}
+
+.dash-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
 .dash-range-bar {
   display: flex;
   gap: 8px;

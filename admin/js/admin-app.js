@@ -3074,30 +3074,107 @@
           ${rangeOptions.map((d) => `<button class="btn btn-sm ${d === dashChartDays ? 'btn-primary' : 'btn-secondary'}" data-range="${d}">${d === 1 ? '1 Day' : d + ' Days'}</button>`).join('')}
         </div>
 
-        <div class="dash-charts dash-charts-6">
-          <div class="dash-chart-card">
-            <h3>User Chat Messages</h3>
-            <canvas id="chart-user-chats"></canvas>
+        <div class="dash-section">
+          <h2 class="dash-section-title">Engagement</h2>
+          <div class="dash-grid">
+            <div class="dash-card">
+              <div class="dash-card-label">Engagement Rate</div>
+              <div class="dash-card-value">${s.engagement_rate || 0}%</div>
+              <div class="dash-card-sub">messages replied to</div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-card-label">Chatbot Documents</div>
+              <div class="dash-card-value">${s.chatbot_docs_ready || 0}</div>
+              <div class="dash-card-sub">ready, ${s.chatbot_docs_failed || 0} failed</div>
+            </div>
           </div>
-          <div class="dash-chart-card">
-            <h3>Job Applications</h3>
-            <canvas id="chart-applications"></canvas>
+          <div class="dash-charts">
+            <div class="dash-chart-card">
+              <h3>User Chat Messages</h3>
+              <canvas id="chart-user-chats"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Product Chat Messages</h3>
+              <canvas id="chart-product-chats"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Chatbot API Usage</h3>
+              <canvas id="chart-chatbot-usage"></canvas>
+            </div>
           </div>
-          <div class="dash-chart-card">
-            <h3>Launchpad Comments</h3>
-            <canvas id="chart-lp-comments"></canvas>
+        </div>
+
+        <div class="dash-section">
+          <h2 class="dash-section-title">Content &amp; Growth</h2>
+          <div class="dash-charts">
+            <div class="dash-chart-card">
+              <h3>Content Published</h3>
+              <canvas id="chart-content"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Growth Trend</h3>
+              <canvas id="chart-growth"></canvas>
+            </div>
           </div>
-          <div class="dash-chart-card">
-            <h3>Admin Actions</h3>
-            <canvas id="chart-activity"></canvas>
+        </div>
+
+        <div class="dash-section">
+          <h2 class="dash-section-title">Jobs &amp; Applications</h2>
+          <div class="dash-grid">
+            <div class="dash-card">
+              <div class="dash-card-label">Applications This Month</div>
+              <div class="dash-card-value">${s.applications_this_month || 0}</div>
+              <div class="dash-card-sub">calendar month to date</div>
+            </div>
           </div>
-          <div class="dash-chart-card">
-            <h3>Content Published</h3>
-            <canvas id="chart-content"></canvas>
+          <div class="dash-charts">
+            <div class="dash-chart-card">
+              <h3>Applications by Job</h3>
+              <canvas id="chart-apps-by-job"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Application Trend</h3>
+              <canvas id="chart-applications"></canvas>
+            </div>
           </div>
-          <div class="dash-chart-card">
-            <h3>Product Chat Messages</h3>
-            <canvas id="chart-product-chats"></canvas>
+        </div>
+
+        <div class="dash-section">
+          <h2 class="dash-section-title">Academy</h2>
+          <div class="dash-grid">
+            <div class="dash-card">
+              <div class="dash-card-label">Total Videos Published</div>
+              <div class="dash-card-value">${s.videos || 0}</div>
+              <div class="dash-card-sub">across ${s.playlists || 0} playlists</div>
+            </div>
+          </div>
+          <div class="dash-charts">
+            <div class="dash-chart-card">
+              <h3>Most Popular Playlist</h3>
+              <canvas id="chart-popular-playlists"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Academy Content Growth</h3>
+              <canvas id="chart-academy-growth"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-section">
+          <h2 class="dash-section-title">Activity Patterns</h2>
+          <div class="dash-charts">
+            <div class="dash-chart-card">
+              <h3>Peak Activity Hours</h3>
+              <canvas id="chart-peak-hours"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Admin Actions by Module</h3>
+              <canvas id="chart-actions-by-module"></canvas>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Launchpad Comments</h3>
+              <canvas id="chart-lp-comments"></canvas>
+            </div>
           </div>
         </div>
 
@@ -3155,12 +3232,13 @@
           dashChartInstances.push(ch);
         }
 
-        function barChart(canvasId, data, color) {
-          const values = labels.map((d) => data[d] || 0);
-          const ch = new Chart(document.getElementById(canvasId), {
+        function categoryBarChart(canvasId, catLabels, values, color) {
+          const el = document.getElementById(canvasId);
+          if (!el) return;
+          const ch = new Chart(el, {
             type: 'bar',
             data: {
-              labels: shortLabels,
+              labels: catLabels,
               datasets: [{ data: values, backgroundColor: color, borderRadius: 3 }],
             },
             options: chartOpts,
@@ -3180,9 +3258,12 @@
         }
 
         lineChart('chart-user-chats', c.user_chats || {}, '#3b82f6');
-        lineChart('chart-applications', c.applications || {}, '#8b5cf6');
+        lineChart('chart-product-chats', c.product_chats || {}, '#10b981');
+        lineChart('chart-chatbot-usage', c.chatbot_usage || {}, '#ec4899');
         lineChart('chart-lp-comments', c.launchpad_comments || {}, '#06b6d4');
-        barChart('chart-activity', c.activity || {}, '#f59e0b');
+        lineChart('chart-applications', c.applications || {}, '#8b5cf6');
+        lineChart('chart-growth', c.growth_trend || {}, '#22c55e');
+        lineChart('chart-academy-growth', c.academy_growth || {}, '#f97316');
 
         const cp = c.content_published || {};
         const stackOpts = {
@@ -3201,13 +3282,24 @@
               { label: 'Blogs', data: labels.map((d) => (cp.blogs || {})[d] || 0), backgroundColor: '#10b981', borderRadius: 3 },
               { label: 'Products', data: labels.map((d) => (cp.products || {})[d] || 0), backgroundColor: '#3b82f6', borderRadius: 3 },
               { label: 'Launchpad', data: labels.map((d) => (cp.launchpad || {})[d] || 0), backgroundColor: '#f59e0b', borderRadius: 3 },
+              { label: 'Jobs', data: labels.map((d) => (cp.jobs || {})[d] || 0), backgroundColor: '#ec4899', borderRadius: 3 },
             ],
           },
           options: stackOpts,
         });
         dashChartInstances.push(contentChart);
 
-        lineChart('chart-product-chats', c.product_chats || {}, '#10b981');
+        const jobApps = c.applications_by_job || [];
+        categoryBarChart('chart-apps-by-job', jobApps.map((j) => j.job), jobApps.map((j) => j.count), '#8b5cf6');
+
+        const playlists = c.popular_playlists || [];
+        categoryBarChart('chart-popular-playlists', playlists.map((p) => p.playlist), playlists.map((p) => p.count), '#f97316');
+
+        const hourLabels = Array.from({ length: 24 }, (_, i) => i + ':00');
+        categoryBarChart('chart-peak-hours', hourLabels, c.peak_hours || new Array(24).fill(0), '#f59e0b');
+
+        const modules = c.admin_actions_by_module || {};
+        categoryBarChart('chart-actions-by-module', Object.keys(modules), Object.values(modules), '#3b82f6');
       }
 
       if (!jobsCleanedUp) {

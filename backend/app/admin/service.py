@@ -133,6 +133,26 @@ def get_stats():
         stats["emails_enabled"] = True
         stats["chat_show_details"] = True
 
+    total_messages = stats.get("chat_total", 0)
+    replied_messages = total_messages - stats.get("chat_unreplied", 0)
+    stats["engagement_rate"] = round((replied_messages / total_messages) * 100, 1) if total_messages else 0
+
+    stats["chatbot_docs_ready"] = safe_count("chatbot_documents", {"status": "ready"})
+    stats["chatbot_docs_failed"] = safe_count("chatbot_documents", {"status": "failed"})
+
+    try:
+        now = datetime.now(timezone.utc)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+        result = (
+            db.table("job_applications")
+            .select("id", count="exact")
+            .gte("created_at", month_start)
+            .execute()
+        )
+        stats["applications_this_month"] = result.count or 0
+    except Exception:
+        stats["applications_this_month"] = 0
+
     return stats
 
 
@@ -161,21 +181,110 @@ def get_charts(days: int = 7):
     charts["applications"] = daily_counts("job_applications")
     charts["launchpad_comments"] = daily_counts("launchpad_comments")
     charts["activity"] = daily_counts("activity_log")
+    charts["chatbot_usage"] = daily_counts("chatbot_requests")
+    charts["academy_growth"] = daily_counts("videos")
 
     try:
         blogs_data = daily_counts("blogs", filters={"status": "published"})
         products_data = daily_counts("products")
         launchpad_data = daily_counts("launchpad_entries")
-        all_days = set(list(blogs_data.keys()) + list(products_data.keys()) + list(launchpad_data.keys()))
+        jobs_data = daily_counts("jobs")
+        all_days = sorted(set(
+            list(blogs_data.keys()) + list(products_data.keys())
+            + list(launchpad_data.keys()) + list(jobs_data.keys())
+        ))
         charts["content_published"] = {
             "blogs": blogs_data,
             "products": products_data,
             "launchpad": launchpad_data,
-            "days": sorted(all_days),
+            "jobs": jobs_data,
+            "days": all_days,
         }
+
+        day_labels = [(now - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days - 1, -1, -1)]
+        running_total = 0
+        growth_trend = {}
+        for day in day_labels:
+            running_total += (
+                blogs_data.get(day, 0) + products_data.get(day, 0)
+                + launchpad_data.get(day, 0) + jobs_data.get(day, 0)
+            )
+            growth_trend[day] = running_total
+        charts["growth_trend"] = growth_trend
     except Exception:
-        charts["content_published"] = {"blogs": {}, "products": {}, "launchpad": {}, "days": []}
+        charts["content_published"] = {"blogs": {}, "products": {}, "launchpad": {}, "jobs": {}, "days": []}
+        charts["growth_trend"] = {}
 
     charts["product_chats"] = daily_counts("product_chat_messages")
+
+    try:
+        jobs_result = db.table("jobs").select("id, title").eq("status", "open").execute()
+        job_map = {j["id"]: j["title"] for j in (jobs_result.data or [])}
+        apps_result = (
+            db.table("job_applications")
+            .select("job_id")
+            .in_("job_id", list(job_map.keys()))
+            .execute()
+        ) if job_map else None
+        counts = {}
+        for row in (apps_result.data if apps_result else []):
+            counts[row["job_id"]] = counts.get(row["job_id"], 0) + 1
+        charts["applications_by_job"] = [
+            {"job": title, "count": counts.get(job_id, 0)}
+            for job_id, title in job_map.items()
+        ]
+    except Exception:
+        charts["applications_by_job"] = []
+
+    try:
+        playlists_result = db.table("playlists").select("id, title").execute()
+        playlist_map = {p["id"]: p["title"] for p in (playlists_result.data or [])}
+        videos_result = db.table("videos").select("playlist_id").execute()
+        counts = {}
+        for row in (videos_result.data or []):
+            pid = row.get("playlist_id")
+            counts[pid] = counts.get(pid, 0) + 1
+        ranked = sorted(
+            ({"playlist": playlist_map.get(pid, "Unknown"), "count": count} for pid, count in counts.items()),
+            key=lambda x: x["count"],
+            reverse=True,
+        )
+        charts["popular_playlists"] = ranked[:10]
+    except Exception:
+        charts["popular_playlists"] = []
+
+    try:
+        hour_counts = [0] * 24
+
+        def add_hours(table, date_col="created_at", filters=None):
+            q = db.table(table).select(date_col).gte(date_col, since)
+            if filters:
+                for k, v in filters.items():
+                    q = q.eq(k, v)
+            for row in (q.execute().data or []):
+                hour = int(row[date_col][11:13])
+                hour_counts[hour] += 1
+
+        add_hours("chat_messages")
+        add_hours("activity_log")
+        add_hours("job_applications")
+        charts["peak_hours"] = hour_counts
+    except Exception:
+        charts["peak_hours"] = [0] * 24
+
+    try:
+        result = (
+            db.table("activity_log")
+            .select("entity_type")
+            .gte("created_at", since)
+            .execute()
+        )
+        counts = {}
+        for row in (result.data or []):
+            et = row.get("entity_type", "other")
+            counts[et] = counts.get(et, 0) + 1
+        charts["admin_actions_by_module"] = counts
+    except Exception:
+        charts["admin_actions_by_module"] = {}
 
     return charts

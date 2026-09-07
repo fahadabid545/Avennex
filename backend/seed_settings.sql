@@ -23,4 +23,12 @@ ALTER TABLE faqs ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
 ALTER TABLE faqs ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 ALTER TABLE faqs ADD COLUMN IF NOT EXISTS last_edited_by text;
 ALTER TABLE faqs ADD COLUMN IF NOT EXISTS last_edited_at timestamptz;
+
+-- Table to track chatbot API usage for analytics
+CREATE TABLE IF NOT EXISTS chatbot_requests (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now()
+);
+ALTER TABLE chatbot_requests DISABLE ROW LEVEL SECURITY;
+
 NOTIFY pgrst, 'reload schema';
