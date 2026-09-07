@@ -2073,23 +2073,27 @@
     try {
       const playlists = await AdminAPI.request('/api/academy/playlists/admin/all');
       cachedItems.academy = playlists;
-      if (!playlists || !playlists.length) return showEmpty('No playlists yet.');
 
-      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `
-        <table class="admin-table">
-          <thead><tr><th>Title</th><th>Videos</th><th>Order</th><th></th></tr></thead>
-          <tbody>${playlists.map((p) => `
-            <tr>
-              <td class="row-title">${esc(p.title)}</td>
-              <td><button class="btn btn-secondary btn-sm" data-videos="${p.id}">${p.video_count || 0} videos</button></td>
-              <td>${p.display_order ?? 0}</td>
-              <td class="row-actions">
-                <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete-playlist="${p.id}">Delete</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
+      content.innerHTML = listHeader('Academy Playlists', 'New Playlist');
+      if (!playlists || !playlists.length) {
+        content.innerHTML += '<div class="admin-empty">No playlists yet.</div>';
+      } else {
+        content.innerHTML += `
+          <table class="admin-table">
+            <thead><tr><th>Title</th><th>Videos</th><th>Order</th><th></th></tr></thead>
+            <tbody>${playlists.map((p) => `
+              <tr>
+                <td class="row-title">${esc(p.title)}</td>
+                <td><button class="btn btn-secondary btn-sm" data-videos="${p.id}">${p.video_count || 0} videos</button></td>
+                <td>${p.display_order ?? 0}</td>
+                <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
+                  <button class="btn btn-danger btn-sm" data-delete-playlist="${p.id}">Delete</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
 
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
@@ -2114,8 +2118,10 @@
           } catch (err) { alert(err.message); }
         }
       });
-    } catch {
-      showEmpty('Failed to load playlists.');
+    } catch (err) {
+      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `<div class="admin-empty">Failed to load playlists: ${esc(err.message)}</div>`;
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
     }
   }
 
@@ -2205,8 +2211,12 @@
           } catch (err) { alert(err.message); }
         }
       });
-    } catch {
-      showEmpty('Failed to load videos.');
+    } catch (err) {
+      content.innerHTML = `<div class="form-card" style="max-width:900px">
+        <div class="form-card-header"><button class="btn btn-secondary btn-sm" id="back-btn">Back</button></div>
+        <div class="admin-empty">Failed to load videos: ${esc(err.message)}</div>
+      </div>`;
+      document.getElementById('back-btn').addEventListener('click', loadAcademy);
     }
   }
 

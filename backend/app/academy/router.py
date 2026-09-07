@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.dependencies import get_current_user
@@ -8,17 +10,27 @@ from app.academy.schemas import (
 )
 from app.admin.service import log_activity
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/academy", tags=["academy"])
 
 
 @router.get("/playlists")
 def list_playlists():
-    return service.list_playlists()
+    try:
+        return service.list_playlists()
+    except Exception as e:
+        logger.error("Failed to list playlists: %s", e)
+        return []
 
 
 @router.get("/playlists/admin/all")
 def list_playlists_admin(_user: dict = Depends(get_current_user)):
-    return service.list_playlists_admin()
+    try:
+        return service.list_playlists_admin()
+    except Exception as e:
+        logger.error("Failed to list admin playlists: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to load playlists: {e}")
 
 
 @router.get("/playlists/{slug}")
@@ -31,7 +43,13 @@ def get_playlist(slug: str):
 
 @router.post("/playlists", status_code=status.HTTP_201_CREATED)
 def create_playlist(body: PlaylistCreate, _user: dict = Depends(get_current_user)):
-    result = service.create_playlist(body.model_dump(exclude_none=True))
+    try:
+        result = service.create_playlist(body.model_dump(exclude_none=True))
+    except Exception as e:
+        logger.error("Failed to create playlist: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to save playlist: {e}")
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to save playlist")
     log_activity(_user["email"], "create", "playlist", result["id"], result["title"])
     return result
 
@@ -58,7 +76,13 @@ def delete_playlist(id: str, _user: dict = Depends(get_current_user)):
 
 @router.post("/videos", status_code=status.HTTP_201_CREATED)
 def create_video(body: VideoCreate, _user: dict = Depends(get_current_user)):
-    result = service.create_video(body.model_dump(exclude_none=True))
+    try:
+        result = service.create_video(body.model_dump(exclude_none=True))
+    except Exception as e:
+        logger.error("Failed to create video: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to save video: {e}")
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to save video")
     log_activity(_user["email"], "create", "video", result["id"], result["title"])
     return result
 
