@@ -23,6 +23,7 @@ def is_email_enabled() -> bool:
 def send_email(to: str, subject: str, body_html: str, email_type: str = "general") -> bool:
     settings = get_settings()
     if not settings.smtp_host:
+        logger.warning("Email to %s not sent: SMTP_HOST is not configured", to)
         return False
 
     if email_type == "careers":
@@ -35,6 +36,10 @@ def send_email(to: str, subject: str, body_html: str, email_type: str = "general
         from_addr = settings.smtp_from_general or settings.smtp_from_email
 
     if not user or not password:
+        logger.warning(
+            "Email to %s not sent: SMTP credentials missing for type '%s' (need SMTP_GENERAL_USER/SMTP_GENERAL_PASSWORD or SMTP_USER/SMTP_PASSWORD)",
+            to, email_type,
+        )
         return False
 
     try:
@@ -49,7 +54,14 @@ def send_email(to: str, subject: str, body_html: str, email_type: str = "general
             server.login(user, password)
             server.send_message(msg)
 
+        logger.info("Email sent to %s (%s)", to, subject)
         return True
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error("Email send failed to %s: SMTP authentication rejected: %s", to, e)
+        return False
+    except (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected, OSError) as e:
+        logger.error("Email send failed to %s: could not connect to SMTP server %s:%s: %s", to, settings.smtp_host, settings.smtp_port, e)
+        return False
     except Exception as e:
         logger.error("Email send failed to %s: %s", to, e)
         return False

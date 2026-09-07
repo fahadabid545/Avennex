@@ -28,7 +28,12 @@
       settings: loadSettings,
       team: loadTeam,
     };
-    if (loaders[mod]) loaders[mod]();
+    if (!loaders[mod]) return;
+    try {
+      loaders[mod]();
+    } catch (err) {
+      content.innerHTML = `<div class="admin-empty">Failed to load this section: ${esc(err.message)}</div>`;
+    }
   }
 
   let contentListeners = [];
