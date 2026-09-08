@@ -9,6 +9,7 @@ from typing import Optional
 from app.auth.dependencies import get_current_user
 from app.database import get_supabase
 from app.settings.service import get_setting
+from app.storage import ftp_service
 from app.chatbot.schemas import ChatRequest, ChatResponse, DocumentResponse, BackupStatusResponse
 from app.chatbot.service import (
     get_chatbot_service,
@@ -117,6 +118,11 @@ async def upload_document(
         "chunk_count": 0,
         "status": "processing",
     }).execute()
+
+    try:
+        ftp_service.upload_file(content, "private_uploads/chatbot_docs", f"{doc_id}-{filename}")
+    except Exception as e:
+        logger.warning("Failed to store source file for %s on FTP: %s", filename, e)
 
     try:
         logger.info("Extracting text from %s", filename)

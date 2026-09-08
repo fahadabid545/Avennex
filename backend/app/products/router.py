@@ -1,21 +1,21 @@
 import logging
+import time
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 
 from app.auth.dependencies import get_current_user
-from app.database import get_supabase
 from app.products import service
 from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.admin.service import log_activity
+from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
-DOCS_BUCKET = "product-docs"
-MAX_DOC_SIZE = 20 * 1024 * 1024
+MAX_DOC_SIZE = 10 * 1024 * 1024
 
 
 @router.get("", response_model=list[ProductResponse])
@@ -88,25 +88,22 @@ async def upload_document(
     file: UploadFile = File(...),
     _user: dict = Depends(get_current_user),
 ):
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
-
     content = await file.read()
     if len(content) > MAX_DOC_SIZE:
-        raise HTTPException(status_code=400, detail="File must be under 20MB")
+        raise HTTPException(status_code=400, detail="File must be under 10MB")
 
-    db = get_supabase()
+    if not content[:5].startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
     filename = file.filename or "document.pdf"
-    path = f"{id}/{uuid.uuid4().hex}-{filename}"
+    remote_filename = f"{uuid.uuid4().hex[:8]}-{int(time.time())}-{filename}"
+    remote_dir = f"public_html/docs/products/{id}"
 
-    try:
-        db.storage.from_(DOCS_BUCKET).upload(path, content, {"content-type": "application/pdf"})
-        url = db.storage.from_(DOCS_BUCKET).get_public_url(path)
-    except Exception as e:
-        logger.error("Failed to upload product document: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to upload document: {e}")
+    remote_path = ftp_service.upload_file(content, remote_dir, remote_filename)
+    if not remote_path:
+        raise HTTPException(status_code=500, detail="Failed to upload document")
 
-    return {"success": True, "name": filename, "url": url}
+    return {"success": True, "name": filename, "url": ftp_service.public_url(remote_path)}
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

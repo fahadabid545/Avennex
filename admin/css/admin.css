@@ -765,6 +765,83 @@ a {
   word-break: break-word;
 }
 
+.review-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 24px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.review-section-title:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* PDF viewer (resume preview) */
+
+.pdf-viewer-wrap {
+  position: relative;
+  margin-top: 12px;
+}
+
+.pdf-viewer {
+  display: none;
+  position: relative;
+}
+
+.pdf-viewer.is-active {
+  display: block;
+}
+
+.pdf-track {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 16px 0;
+  scrollbar-width: thin;
+}
+
+.pdf-page {
+  scroll-snap-align: center;
+  flex-shrink: 0;
+  max-height: 75vh;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: #fff;
+}
+
+.pdf-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.pdf-nav:hover {
+  border-color: var(--accent);
+}
+
+.pdf-prev {
+  left: -8px;
+}
+
+.pdf-next {
+  right: -8px;
+}
+
 /* Field badges */
 
 .field-req {

@@ -5,6 +5,10 @@
 
   const SITE_URL = 'https://avennex.com';
 
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+  }
+
   navLinks.forEach((link) => {
     link.addEventListener('click', () => {
       navLinks.forEach((l) => l.classList.remove('active'));
@@ -475,13 +479,6 @@
         break;
       }
       case 'blockquote': before = '<blockquote>'; after = '</blockquote>'; break;
-      case 'image': {
-        const src = prompt('Image URL:');
-        if (!src) return;
-        const alt = prompt('Alt text:', '');
-        insert = `<img src="${src}" alt="${alt || ''}">`;
-        break;
-      }
       case 'code': before = '<pre><code>'; after = '</code></pre>'; break;
     }
 
@@ -497,6 +494,94 @@
     }
     textarea.focus();
     textarea.dispatchEvent(new Event('input'));
+  }
+
+  function triggerImageUpload(textarea, context) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+
+      const cursorPos = textarea.selectionStart;
+      const placeholder = '[Uploading image...]';
+      textarea.value = textarea.value.substring(0, cursorPos) + placeholder + textarea.value.substring(textarea.selectionEnd);
+      textarea.dispatchEvent(new Event('input'));
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('context', context);
+        const token = AdminAPI.getToken();
+        const res = await fetch('https://avennex.onrender.com/api/uploads/image', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData,
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Upload failed');
+        }
+        const result = await res.json();
+        const alt = prompt('Alt text:', '') || '';
+        const imgTag = `<img src="${result.url}" alt="${esc(alt)}">`;
+        const idx = textarea.value.indexOf(placeholder);
+        if (idx !== -1) {
+          textarea.value = textarea.value.substring(0, idx) + imgTag + textarea.value.substring(idx + placeholder.length);
+        } else {
+          textarea.value += imgTag;
+        }
+      } catch (err) {
+        const idx = textarea.value.indexOf(placeholder);
+        if (idx !== -1) {
+          textarea.value = textarea.value.substring(0, idx) + textarea.value.substring(idx + placeholder.length);
+        }
+        alert(err.message);
+      }
+      textarea.dispatchEvent(new Event('input'));
+    });
+    input.click();
+  }
+
+  function handleToolbarClick(e, textarea, context) {
+    const cmd = e.target.closest('[data-cmd]');
+    if (!cmd) return;
+    if (cmd.dataset.cmd === 'image') {
+      triggerImageUpload(textarea, context);
+    } else {
+      blogToolbarAction(textarea, cmd.dataset.cmd);
+    }
+  }
+
+  function pickAndUploadImage(context, onSuccess) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('context', context);
+        const token = AdminAPI.getToken();
+        const res = await fetch('https://avennex.onrender.com/api/uploads/image', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData,
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Upload failed');
+        }
+        const result = await res.json();
+        onSuccess(result.url);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+    input.click();
   }
 
   function blogForm(item) {
@@ -604,10 +689,7 @@
             textarea.addEventListener('input', updatePreview);
             updatePreview();
 
-            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
-              const cmd = e.target.closest('[data-cmd]');
-              if (cmd) blogToolbarAction(textarea, cmd.dataset.cmd);
-            });
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => handleToolbarClick(e, textarea, 'blog'));
           },
         },
         {
@@ -865,8 +947,7 @@
                 <td>${formatDate(a.created_at)}</td>
                 <td>${a.email_status ? `<span class="email-status email-status-${a.email_status}"></span>${a.email_status}` : '<span class="email-status email-status-skipped"></span>'}</td>
                 <td>
-                  <button class="btn btn-secondary btn-sm" data-resume="${esc(a.id)}">View</button>
-                  ${a.resume_url ? `<a href="${esc(a.resume_url)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-left:4px">PDF</a>` : ''}
+                  <button class="btn btn-secondary btn-sm" data-view-app="${esc(a.id)}">View</button>
                 </td>
                 <td class="row-actions">
                   <button class="btn btn-danger btn-sm" data-delete-app="${esc(a.id)}">Delete</button>
@@ -881,26 +962,9 @@
       const appMap = {};
       apps.forEach((a) => { appMap[a.id] = a; });
       addContentListener('click', async (e) => {
-        const rid = e.target.dataset.resume;
-        if (rid && appMap[rid]) {
-          const a = appMap[rid];
-          const overlay = document.createElement('div');
-          overlay.className = 'confirm-overlay';
-          overlay.innerHTML = `
-            <div class="confirm-box" style="max-width:600px;max-height:80vh;overflow-y:auto">
-              <h3 style="margin-bottom:12px">${esc(a.name)}</h3>
-              <p style="margin-bottom:8px;color:var(--text-muted)">${esc(a.email)}</p>
-              <h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Resume</h4>
-              <pre style="white-space:pre-wrap;font-size:0.82rem;color:var(--text-secondary);background:var(--bg-secondary);padding:12px;border-radius:8px">${esc(a.resume_text)}</pre>
-              ${a.cover_letter ? `<h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Cover Letter</h4><p style="font-size:0.85rem;color:var(--text-secondary)">${esc(a.cover_letter)}</p>` : ''}
-              ${a.custom_answers ? `<h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Custom Answers</h4><pre style="white-space:pre-wrap;font-size:0.82rem;color:var(--text-secondary);background:var(--bg-secondary);padding:12px;border-radius:8px">${esc(JSON.stringify(a.custom_answers, null, 2))}</pre>` : ''}
-              ${a.resume_url ? `<p style="margin-top:12px"><a href="${esc(a.resume_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Download Resume PDF</a></p>` : ''}
-              <div class="confirm-actions" style="margin-top:16px"><button class="btn btn-secondary btn-sm" data-action="cancel">Close</button></div>
-            </div>`;
-          document.body.appendChild(overlay);
-          overlay.addEventListener('click', (ev) => {
-            if (ev.target.dataset.action === 'cancel') document.body.removeChild(overlay);
-          });
+        const viewId = e.target.dataset.viewApp;
+        if (viewId && appMap[viewId]) {
+          showApplicationDetail(appMap[viewId], job, jobId);
         }
 
         const delAppId = e.target.dataset.deleteApp;
@@ -915,6 +979,153 @@
       });
     } catch {
       showEmpty('Failed to load applications.');
+    }
+  }
+
+  async function fetchResumeBlob(appId) {
+    const token = AdminAPI.getToken();
+    const res = await fetch(`https://avennex.onrender.com/api/jobs/applications/${appId}/resume`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to load resume');
+    return res.blob();
+  }
+
+  function buildApplicationPrintHtml(app, job) {
+    const answers = app.custom_answers && typeof app.custom_answers === 'object' ? Object.entries(app.custom_answers) : [];
+    return `
+      <html><head><title>Application: ${esc(app.name)}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:32px;color:#111;max-width:800px;margin:0 auto}
+        h1{font-size:1.4rem;margin-bottom:4px} h2{font-size:1.1rem;margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}
+        .meta{color:#555;margin-bottom:16px} .qa{margin-bottom:14px} .qa .q{font-weight:600} .qa .a{margin-top:2px}
+        p{white-space:pre-wrap;line-height:1.5}
+      </style></head><body>
+        <h1>${esc(job ? job.title : 'Job Application')}</h1>
+        <div class="meta">Applicant: ${esc(app.name)} &middot; ${esc(app.email)} &middot; ${formatDate(app.created_at)}</div>
+        ${job ? `
+          <h2>Job Description</h2><p>${esc(job.description || '')}</p>
+          ${job.requirements ? `<h2>Requirements</h2><p>${esc(job.requirements)}</p>` : ''}
+          ${job.good_to_have ? `<h2>Good to Have</h2><p>${esc(job.good_to_have)}</p>` : ''}
+        ` : ''}
+        <h2>Applicant</h2>
+        <div class="qa"><div class="q">Name</div><div class="a">${esc(app.name)}</div></div>
+        <div class="qa"><div class="q">Email</div><div class="a">${esc(app.email)}</div></div>
+        ${app.cover_letter ? `<div class="qa"><div class="q">Cover Letter</div><div class="a">${esc(app.cover_letter)}</div></div>` : ''}
+        ${answers.map(([q, a]) => `<div class="qa"><div class="q">${esc(q)}</div><div class="a">${esc(a)}</div></div>`).join('')}
+      </body></html>`;
+  }
+
+  function showApplicationDetail(app, job, jobId) {
+    const answers = app.custom_answers && typeof app.custom_answers === 'object' ? Object.entries(app.custom_answers) : [];
+    content.innerHTML = `
+      <div class="form-card" style="max-width:900px">
+        <div class="form-card-header">
+          <button class="btn btn-secondary btn-sm" id="back-to-apps">Back</button>
+          <h2 class="form-card-title">Application: ${esc(app.name)}</h2>
+        </div>
+
+        <div class="app-detail-actions" style="display:flex;gap:8px;margin-bottom:20px">
+          <button class="btn btn-secondary btn-sm" id="download-application-btn">Download Application</button>
+          ${app.resume_url ? '<button class="btn btn-secondary btn-sm" id="download-resume-btn">Download Resume</button>' : ''}
+        </div>
+
+        ${job ? `
+        <h3 class="review-section-title">Job Details</h3>
+        <div class="review-row"><span class="review-label">Title</span><span class="review-value">${esc(job.title)}</span></div>
+        <div class="review-row"><span class="review-label">Description</span><span class="review-value">${esc(job.description || '')}</span></div>
+        ${job.requirements ? `<div class="review-row"><span class="review-label">Requirements</span><span class="review-value">${esc(job.requirements)}</span></div>` : ''}
+        ${job.good_to_have ? `<div class="review-row"><span class="review-label">Good to Have</span><span class="review-value">${esc(job.good_to_have)}</span></div>` : ''}
+        ` : ''}
+
+        <h3 class="review-section-title">Applicant</h3>
+        <div class="review-row"><span class="review-label">Name</span><span class="review-value">${esc(app.name)}</span></div>
+        <div class="review-row"><span class="review-label">Email</span><span class="review-value">${esc(app.email)}</span></div>
+        <div class="review-row"><span class="review-label">Applied</span><span class="review-value">${formatDate(app.created_at)}</span></div>
+        ${app.cover_letter ? `<div class="review-row"><span class="review-label">Cover Letter</span><span class="review-value">${esc(app.cover_letter)}</span></div>` : ''}
+        ${answers.map(([q, a]) => `<div class="review-row"><span class="review-label">${esc(q)}</span><span class="review-value">${esc(a)}</span></div>`).join('')}
+
+        ${app.resume_url ? `
+        <h3 class="review-section-title">Resume</h3>
+        <div class="pdf-viewer-wrap">
+          <div class="pdf-viewer is-active" id="resume-pdf-viewer">
+            <div class="pdf-track" id="resume-pdf-track"><p class="text-muted">Loading resume...</p></div>
+            <button type="button" class="pdf-nav pdf-prev" id="resume-pdf-prev" aria-label="Previous page">&#8249;</button>
+            <button type="button" class="pdf-nav pdf-next" id="resume-pdf-next" aria-label="Next page">&#8250;</button>
+          </div>
+        </div>` : '<div class="admin-empty">No resume was submitted with this application.</div>'}
+      </div>`;
+
+    document.getElementById('back-to-apps').addEventListener('click', () => showApplications(jobId));
+
+    document.getElementById('download-application-btn').addEventListener('click', () => {
+      const w = window.open('', '_blank');
+      if (!w) { alert('Please allow popups to download the application.'); return; }
+      w.document.write(buildApplicationPrintHtml(app, job));
+      w.document.close();
+      w.onload = () => w.print();
+    });
+
+    const downloadResumeBtn = document.getElementById('download-resume-btn');
+    if (downloadResumeBtn) {
+      downloadResumeBtn.addEventListener('click', async () => {
+        downloadResumeBtn.disabled = true;
+        try {
+          const blob = await fetchResumeBlob(app.id);
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${app.name.replace(/[^a-zA-Z0-9_-]/g, '_')}-resume.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert(err.message || 'Failed to download resume');
+        } finally {
+          downloadResumeBtn.disabled = false;
+        }
+      });
+    }
+
+    if (app.resume_url) {
+      const track = document.getElementById('resume-pdf-track');
+      fetchResumeBlob(app.id).then((blob) => {
+        const url = URL.createObjectURL(blob);
+        if (typeof pdfjsLib === 'undefined') {
+          track.innerHTML = '<p class="text-muted">PDF preview unavailable.</p>';
+          return;
+        }
+        pdfjsLib.getDocument(url).promise.then((pdf) => {
+          track.innerHTML = '';
+          let chain = Promise.resolve();
+          const renderPage = (n) => {
+            chain = chain.then(() => pdf.getPage(n).then((page) => {
+              const viewport = page.getViewport({ scale: 1.4 });
+              const canvas = document.createElement('canvas');
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              canvas.className = 'pdf-page';
+              const ctx = canvas.getContext('2d');
+              return page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+                track.appendChild(canvas);
+              });
+            }));
+          };
+          for (let n = 1; n <= pdf.numPages; n++) renderPage(n);
+        }).catch(() => {
+          track.innerHTML = '<p class="text-muted">Could not load the resume.</p>';
+        });
+      }).catch(() => {
+        track.innerHTML = '<p class="text-muted">Could not load the resume.</p>';
+      });
+
+      document.getElementById('resume-pdf-prev').addEventListener('click', () => {
+        track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
+      });
+      document.getElementById('resume-pdf-next').addEventListener('click', () => {
+        track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
+      });
     }
   }
 
@@ -1014,6 +1225,7 @@
                   <button type="button" data-cmd="link" title="Link">Link</button>
                   <button type="button" data-cmd="ul" title="Unordered List">List</button>
                   <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
+                  <button type="button" data-cmd="image" title="Image">Img</button>
                 </div>
                 <textarea id="f-description" class="blog-content-editor" rows="10">${esc(config.formData.description)}</textarea>
               </div>
@@ -1044,10 +1256,7 @@
             descTextarea.addEventListener('input', updateDescPreview);
             updateDescPreview();
 
-            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
-              const cmd = e.target.closest('[data-cmd]');
-              if (cmd) blogToolbarAction(descTextarea, cmd.dataset.cmd);
-            });
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => handleToolbarClick(e, descTextarea, 'blog'));
 
             renderJobQuestions();
             document.getElementById('add-question').addEventListener('click', () => {
@@ -1317,7 +1526,8 @@
     if (!list) return;
     list.innerHTML = productGallery.map((url, i) => `
       <div class="feature-row">
-        <input type="text" value="${esc(url)}" placeholder="https://..." data-idx="${i}">
+        <img src="${esc(url)}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-secondary)">${esc(url)}</span>
         <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
       </div>`).join('');
   }
@@ -1512,7 +1722,7 @@
                   <button type="button" data-cmd="link" title="Link">Link</button>
                   <button type="button" data-cmd="ul" title="Unordered List">List</button>
                   <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
-                  <button type="button" data-cmd="img" title="Image">Img</button>
+                  <button type="button" data-cmd="image" title="Image">Img</button>
                   <button type="button" data-cmd="code" title="Code">Code</button>
                 </div>
                 <textarea id="f-content" class="blog-content-editor" rows="12">${esc(config.formData.content)}</textarea>
@@ -1552,10 +1762,7 @@
             contentTextarea.addEventListener('input', updatePreview);
             updatePreview();
 
-            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
-              const cmd = e.target.closest('[data-cmd]');
-              if (cmd) blogToolbarAction(contentTextarea, cmd.dataset.cmd);
-            });
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => handleToolbarClick(e, contentTextarea, 'product'));
 
             renderFeatures();
             document.getElementById('add-feature').addEventListener('click', () => {
@@ -1593,7 +1800,7 @@
               </div>
               <div class="field">
                 <label>Image Gallery <span class="field-opt">Optional</span></label>
-                <span class="field-hint">Additional screenshots or mockups (image URLs)</span>
+                <span class="field-hint">Upload additional screenshots or mockups</span>
                 <div id="gallery-list"></div>
                 <button type="button" class="btn btn-secondary btn-sm" id="add-gallery" style="margin-top:8px">Add Image</button>
               </div>
@@ -1620,16 +1827,14 @@
 
             renderProductGallery();
             document.getElementById('add-gallery').addEventListener('click', () => {
-              productGallery.push('');
-              renderProductGallery();
+              pickAndUploadImage('product', (url) => {
+                productGallery.push(url);
+                renderProductGallery();
+              });
             });
             document.getElementById('gallery-list').addEventListener('click', (e) => {
               const rm = e.target.dataset.remove;
               if (rm !== undefined) { productGallery.splice(Number(rm), 1); renderProductGallery(); }
-            });
-            document.getElementById('gallery-list').addEventListener('input', (e) => {
-              const idx = e.target.dataset.idx;
-              if (idx !== undefined) productGallery[Number(idx)] = e.target.value;
             });
 
             renderProductLinks();
@@ -1918,17 +2123,12 @@
   function renderLaunchpadDiagrams() {
     const list = document.getElementById('lp-diagrams-list');
     if (!list) return;
-    let html = '';
-    launchpadDiagrams.forEach((url, i) => {
-      html += `<div class="lp-diagram-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
-        <input type="text" value="${esc(url)}" data-idx="${i}" data-field="url" placeholder="https://..." style="flex:1">
+    list.innerHTML = launchpadDiagrams.map((url, i) => `
+      <div class="lp-diagram-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <img src="${esc(url)}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-secondary)">${esc(url)}</span>
         <button type="button" class="btn btn-danger btn-sm" data-remove="${i}">Remove</button>
-      </div>`;
-      if (url) {
-        html += `<img src="${esc(url)}" style="max-width:300px;border-radius:8px;margin-bottom:12px;display:block" onerror="this.style.display='none'">`;
-      }
-    });
-    list.innerHTML = html;
+      </div>`).join('');
   }
 
   function launchpadForm(item) {
@@ -2034,7 +2234,7 @@
                   <button type="button" data-cmd="link" title="Link">Link</button>
                   <button type="button" data-cmd="ul" title="Unordered List">List</button>
                   <button type="button" data-cmd="blockquote" title="Blockquote">Quote</button>
-                  <button type="button" data-cmd="img" title="Image">Img</button>
+                  <button type="button" data-cmd="image" title="Image">Img</button>
                   <button type="button" data-cmd="code" title="Code">Code</button>
                 </div>
                 <textarea id="f-lp-content" class="blog-content-editor" rows="10">${esc(config.formData.content)}</textarea>
@@ -2080,7 +2280,7 @@
               </div>
               <div class="field">
                 <label>Diagrams <span class="field-opt">Optional</span></label>
-                <span class="field-hint">Image URLs for architecture or flow diagrams</span>
+                <span class="field-hint">Upload architecture or flow diagram images</span>
                 <div id="lp-diagrams-list"></div>
                 <button type="button" class="btn btn-secondary btn-sm" id="add-diagram" style="margin-top:8px">Add Diagram</button>
               </div>`;
@@ -2093,10 +2293,7 @@
             contentTextarea.addEventListener('input', updatePreview);
             updatePreview();
 
-            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => {
-              const cmd = e.target.closest('[data-cmd]');
-              if (cmd) blogToolbarAction(contentTextarea, cmd.dataset.cmd);
-            });
+            wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => handleToolbarClick(e, contentTextarea, 'launchpad'));
 
             const collabTextarea = document.getElementById('f-lp-collab');
             document.getElementById('collab-toolbar').addEventListener('click', (e) => {
@@ -2106,8 +2303,10 @@
 
             renderLaunchpadDiagrams();
             document.getElementById('add-diagram').addEventListener('click', () => {
-              launchpadDiagrams.push('');
-              renderLaunchpadDiagrams();
+              pickAndUploadImage('launchpad', (url) => {
+                launchpadDiagrams.push(url);
+                renderLaunchpadDiagrams();
+              });
             });
 
             document.getElementById('lp-diagrams-list').addEventListener('click', (e) => {
@@ -2115,13 +2314,6 @@
               if (rm !== undefined) {
                 launchpadDiagrams.splice(Number(rm), 1);
                 renderLaunchpadDiagrams();
-              }
-            });
-
-            document.getElementById('lp-diagrams-list').addEventListener('input', (e) => {
-              const idx = e.target.dataset.idx;
-              if (idx !== undefined) {
-                launchpadDiagrams[Number(idx)] = e.target.value.trim();
               }
             });
           },

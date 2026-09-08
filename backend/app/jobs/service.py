@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 
 from app.database import get_supabase
 from app.blogs.service import slugify
+from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,12 @@ def count_applications(job_id: str) -> int:
     return len(result.data) if result.data else 0
 
 
+def get_application_by_id(app_id: str):
+    db = get_supabase()
+    result = db.table("job_applications").select("*").eq("id", app_id).execute()
+    return result.data[0] if result.data else None
+
+
 def delete_application(app_id: str):
     db = get_supabase()
     app = db.table("job_applications").select("*").eq("id", app_id).execute()
@@ -135,11 +142,9 @@ def delete_application(app_id: str):
 
     if app_data.get("resume_url"):
         try:
-            path = app_data["resume_url"].split("/resumes/", 1)[-1] if "/resumes/" in app_data["resume_url"] else None
-            if path:
-                db.storage.from_("resumes").remove([path])
-        except Exception:
-            pass
+            ftp_service.delete_file(app_data["resume_url"])
+        except Exception as e:
+            logger.warning("Failed to delete resume file for application %s: %s", app_id, e)
 
     return app_data
 
@@ -206,12 +211,9 @@ def cleanup_old_closed_jobs():
                     .execute()
                 )
                 for app in (apps.data or []):
-                    if app.get("resume_url") and "/resumes/" in app["resume_url"]:
-                        try:
-                            path = app["resume_url"].split("/resumes/", 1)[-1]
-                            db.storage.from_("resumes").remove([path])
-                        except Exception as e:
-                            warnings.append(f"Failed to delete resume for app {app['id']}: {e}")
+                    if app.get("resume_url"):
+                        if not ftp_service.delete_file(app["resume_url"]):
+                            warnings.append(f"Failed to delete resume for app {app['id']}")
 
                 db.table("job_applications").delete().eq("job_id", job_id).execute()
                 db.table("jobs").delete().eq("id", job_id).execute()

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
+from fastapi.responses import Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import Optional
@@ -14,6 +15,7 @@ from app.email.service import send_email, is_email_enabled
 from app.config import get_settings
 from app.admin.service import log_activity
 from app.database import get_supabase
+from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,19 @@ def delete_application(id: str, _user: dict = Depends(get_current_user)):
     log_activity(_user["email"], "delete", "application", id, result.get("name", id))
 
 
+@router.get("/applications/{id}/resume")
+def get_application_resume(id: str, _user: dict = Depends(get_current_user)):
+    application = service.get_application_by_id(id)
+    if not application or not application.get("resume_url"):
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    content = ftp_service.download_file(application["resume_url"])
+    if content is None:
+        raise HTTPException(status_code=500, detail="Failed to retrieve resume")
+
+    return Response(content=content, media_type="application/pdf")
+
+
 @router.post("/{id}/repost", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 def repost_job(id: str, body: Optional[JobUpdate] = None, _user: dict = Depends(get_current_user)):
     overrides = body.model_dump(exclude_none=True) if body else {}
@@ -153,6 +168,7 @@ async def apply_to_job(
             pass
 
     resume_url = None
+    resume_uploaded = False
     if resume:
         content = await resume.read()
         if not content[:5].startswith(b'%PDF-'):
@@ -165,16 +181,16 @@ async def apply_to_job(
         import re
         timestamp = int(time.time())
         safe_email = re.sub(r'[^a-zA-Z0-9@._-]', '_', email)
-        path = f"{slug}/{safe_email}_{timestamp}.pdf"
+        filename = f"{safe_email}_{timestamp}.pdf"
+        remote_dir = f"private_uploads/resumes/{slug}"
 
-        db = get_supabase()
-        try:
-            db.storage.from_("resumes").upload(path, content, {"content-type": "application/pdf"})
-            public_url = db.storage.from_("resumes").get_public_url(path)
-            resume_url = public_url
+        remote_path = ftp_service.upload_file(content, remote_dir, filename)
+        if remote_path:
+            resume_url = remote_path
+            resume_uploaded = True
             app_data["resume_url"] = resume_url
-        except Exception:
-            pass
+        else:
+            logger.warning("Resume upload to FTP failed for application by %s", email)
 
     application = service.store_application(job["id"], app_data)
 
@@ -198,7 +214,7 @@ async def apply_to_job(
 
     settings = get_settings()
     cover = cover_letter or "Not provided"
-    resume_link = f'<p><a href="{html_escape(resume_url)}">Download Resume</a></p>' if resume_url else ""
+    resume_link = "<p>Resume attached. View it in the admin panel.</p>" if resume_uploaded else ""
     admin_html = f"""
     <h2>New application for: {html_escape(job['title'])}</h2>
     <p><strong>Name:</strong> {html_escape(name)}</p>

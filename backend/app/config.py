@@ -28,6 +28,11 @@ class Settings(BaseSettings):
 
     resend_api_key: str = ""
 
+    ftp_host: str = ""
+    ftp_user: str = ""
+    ftp_password: str = ""
+    ftp_port: int = 21
+
     model_config = {"env_file": ".env"}
 
     @property

@@ -20,6 +20,7 @@ from app.settings.router import router as settings_router
 from app.sitemap import router as sitemap_router
 from app.chatbot.router import router as chatbot_router
 from app.product_chat.router import router as product_chat_router
+from app.uploads.router import router as uploads_router
 
 settings = get_settings()
 
@@ -51,6 +52,7 @@ app.include_router(settings_router)
 app.include_router(sitemap_router)
 app.include_router(chatbot_router)
 app.include_router(product_chat_router)
+app.include_router(uploads_router)
 
 
 @app.on_event("startup")
