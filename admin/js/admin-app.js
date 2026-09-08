@@ -1235,10 +1235,24 @@
               </div>
               <div class="field">
                 <label for="f-requirements">Must-have Requirements <span class="field-hint" style="display:inline">(one per line)</span></label>
+                <div class="blog-toolbar" id="req-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                </div>
                 <textarea id="f-requirements" rows="6">${esc(config.formData.requirements)}</textarea>
               </div>
               <div class="field">
                 <label for="f-good-to-have">Good-to-have <span class="field-hint" style="display:inline">(one per line)</span></label>
+                <div class="blog-toolbar" id="gth-toolbar">
+                  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                  <span class="toolbar-sep"></span>
+                  <button type="button" data-cmd="link" title="Link">Link</button>
+                  <button type="button" data-cmd="ul" title="Unordered List">List</button>
+                </div>
                 <textarea id="f-good-to-have" rows="4">${esc(config.formData.good_to_have)}</textarea>
               </div>
               <div class="field">
@@ -1257,6 +1271,12 @@
             updateDescPreview();
 
             wrap.querySelector('.blog-toolbar').addEventListener('click', (e) => handleToolbarClick(e, descTextarea, 'blog'));
+
+            const reqTextarea = document.getElementById('f-requirements');
+            document.getElementById('req-toolbar').addEventListener('click', (e) => blogToolbarAction(reqTextarea, e.target.closest('[data-cmd]')?.dataset.cmd));
+
+            const gthTextarea = document.getElementById('f-good-to-have');
+            document.getElementById('gth-toolbar').addEventListener('click', (e) => blogToolbarAction(gthTextarea, e.target.closest('[data-cmd]')?.dataset.cmd));
 
             renderJobQuestions();
             document.getElementById('add-question').addEventListener('click', () => {

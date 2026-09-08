@@ -194,22 +194,24 @@
   }
 
   function formatText(text) {
-    var esc = API.escHtml;
+    var blockTagRe = /^<(h2|h3|ul|ol|blockquote|pre|img|div)[\s>]/i;
     var paragraphs = text.split(/\n\n+/);
     var html = '';
     for (var i = 0; i < paragraphs.length; i++) {
       var p = paragraphs[i].trim();
       if (!p) continue;
-      if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
+      if (blockTagRe.test(p)) {
+        html += p;
+      } else if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
         var lines = p.split('\n');
         html += '<ul>';
         for (var j = 0; j < lines.length; j++) {
           var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + esc(line) + '</li>';
+          if (line) html += '<li>' + line + '</li>';
         }
         html += '</ul>';
       } else {
-        html += '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
       }
     }
     return html;
