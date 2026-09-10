@@ -125,6 +125,26 @@
     }
   }
 
+  if (page === 'launchpad-detail.html') {
+    var lpEl = document.getElementById('launchpad-content');
+    if (lpEl) {
+      var observer = new MutationObserver(function () {
+        var h1 = lpEl.querySelector('h1');
+        if (!h1) return;
+        observer.disconnect();
+        var tagline = lpEl.querySelector('.product-article-tagline');
+        inject({
+          '@type': 'CreativeWork',
+          name: h1.textContent.trim(),
+          description: tagline ? tagline.textContent.trim() : '',
+          creator: org,
+          url: location.href
+        });
+      });
+      observer.observe(lpEl, { childList: true, subtree: true });
+    }
+  }
+
   if (page === 'careers.html') {
     var jobsEl = document.getElementById('jobs-list');
     if (jobsEl) {

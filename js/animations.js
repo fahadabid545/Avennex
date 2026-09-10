@@ -1,6 +1,13 @@
 (function () {
+  var animationsEnabled = true;
+
+  function initAnimations() {
   var animateEls = document.querySelectorAll('[data-animate]');
-  if (animateEls.length) {
+  if (!animationsEnabled) {
+    animateEls.forEach(function (el) {
+      el.classList.add('animate-visible');
+    });
+  } else if (animateEls.length) {
     var animObs = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
@@ -107,6 +114,18 @@
         e.preventDefault();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+    });
+  }
+  }
+
+  if (typeof API === 'undefined') {
+    initAnimations();
+  } else {
+    API.get('/settings/animations_enabled').then(function (setting) {
+      if (setting && setting.value === 'false') animationsEnabled = false;
+      initAnimations();
+    }).catch(function () {
+      initAnimations();
     });
   }
 })();

@@ -1,4 +1,14 @@
 (function () {
+  if (typeof API === 'undefined') return init();
+
+  API.get('/settings/space_bg_enabled').then(function (setting) {
+    if (setting && setting.value === 'false') return;
+    init();
+  }).catch(function () {
+    init();
+  });
+
+  function init() {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
   canvas.id = 'space-bg';
@@ -229,4 +239,5 @@
   window.addEventListener('resize', onResize);
 
   requestAnimationFrame(draw);
+  }
 })();

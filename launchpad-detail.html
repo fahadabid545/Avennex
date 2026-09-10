@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy | Avennex</title>
-  <meta name="description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <title>Launchpad | Avennex</title>
+  <meta name="description" content="Launchpad idea details on Avennex.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://avennex.com/privacy.html">
+  <link rel="canonical" href="https://avennex.com/launchpad-detail.html">
 
-  <meta property="og:title" content="Privacy Policy | Avennex">
-  <meta property="og:description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <meta property="og:title" content="Launchpad | Avennex">
+  <meta property="og:description" content="Launchpad idea details on Avennex.">
+  <meta property="og:image" content="https://avennex.com/img/og-image.png">
+  <meta property="og:url" content="https://avennex.com/launchpad-detail.html">
+  <meta property="og:type" content="website">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Privacy Policy | Avennex">
-  <meta name="twitter:description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <meta name="twitter:title" content="Launchpad | Avennex">
+  <meta name="twitter:description" content="Launchpad idea details on Avennex.">
   <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:url" content="https://avennex.com/privacy.html">
-  <meta property="og:type" content="website">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 
@@ -76,47 +76,35 @@
   </div>
 
   <main id="main">
-    <section class="page-hero section">
+    <section class="section" style="padding-top: 140px;">
       <div class="section-inner">
-        <p class="section-eyebrow" data-animate="fade-up">Legal</p>
-        <h1 class="section-heading" data-animate="fade-up">Privacy Policy</h1>
-        <p class="page-hero-subtext" data-animate="fade-up">How we handle your data. Plain language, no legal tricks.</p>
+        <div id="launchpad-content"></div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="lp-comments-section" style="display:none;">
       <div class="section-inner">
-        <div class="legal-content" data-animate="fade-up">
-          <p class="legal-updated">Last updated: September 2, 2026</p>
+        <h2 class="section-heading">Comments</h2>
+        <p class="section-subtext">Got feedback or want to collaborate? Leave a note below.</p>
 
-          <h2>What we collect</h2>
-          <p>When you fill out a contact form or submit a job application, we collect your name, email, and whatever you type into the message fields. That's it.</p>
-          <p>Our site doesn't use tracking cookies. We don't run third-party analytics scripts. No pixel trackers, no retargeting.</p>
+        <div id="lp-comments-list"></div>
 
-          <h2>How we use it</h2>
-          <p>Contact form submissions go straight to our team inbox so we can reply to you. Job applications are reviewed internally and stored for the hiring process.</p>
-          <p>We won't sell your information. We won't share it with third parties for marketing. The data exists for one reason: so we can respond to you.</p>
-
-          <h2>Where it's stored</h2>
-          <p>Data lives in Supabase (PostgreSQL), hosted on AWS infrastructure. Connections are encrypted in transit. Passwords are hashed with bcrypt before storage.</p>
-
-          <h2>How long we keep it</h2>
-          <p>Contact messages: until the conversation is resolved, then deleted within 90 days.</p>
-          <p>Job applications: kept for 12 months after the role closes, then removed.</p>
-          <p>Account data (admin only): kept as long as the account is active.</p>
-
-          <h2>Your rights</h2>
-          <p>You can ask us to delete any data we have on you. Send an email to <a href="mailto:hello@avennex.com">hello@avennex.com</a> and we'll handle it within 7 business days.</p>
-
-          <h2>Third-party services</h2>
-          <p>We use Google Fonts for typography (loaded from Google's CDN). Google may log font requests per their own privacy policy. No other third-party services process your personal data through our site.</p>
-
-          <h2>Changes</h2>
-          <p>If we update this policy, the "last updated" date changes above. Major changes get a note on the homepage. We won't sneak anything in.</p>
-
-          <h2>Questions</h2>
-          <p>Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> with any privacy questions.</p>
-        </div>
+        <form id="lp-comment-form" class="lp-comment-form">
+          <div class="form-group">
+            <label for="lpc-name">Name</label>
+            <input type="text" id="lpc-name" required>
+          </div>
+          <div class="form-group">
+            <label for="lpc-email">Email</label>
+            <input type="email" id="lpc-email" required>
+          </div>
+          <div class="form-group">
+            <label for="lpc-message">Message</label>
+            <textarea id="lpc-message" rows="4" required></textarea>
+          </div>
+          <div id="lpc-msg" class="form-msg"></div>
+          <button type="submit" class="hero-btn-primary form-submit">Post comment</button>
+        </form>
       </div>
     </section>
   </main>
@@ -161,6 +149,8 @@
   <script src="js/header.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/animations.js" defer></script>
+  <script src="js/launchpad-detail.js" defer></script>
+  <script src="js/schema.js" defer></script>
   <script src="js/chatbot.js" defer></script>
   <script>lucide.createIcons();</script>
 

@@ -596,6 +596,15 @@
       status: b.status || 'draft',
     };
 
+    if (!b.id) {
+      AdminAPI.request('/api/settings/default_blog_status').then((setting) => {
+        if (setting && setting.value) formData.status = setting.value;
+      }).catch(() => {}).finally(() => renderBlogForm());
+    } else {
+      renderBlogForm();
+    }
+
+    function renderBlogForm() {
     renderStepForm({
       title: b.id ? 'Edit Post' : 'New Post',
       item: b,
@@ -754,6 +763,7 @@
       },
       onBack: loadBlogs,
     });
+    }
   }
 
   // ── Jobs ──
@@ -1160,6 +1170,20 @@
       expires_at: j.expires_at ? j.expires_at.slice(0, 10) : '',
     };
 
+    if (!j.id) {
+      AdminAPI.request('/api/settings/default_job_expiry_days').then((setting) => {
+        const days = setting && setting.value ? parseInt(setting.value, 10) : 30;
+        if (days > 0) {
+          const d = new Date();
+          d.setDate(d.getDate() + days);
+          formData.expires_at = d.toISOString().slice(0, 10);
+        }
+      }).catch(() => {}).finally(() => renderJobForm());
+    } else {
+      renderJobForm();
+    }
+
+    function renderJobForm() {
     renderStepForm({
       title: j.id ? 'Edit Job' : 'New Job',
       item: j,
@@ -1348,11 +1372,12 @@
           status: d.status || 'open',
           max_applications: d.max_applications ? parseInt(d.max_applications, 10) : null,
           custom_questions: jobCustomQuestions.filter((q) => q.trim()),
-          expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : undefined,
+          expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : null,
         };
       },
       onBack: loadJobs,
     });
+    }
   }
 
   // ── Products ──

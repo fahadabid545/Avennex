@@ -1,4 +1,25 @@
 (function () {
+  var toggleSections = [
+    { key: 'game_enabled', el: document.getElementById('game-trigger') },
+    { key: 'ai_brain_enabled', el: document.getElementById('brain-section') },
+    { key: 'pipeline_enabled', el: document.getElementById('pipeline-section') },
+    { key: 'stats_enabled', el: document.getElementById('stats-section') },
+    { key: 'home_chat_enabled', el: document.getElementById('chat-section') }
+  ];
+
+  toggleSections.forEach(function (t) {
+    if (!t.el) return;
+    API.get('/settings/' + t.key).then(function (setting) {
+      if (setting && setting.value === 'false') {
+        t.el.style.display = 'none';
+      } else {
+        t.el.style.display = '';
+      }
+    }).catch(function () {
+      t.el.style.display = '';
+    });
+  });
+
   var grid = document.getElementById('home-bento');
   if (!grid) return;
 
@@ -30,6 +51,18 @@
   var faqList = document.getElementById('faq-list');
   var faqSection = document.getElementById('faq-section');
   if (faqList && faqSection) {
+    API.get('/settings/faq_enabled').then(function (setting) {
+      if (setting && setting.value === 'false') {
+        faqSection.style.display = 'none';
+        return;
+      }
+      loadFaqs();
+    }).catch(function () {
+      loadFaqs();
+    });
+  }
+
+  function loadFaqs() {
     API.get('/faqs').then(function (faqs) {
       if (!faqs || faqs.length === 0) {
         faqSection.style.display = 'none';

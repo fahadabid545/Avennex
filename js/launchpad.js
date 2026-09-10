@@ -44,6 +44,8 @@
       html += detailItem('Stage', stageLabel(e.stage));
       html += '</div>';
 
+      html += '<a href="launchpad-detail.html?slug=' + encodeURIComponent(e.slug) + '" class="text-link">See full details <span class="text-link-arrow">&rarr;</span></a>';
+
       html += '</div>';
     }
 
