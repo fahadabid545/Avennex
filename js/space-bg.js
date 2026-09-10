@@ -9,11 +9,14 @@
   });
 
   function init() {
+  var host = document.getElementById('space-host');
+  if (!host) return;
+
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
-  canvas.id = 'space-bg';
-  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;';
-  document.body.prepend(canvas);
+  canvas.id = 'space-bg-canvas';
+  canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+  host.appendChild(canvas);
 
   var isMobile = window.innerWidth < 768;
   var starCount = isMobile ? 100 : 250;
@@ -46,8 +49,8 @@
   ];
 
   function resize() {
-    var w = window.innerWidth;
-    var h = window.innerHeight;
+    var w = host.clientWidth;
+    var h = host.clientHeight;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -101,11 +104,11 @@
 
   function draw(time) {
     if (!running) return;
-    var w = window.innerWidth;
-    var h = window.innerHeight;
+    var w = host.clientWidth;
+    var h = host.clientHeight;
     ctx.clearRect(0, 0, w, h);
 
-    var scrollFactor = scrollY / (document.documentElement.scrollHeight - h || 1);
+    var scrollFactor = scrollY / (document.documentElement.scrollHeight - window.innerHeight || 1);
     var eased = 1 - Math.pow(1 - Math.min(scrollFactor, 1), 2);
     var starParallax = eased * h * 0.15;
     var planetParallax = eased * h * 0.35;
@@ -206,8 +209,9 @@
   }
 
   function onMouse(e) {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
+    var rect = host.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
   }
 
   function onVisibility() {

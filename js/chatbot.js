@@ -8,6 +8,7 @@
   var sendBtn = null;
   var open = false;
   var sending = false;
+  var greeting = null;
 
   function escHtml(s) {
     if (!s) return '';
@@ -29,18 +30,28 @@
     trigger.className = 'chatbot-trigger pulse';
     trigger.setAttribute('aria-label', 'Open chat');
     trigger.innerHTML =
-      '<svg class="chatbot-robot" width="34" height="34" viewBox="0 0 40 40" fill="none">' +
-        '<rect class="chatbot-robot-antenna-line" x="19" y="4" width="2" height="7" rx="1" fill="var(--accent-sun)"/>' +
-        '<circle class="chatbot-robot-antenna-tip" cx="20" cy="4" r="2.5" fill="var(--accent-sun)"/>' +
-        '<rect class="chatbot-robot-head" x="8" y="11" width="24" height="22" rx="8" fill="#fff" fill-opacity="0.14" stroke="#fff" stroke-width="1.5"/>' +
-        '<rect class="chatbot-robot-eye chatbot-robot-eye-l" x="14" y="19" width="4" height="6" rx="2" fill="#fff"/>' +
-        '<rect class="chatbot-robot-eye chatbot-robot-eye-r" x="22" y="19" width="4" height="6" rx="2" fill="#fff"/>' +
+      '<svg class="chatbot-robot" width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">' +
+        '<g class="chatbot-robot-antenna">' +
+          '<rect x="23" y="3" width="2" height="7" rx="1" fill="#F3E4E0"/>' +
+          '<circle class="chatbot-robot-antenna-tip" cx="24" cy="3" r="2.6" fill="#FFC24B"/>' +
+        '</g>' +
+        '<rect x="3.5" y="19" width="3.5" height="9" rx="1.75" fill="#F3E4E0"/>' +
+        '<rect x="41" y="19" width="3.5" height="9" rx="1.75" fill="#F3E4E0"/>' +
+        '<g class="chatbot-robot-body">' +
+          '<rect x="13" y="37" width="22" height="8" rx="4" fill="#E9D7D2"/>' +
+          '<rect x="8" y="9" width="32" height="29" rx="11" fill="#FFFFFF"/>' +
+          '<rect x="12.5" y="15" width="23" height="13.5" rx="6.75" fill="#1A1113"/>' +
+          '<rect class="chatbot-robot-eye chatbot-robot-eye-l" x="17" y="19" width="4" height="5.5" rx="2" fill="#FFD9A8"/>' +
+          '<rect class="chatbot-robot-eye chatbot-robot-eye-r" x="27" y="19" width="4" height="5.5" rx="2" fill="#FFD9A8"/>' +
+          '<path class="chatbot-robot-smile" d="M19.5 32.5c1.6 1.5 7.4 1.5 9 0" stroke="#C4564A" stroke-width="1.8" stroke-linecap="round"/>' +
+        '</g>' +
       '</svg>';
     document.body.appendChild(trigger);
 
     setTimeout(function () { trigger.classList.remove('pulse'); }, 6000);
 
     scheduleBlink();
+    showGreeting();
 
     panel = document.createElement('div');
     panel.className = 'chatbot-panel';
@@ -67,6 +78,7 @@
     addBotMessage('Hi! Ask me anything about Avennex.');
 
     function openPanel() {
+      dismissGreeting();
       open = true;
       panel.classList.add('open');
       trigger.classList.add('trigger-closing');
@@ -105,6 +117,48 @@
     sendBtn.addEventListener('click', function () {
       if (!sendBtn.disabled) send();
     });
+  }
+
+  function showGreeting() {
+    var dismissed;
+    try {
+      dismissed = sessionStorage.getItem('avennex_greeting_seen');
+    } catch (e) {
+      dismissed = null;
+    }
+    if (dismissed) return;
+
+    greeting = document.createElement('div');
+    greeting.className = 'chatbot-greeting';
+    greeting.setAttribute('role', 'status');
+    greeting.innerHTML =
+      '<p class="chatbot-greeting-text">Hi, I\'m Nex. Ask me anything about Avennex.</p>' +
+      '<button type="button" class="chatbot-greeting-close" aria-label="Dismiss message">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>';
+    document.body.appendChild(greeting);
+
+    setTimeout(function () {
+      if (greeting) greeting.classList.add('is-visible');
+    }, 1400);
+
+    greeting.querySelector('.chatbot-greeting-close').addEventListener('click', dismissGreeting);
+    setTimeout(dismissGreeting, 14000);
+  }
+
+  function dismissGreeting() {
+    if (!greeting) return;
+    greeting.classList.remove('is-visible');
+    var el = greeting;
+    greeting = null;
+    setTimeout(function () {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    }, 300);
+    try {
+      sessionStorage.setItem('avennex_greeting_seen', '1');
+    } catch (e) {
+      /* private mode */
+    }
   }
 
   function scheduleBlink() {

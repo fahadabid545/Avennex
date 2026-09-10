@@ -4,15 +4,17 @@ body {
   font-family: var(--font-primary);
   font-size: 16px;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background-color: var(--accent);
-  color: var(--text-primary);
+  background-color: var(--brand);
+  color: #fff;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -20,8 +22,8 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--border-strong);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -34,7 +36,7 @@ body {
   left: 16px;
   z-index: 10000;
   padding: 12px 24px;
-  background: var(--accent);
+  background: var(--brand);
   color: #fff;
   border-radius: var(--radius-sm);
   font-weight: 600;
@@ -47,8 +49,12 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+.band-dark :focus-visible {
+  outline-color: var(--brand-on-dark);
 }
 
 a:focus:not(:focus-visible),

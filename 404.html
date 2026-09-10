@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/components.css">
 
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/chatbot.css">
   <script src="https://unpkg.com/lucide@0.460.0"></script>
 </head>
@@ -70,8 +71,9 @@
   </div>
 
   <main id="main">
-    <section class="error-page">
+    <section class="error-page band-dark">
       <canvas id="space-bg" class="error-bg"></canvas>
+      <div class="space-host" id="space-host"></div>
       <div class="error-content" data-animate="fade-up">
         <span class="error-code">404</span>
         <h1 class="error-heading">Page not found</h1>
@@ -81,7 +83,7 @@
     </section>
   </main>
 
-  <footer class="site-footer">
+  <footer class="site-footer site-footer--rounded">
     <div class="footer-inner">
       <div class="footer-grid">
         <div class="footer-col">
