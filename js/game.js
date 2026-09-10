@@ -298,6 +298,13 @@
     start();
   });
 
+  trigger.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      start();
+    }
+  });
+
   canvas.addEventListener('click', onCanvasClick);
   canvas.addEventListener('touchstart', function (e) {
     e.preventDefault();

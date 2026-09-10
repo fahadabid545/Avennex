@@ -66,7 +66,7 @@
 
     addBotMessage('Hi! Ask me anything about Avennex.');
 
-    trigger.addEventListener('click', function () {
+    function openPanel() {
       open = true;
       panel.classList.add('open');
       trigger.classList.add('trigger-closing');
@@ -74,15 +74,24 @@
         if (open) trigger.style.display = 'none';
       }, 220);
       inputEl.focus();
-    });
+    }
 
-    panel.querySelector('.chatbot-close').addEventListener('click', function () {
+    function closePanel() {
       open = false;
       panel.classList.remove('open');
       trigger.style.display = '';
       requestAnimationFrame(function () {
         trigger.classList.remove('trigger-closing');
       });
+      trigger.focus();
+    }
+
+    trigger.addEventListener('click', openPanel);
+
+    panel.querySelector('.chatbot-close').addEventListener('click', closePanel);
+
+    panel.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closePanel();
     });
 
     inputEl.addEventListener('input', function () {

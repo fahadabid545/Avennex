@@ -326,8 +326,10 @@ a {
 
 .content {
   flex: 1;
+  min-width: 0;
   padding: 32px;
   overflow-y: auto;
+  overflow-x: auto;
 }
 
 /* Content header */

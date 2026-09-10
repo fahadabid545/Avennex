@@ -236,7 +236,7 @@ async def apply_to_job(
         send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html, email_type="careers")
     except Exception as e:
         logger.error("Admin notification email failed: %s", e)
-        warnings.append(f"Admin notification email failed: {e}")
+        warnings.append("Admin notification email failed")
 
     try:
         applicant_html = f"""
@@ -249,7 +249,7 @@ async def apply_to_job(
     except Exception as e:
         logger.error("Applicant confirmation email failed: %s", e)
         email_status = "failed"
-        warnings.append(f"Confirmation email failed: {e}")
+        warnings.append("Confirmation email failed")
 
     try:
         db = get_supabase()
