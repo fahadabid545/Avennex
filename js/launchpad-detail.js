@@ -53,15 +53,9 @@
     html += '</div>';
 
     if (entry.content) {
-      html += '<div class="product-article-body">' + renderContent(entry.content) + '</div>';
+      html += '<div class="product-article-body">' + API.renderRichText(entry.content) + '</div>';
     } else if (entry.description) {
-      html += '<div class="product-article-body">';
-      var paras = entry.description.split(/\n\n+/);
-      for (var i = 0; i < paras.length; i++) {
-        var para = paras[i].trim();
-        if (para) html += '<p>' + API.escHtml(para).replace(/\n/g, '<br>') + '</p>';
-      }
-      html += '</div>';
+      html += '<div class="product-article-body">' + API.renderRichText(entry.description) + '</div>';
     }
 
     var diagramUrls = (entry.diagrams || '').split('\n').map(function (u) { return u.trim(); }).filter(Boolean);
@@ -70,7 +64,7 @@
       html += '<h2>Diagrams</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < diagramUrls.length; g++) {
-        html += '<img class="product-gallery-item" src="' + API.escHtml(diagramUrls[g]) + '" alt="' + API.escHtml(entry.title) + ' diagram ' + (g + 1) + '" onerror="this.style.display=\'none\'">';
+        html += '<img class="product-gallery-item" src="' + API.escHtml(diagramUrls[g]) + '" alt="' + API.escHtml(entry.title) + ' diagram ' + (g + 1) + '" onerror="API.imgFallback(this)">';
       }
       html += '</div></div>';
     }
@@ -99,13 +93,8 @@
     if (entry.collaboration_details) {
       html += '<div class="product-article-section">';
       html += '<h2>How to Collaborate</h2>';
-      html += '<div class="product-article-body">';
-      var collabParas = entry.collaboration_details.split(/\n\n+/);
-      for (var c = 0; c < collabParas.length; c++) {
-        var cp = collabParas[c].trim();
-        if (cp) html += '<p>' + API.escHtml(cp).replace(/\n/g, '<br>') + '</p>';
-      }
-      html += '</div></div>';
+      html += '<div class="product-article-body">' + API.renderRichText(entry.collaboration_details) + '</div>';
+      html += '</div>';
     }
 
     html += '</article>';
@@ -232,31 +221,4 @@
     return '<span class="' + cls + '"><span class="' + dotCls + '"></span> ' + stageLabel(stage) + '</span>';
   }
 
-  function renderContent(text) {
-    var blockTagRe = /^<(h2|h3|ul|ol|blockquote|pre|img|div)[\s>]/i;
-    var paragraphs = text.split(/\n\n+/);
-    var html = '';
-    for (var i = 0; i < paragraphs.length; i++) {
-      var p = paragraphs[i].trim();
-      if (!p) continue;
-      if (blockTagRe.test(p)) {
-        html += p;
-      } else if (p.indexOf('## ') === 0) {
-        html += '<h2>' + p.substring(3) + '</h2>';
-      } else if (p.indexOf('### ') === 0) {
-        html += '<h3>' + p.substring(4) + '</h3>';
-      } else if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
-        var lines = p.split('\n');
-        html += '<ul>';
-        for (var j = 0; j < lines.length; j++) {
-          var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + line + '</li>';
-        }
-        html += '</ul>';
-      } else {
-        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
-      }
-    }
-    return html;
-  }
 })();

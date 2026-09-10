@@ -68,21 +68,21 @@
     if (job.description) {
       html += '<div class="job-section">';
       html += '<h2>About the role</h2>';
-      html += '<div class="job-body">' + formatText(job.description) + '</div>';
+      html += '<div class="job-body">' + API.renderRichText(job.description) + '</div>';
       html += '</div>';
     }
 
     if (job.requirements) {
       html += '<div class="job-section">';
       html += '<h2>Must have</h2>';
-      html += '<div class="job-body">' + formatText(job.requirements) + '</div>';
+      html += '<div class="job-body">' + API.renderRichText(job.requirements) + '</div>';
       html += '</div>';
     }
 
     if (job.good_to_have) {
       html += '<div class="job-section">';
       html += '<h2>Good to have</h2>';
-      html += '<div class="job-body">' + formatText(job.good_to_have) + '</div>';
+      html += '<div class="job-body">' + API.renderRichText(job.good_to_have) + '</div>';
       html += '</div>';
     }
 
@@ -193,29 +193,6 @@
     });
   }
 
-  function formatText(text) {
-    var blockTagRe = /^<(h2|h3|ul|ol|blockquote|pre|img|div)[\s>]/i;
-    var paragraphs = text.split(/\n\n+/);
-    var html = '';
-    for (var i = 0; i < paragraphs.length; i++) {
-      var p = paragraphs[i].trim();
-      if (!p) continue;
-      if (blockTagRe.test(p)) {
-        html += p;
-      } else if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
-        var lines = p.split('\n');
-        html += '<ul>';
-        for (var j = 0; j < lines.length; j++) {
-          var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + line + '</li>';
-        }
-        html += '</ul>';
-      } else {
-        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
-      }
-    }
-    return html;
-  }
 
   function escHtml(s) {
     if (!s) return '';

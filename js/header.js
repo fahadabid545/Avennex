@@ -1,14 +1,3 @@
-(function () {
-  fetch('https://avennex.onrender.com/api/settings/site_theme')
-    .then(function (res) { return res.ok ? res.json() : null; })
-    .then(function (data) {
-      if (data && data.value === 'light') {
-        document.body.classList.add('light-theme');
-      }
-    })
-    .catch(function () {});
-})();
-
 document.addEventListener('DOMContentLoaded', function () {
   var header = document.querySelector('.site-header');
   var toggle = document.querySelector('.menu-toggle');

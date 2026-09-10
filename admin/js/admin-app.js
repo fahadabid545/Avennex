@@ -102,6 +102,7 @@
       concept: 'gray', planning: 'yellow', 'open-for-feedback': 'blue', building: 'green',
       ready: 'green', processing: 'yellow', failed: 'red',
     };
+    if (!status) return badge('unknown', 'gray');
     return badge(status, map[status] || 'gray');
   }
 
@@ -514,7 +515,7 @@
         formData.append('file', file);
         formData.append('context', context);
         const token = AdminAPI.getToken();
-        const res = await fetch('https://avennex.onrender.com/api/uploads/image', {
+        const res = await fetch(`${AdminAPI.BASE}/api/uploads/image`, {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token },
           body: formData,
@@ -566,7 +567,7 @@
         formData.append('file', file);
         formData.append('context', context);
         const token = AdminAPI.getToken();
-        const res = await fetch('https://avennex.onrender.com/api/uploads/image', {
+        const res = await fetch(`${AdminAPI.BASE}/api/uploads/image`, {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token },
           body: formData,
@@ -881,7 +882,7 @@
       if (displayJobs.length) {
         try {
           const allApps = await Promise.all(displayJobs.map((j) =>
-            AdminAPI.request(`/api/jobs/${j.id}/applications`).then((apps) => ({ id: j.id, count: apps.length })).catch(() => ({ id: j.id, count: 0 }))
+            AdminAPI.request(`/api/jobs/${j.id}/applications`).then((apps) => ({ id: j.id, count: Array.isArray(apps) ? apps.length : 0 })).catch(() => ({ id: j.id, count: 0 }))
           ));
           allApps.forEach((a) => { appCounts[a.id] = a.count; });
         } catch {}
@@ -995,7 +996,7 @@
 
   async function fetchResumeBlob(appId) {
     const token = AdminAPI.getToken();
-    const res = await fetch(`https://avennex.onrender.com/api/jobs/applications/${appId}/resume`, {
+    const res = await fetch(`${AdminAPI.BASE}/api/jobs/applications/${appId}/resume`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Failed to load resume');
@@ -1416,7 +1417,7 @@
                 <td>${i + 1}</td>
                 <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
                 <td>${statusBadge(p.status)}</td>
-                <td>${p.progress}%</td>
+                <td>${p.progress ?? 0}%</td>
                 <td>
                   <button class="btn btn-sm ${p.chat_enabled ? 'btn-primary' : 'btn-secondary'}" data-toggle-chat="${p.id}" data-chat-on="${p.chat_enabled ? 'true' : 'false'}">
                     ${p.chat_enabled ? 'On' : 'Off'}
@@ -1913,7 +1914,7 @@
                 const formData = new FormData();
                 formData.append('file', file);
                 const token = AdminAPI.getToken();
-                const res = await fetch(`https://avennex.onrender.com/api/products/${config.item.id}/upload-document`, {
+                const res = await fetch(`${AdminAPI.BASE}/api/products/${config.item.id}/upload-document`, {
                   method: 'POST',
                   headers: { 'Authorization': 'Bearer ' + token },
                   body: formData,
@@ -1987,7 +1988,7 @@
               ['Slug', d.slug],
               ['Tagline', d.tagline],
               ['Status', d.status],
-              ['Progress', d.progress + '%'],
+              ['Progress', (d.progress ?? 0) + '%'],
               ['Display Order', d.display_order],
               ['Cover Image', d.cover_image],
               ['Tech Stack', d.tech_stack],
@@ -2068,7 +2069,7 @@
       try {
         const entryIds = entries.map((e) => e.id);
         const allComments = await Promise.all(entryIds.map((id) =>
-          AdminAPI.request(`/api/launchpad/${id}/comments`).then((c) => ({ id, count: c.length })).catch(() => ({ id, count: 0 }))
+          AdminAPI.request(`/api/launchpad/${id}/comments`).then((c) => ({ id, count: Array.isArray(c) ? c.length : 0 })).catch(() => ({ id, count: 0 }))
         ));
         allComments.forEach((c) => {
           commentCounts[c.id] = c.count;
@@ -3243,7 +3244,7 @@
 
       try {
         const token = AdminAPI.getToken();
-        const res = await fetch('https://avennex.onrender.com/api/chatbot/documents', {
+        const res = await fetch(`${AdminAPI.BASE}/api/chatbot/documents`, {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token },
           body: formData,
@@ -3690,7 +3691,7 @@
     showLoading();
     const keys = [
       'chatbot_visible', 'product_chat_enabled', 'chat_show_details', 'emails_enabled',
-      'site_theme', 'space_bg_enabled', 'animations_enabled',
+      'space_bg_enabled', 'animations_enabled',
       'game_enabled', 'ai_brain_enabled', 'pipeline_enabled', 'stats_enabled', 'home_chat_enabled', 'faq_enabled',
       'default_blog_status', 'default_job_expiry_days',
     ];
@@ -3731,24 +3732,16 @@
 
       <div class="chatbot-admin-section">
         <h3>Appearance</h3>
-        <div class="toggle-row">
-          <span class="toggle-label">Dark theme</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="s-theme" data-key="site_theme" ${(vals.site_theme || 'dark') === 'dark' ? 'checked' : ''}>
-            <span class="toggle-slider"></span>
-          </label>
-          <span class="form-msg settings-msg" data-msg-for="s-theme" style="margin-left:12px"></span>
-        </div>
         ${toggleRow('s-space-bg', 'Show space background', 'space_bg_enabled', 'true')}
         ${toggleRow('s-animations', 'Show scroll animations', 'animations_enabled', 'true')}
       </div>
 
       <div class="chatbot-admin-section">
         <h3>Homepage Controls</h3>
-        ${toggleRow('s-game', 'Show mini game in hero', 'game_enabled', 'true')}
-        ${toggleRow('s-ai-brain', 'Show AI brain section', 'ai_brain_enabled', 'true')}
-        ${toggleRow('s-pipeline', 'Show pipeline section', 'pipeline_enabled', 'true')}
-        ${toggleRow('s-stats', 'Show stats section', 'stats_enabled', 'true')}
+        ${toggleRow('s-game', 'Show demo game in hero', 'game_enabled', 'true')}
+        ${toggleRow('s-ai-brain', 'Show node network section', 'ai_brain_enabled', 'true')}
+        ${toggleRow('s-pipeline', 'Show dashboard section', 'pipeline_enabled', 'true')}
+        ${toggleRow('s-stats', 'Show facts section', 'stats_enabled', 'true')}
         ${toggleRow('s-home-chat', 'Show home chat section', 'home_chat_enabled', 'true')}
         ${toggleRow('s-faq', 'Show FAQ section', 'faq_enabled', 'true')}
       </div>
@@ -3795,21 +3788,6 @@
         }
         cb.disabled = false;
       });
-    });
-
-    document.getElementById('s-theme').addEventListener('change', async (e) => {
-      const cb = e.target;
-      cb.disabled = true;
-      try {
-        await AdminAPI.request('/api/settings/site_theme', {
-          method: 'PUT',
-          body: JSON.stringify({ value: cb.checked ? 'dark' : 'light' }),
-        });
-      } catch (err) {
-        showMsg('s-theme', err.message, false);
-        cb.checked = !cb.checked;
-      }
-      cb.disabled = false;
     });
 
     document.getElementById('s-save-defaults').addEventListener('click', async () => {

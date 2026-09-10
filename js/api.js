@@ -55,6 +55,43 @@ var API = (function () {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  function renderRichText(text) {
+    if (!text) return '';
+    var blockTagRe = /<(h[1-6]|ul|ol|li|blockquote|pre|img|div|table|p)[\s>/]/i;
+    var paragraphs = String(text).split(/\n\n+/);
+    var html = '';
+    for (var i = 0; i < paragraphs.length; i++) {
+      var para = paragraphs[i].trim();
+      if (!para) continue;
+      if (blockTagRe.test(para)) {
+        html += para;
+      } else if (para.indexOf('## ') === 0) {
+        html += '<h2>' + para.substring(3) + '</h2>';
+      } else if (para.indexOf('### ') === 0) {
+        html += '<h3>' + para.substring(4) + '</h3>';
+      } else if (para.indexOf('- ') === 0 || para.indexOf('\n- ') >= 0) {
+        var lines = para.split('\n');
+        html += '<ul>';
+        for (var j = 0; j < lines.length; j++) {
+          var line = lines[j].replace(/^-\s*/, '').trim();
+          if (line) html += '<li>' + line + '</li>';
+        }
+        html += '</ul>';
+      } else {
+        html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+      }
+    }
+    return html;
+  }
+
+  function imgFallback(img) {
+    img.style.display = 'none';
+    var section = img.closest('.product-article-section');
+    if (!section) return;
+    var alive = section.querySelectorAll('img:not([style*="display: none"])');
+    if (!alive.length) section.style.display = 'none';
+  }
+
   return {
     get: function (path) { return request('GET', path); },
     post: function (path, body) { return request('POST', path, body); },
@@ -64,6 +101,8 @@ var API = (function () {
     formatDate: formatDate,
     daysUntil: daysUntil,
     escHtml: escHtml,
+    renderRichText: renderRichText,
+    imgFallback: imgFallback,
     BASE_URL: BASE
   };
 })();

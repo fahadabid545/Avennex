@@ -72,7 +72,7 @@
       html += '<h2>Gallery</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < product.gallery.length; g++) {
-        html += '<img class="product-gallery-item" src="' + escHtml(product.gallery[g]) + '" alt="' + escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="this.style.display=\'none\'">';
+        html += '<img class="product-gallery-item" src="' + escHtml(product.gallery[g]) + '" alt="' + escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="API.imgFallback(this)">';
       }
       html += '</div></div>';
     }
@@ -88,15 +88,9 @@
     }
 
     if (product.content) {
-      html += '<div class="product-article-body">' + renderContent(product.content) + '</div>';
+      html += '<div class="product-article-body">' + API.renderRichText(product.content) + '</div>';
     } else if (product.description) {
-      html += '<div class="product-article-body">';
-      var paras = product.description.split(/\n\n+/);
-      for (var i = 0; i < paras.length; i++) {
-        var para = paras[i].trim();
-        if (para) html += '<p>' + escHtml(para).replace(/\n/g, '<br>') + '</p>';
-      }
-      html += '</div>';
+      html += '<div class="product-article-body">' + API.renderRichText(product.description) + '</div>';
     }
 
     if (product.features && product.features.length) {
@@ -496,33 +490,6 @@
     });
   }
 
-  function renderContent(text) {
-    var blockTagRe = /^<(h2|h3|ul|ol|blockquote|pre|img|div)[\s>]/i;
-    var paragraphs = text.split(/\n\n+/);
-    var html = '';
-    for (var i = 0; i < paragraphs.length; i++) {
-      var p = paragraphs[i].trim();
-      if (!p) continue;
-      if (blockTagRe.test(p)) {
-        html += p;
-      } else if (p.indexOf('## ') === 0) {
-        html += '<h2>' + p.substring(3) + '</h2>';
-      } else if (p.indexOf('### ') === 0) {
-        html += '<h3>' + p.substring(4) + '</h3>';
-      } else if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
-        var lines = p.split('\n');
-        html += '<ul>';
-        for (var j = 0; j < lines.length; j++) {
-          var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + line + '</li>';
-        }
-        html += '</ul>';
-      } else {
-        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
-      }
-    }
-    return html;
-  }
 
   function statusBadgeClass(status) {
     if (status === 'launched') return 'badge-blue';

@@ -113,5 +113,5 @@ const AdminAPI = (() => {
     return res.json();
   }
 
-  return { request, requestRaw, login, logout, getToken, clearTokens, setTokens };
+  return { BASE, request, requestRaw, login, logout, getToken, clearTokens, setTokens };
 })();
