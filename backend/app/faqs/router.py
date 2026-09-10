@@ -32,7 +32,7 @@ def create_faq(body: FaqCreate, _user: dict = Depends(get_current_user)):
         result = service.create(data)
     except Exception as e:
         logger.error("Failed to create FAQ: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to save FAQ: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save FAQ")
     if not result:
         raise HTTPException(status_code=500, detail="Failed to save FAQ")
     log_activity(_user["email"], "create", "faq", result["id"], result["question"][:50])
@@ -50,7 +50,7 @@ def update_faq(id: str, body: FaqUpdate, _user: dict = Depends(get_current_user)
         result = service.update(id, data)
     except Exception as e:
         logger.error("Failed to update FAQ %s: %s", id, e)
-        raise HTTPException(status_code=500, detail=f"Failed to update FAQ: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update FAQ")
     if not result:
         raise HTTPException(status_code=404, detail="FAQ not found")
     log_activity(_user["email"], "update", "faq", result["id"], result["question"][:50])

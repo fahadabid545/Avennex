@@ -38,7 +38,7 @@ def list_all_entries(
         return service.list_all(page, limit)
     except Exception as e:
         logger.error("Failed to list admin launchpad entries: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to load launchpad entries: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load launchpad entries")
 
 
 @router.get("/{slug}", response_model=LaunchpadDetailResponse)
@@ -58,7 +58,7 @@ def create_entry(body: LaunchpadCreate, _user: dict = Depends(get_current_user))
         result = service.create(data)
     except Exception as e:
         logger.error("Failed to create launchpad entry: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to save entry: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save entry")
     if not result:
         raise HTTPException(status_code=500, detail="Failed to save entry")
     log_activity(_user["email"], "create", "launchpad", result["id"], result["title"])
@@ -76,7 +76,7 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
         result = service.update(id, data)
     except Exception as e:
         logger.error("Failed to update launchpad entry %s: %s", id, e)
-        raise HTTPException(status_code=500, detail=f"Failed to update entry: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update entry")
     if not result:
         raise HTTPException(status_code=404, detail="Entry not found")
     log_activity(_user["email"], "update", "launchpad", result["id"], result["title"])

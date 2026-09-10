@@ -75,6 +75,9 @@ async def upload_document(
     product_id: str = Form(...),
     _user: dict = Depends(get_current_user),
 ):
+    if not re.fullmatch(r"[a-zA-Z0-9_-]+", product_id or ""):
+        raise HTTPException(status_code=400, detail="Invalid product ID")
+
     content = await file.read()
     if len(content) > MAX_DOC_SIZE:
         raise HTTPException(status_code=400, detail="File must be under 10MB")

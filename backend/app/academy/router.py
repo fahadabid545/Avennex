@@ -30,7 +30,7 @@ def list_playlists_admin(_user: dict = Depends(get_current_user)):
         return service.list_playlists_admin()
     except Exception as e:
         logger.error("Failed to list admin playlists: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to load playlists: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load playlists")
 
 
 @router.get("/playlists/admin/{id}")
@@ -39,7 +39,7 @@ def get_playlist_admin(id: str, _user: dict = Depends(get_current_user)):
         playlist = service.get_playlist_admin(id)
     except Exception as e:
         logger.error("Failed to load playlist %s: %s", id, e)
-        raise HTTPException(status_code=500, detail=f"Failed to load playlist: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load playlist")
     if not playlist:
         raise HTTPException(status_code=404, detail="Playlist not found")
     return playlist
@@ -59,7 +59,7 @@ def create_playlist(body: PlaylistCreate, _user: dict = Depends(get_current_user
         result = service.create_playlist(body.model_dump(exclude_none=True))
     except Exception as e:
         logger.error("Failed to create playlist: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to save playlist: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save playlist")
     if not result:
         raise HTTPException(status_code=500, detail="Failed to save playlist")
     log_activity(_user["email"], "create", "playlist", result["id"], result["title"])
@@ -92,7 +92,7 @@ def create_video(body: VideoCreate, _user: dict = Depends(get_current_user)):
         result = service.create_video(body.model_dump(exclude_none=True))
     except Exception as e:
         logger.error("Failed to create video: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to save video: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save video")
     if not result:
         raise HTTPException(status_code=500, detail="Failed to save video")
     log_activity(_user["email"], "create", "video", result["id"], result["title"])

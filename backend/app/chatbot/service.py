@@ -329,14 +329,14 @@ def create_chat_session_token(session_id: Optional[str] = None) -> tuple[str, st
         "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
         "iat": datetime.now(timezone.utc),
     }
-    token = jwt.encode(payload, settings.chatbot_jwt_secret, algorithm="HS256")
+    token = jwt.encode(payload, settings.chatbot_jwt_secret_effective, algorithm="HS256")
     return token, sid
 
 
 def verify_chat_session_token(token: str) -> Optional[str]:
     settings = get_settings()
     try:
-        payload = jwt.decode(token, settings.chatbot_jwt_secret, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.chatbot_jwt_secret_effective, algorithms=["HS256"])
         if payload.get("type") != "chat_session":
             return None
         return payload.get("sub")

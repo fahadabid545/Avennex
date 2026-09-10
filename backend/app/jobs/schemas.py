@@ -1,6 +1,16 @@
-from pydantic import BaseModel, EmailStr
+import re
+
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
 from typing import Optional
+
+SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def _validate_slug(v: Optional[str]) -> Optional[str]:
+    if v is not None and not SLUG_RE.fullmatch(v):
+        raise ValueError("Slug must contain only lowercase letters, numbers, and hyphens")
+    return v
 
 
 class JobCreate(BaseModel):
@@ -17,6 +27,8 @@ class JobCreate(BaseModel):
     custom_questions: Optional[list[str]] = None
     max_applications: Optional[int] = None
 
+    _validate_slug = field_validator("slug")(_validate_slug)
+
 
 class JobUpdate(BaseModel):
     title: Optional[str] = None
@@ -32,6 +44,8 @@ class JobUpdate(BaseModel):
     custom_questions: Optional[list[str]] = None
     max_applications: Optional[int] = None
     created_at: Optional[datetime] = None
+
+    _validate_slug = field_validator("slug")(_validate_slug)
 
 
 class JobResponse(BaseModel):

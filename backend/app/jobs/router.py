@@ -58,7 +58,7 @@ def get_job(slug: str):
     job = service.get_by_slug(slug)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    if job.get("max_applications"):
+    if job.get("max_applications") is not None:
         job["application_count"] = service.count_applications(job["id"])
     return job
 
@@ -154,7 +154,7 @@ async def apply_to_job(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    if job.get("max_applications"):
+    if job.get("max_applications") is not None:
         current_count = service.count_applications(job["id"])
         if current_count >= job["max_applications"]:
             raise HTTPException(status_code=400, detail="This position is no longer accepting applications")
@@ -200,7 +200,7 @@ async def apply_to_job(
 
     application = service.store_application(job["id"], app_data)
 
-    if job.get("max_applications"):
+    if job.get("max_applications") is not None:
         new_count = service.count_applications(job["id"])
         if new_count >= job["max_applications"]:
             service.update(job["id"], {"status": "closed"})

@@ -31,6 +31,10 @@ def _ensure_dir(ftp: FTP, remote_dir: str):
 
 
 def upload_file(file_bytes: bytes, remote_dir: str, filename: str) -> Optional[str]:
+    parts = [p for p in remote_dir.strip("/").split("/") if p]
+    if any(p in (".", "..") for p in parts) or "/" in filename or filename in (".", ".."):
+        logger.error("Rejected unsafe FTP path: %s/%s", remote_dir, filename)
+        return None
     try:
         ftp = _connect()
         try:

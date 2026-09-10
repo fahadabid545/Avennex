@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
 
     openai_api_key: str = ""
-    chatbot_jwt_secret: str = "change-this-chatbot-secret"
+    chatbot_jwt_secret: str = ""
 
     resend_api_key: str = ""
 
@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def chatbot_jwt_secret_effective(self) -> str:
+        return self.chatbot_jwt_secret or self.jwt_secret
 
 
 @lru_cache
