@@ -14,7 +14,7 @@
 .scroll-bg-warm {
   z-index: -2;
   background: linear-gradient(to bottom, transparent 0%, var(--bg-warm-1) 55%, var(--bg-warm-2) 100%);
-  opacity: clamp(0, calc(var(--scroll-warmth) * 1.6), 1);
+  opacity: var(--scroll-warmth);
 }
 
 .scroll-bg-sun {
