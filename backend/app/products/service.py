@@ -1,7 +1,11 @@
+import logging
 from datetime import datetime, timezone
 
 from app.database import get_supabase
 from app.blogs.service import slugify
+from app.storage import ftp_service
+
+logger = logging.getLogger(__name__)
 
 
 def list_all(page: int, limit: int):
@@ -46,5 +50,18 @@ def update(product_id: str, data: dict):
 
 def delete(product_id: str):
     db = get_supabase()
+    product = get_by_id(product_id)
     result = db.table("products").delete().eq("id", product_id).execute()
+
+    if product:
+        urls = []
+        if product.get("cover_image"):
+            urls.append(product["cover_image"])
+        urls.extend(product.get("gallery") or [])
+        urls.extend(doc.get("url") for doc in (product.get("documents") or []) if doc.get("url"))
+        for url in urls:
+            remote_path = ftp_service.remote_path_from_url(url)
+            if remote_path and not ftp_service.delete_file(remote_path):
+                logger.warning("Failed to delete file %s for product %s", url, product_id)
+
     return bool(result.data)

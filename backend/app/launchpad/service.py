@@ -1,7 +1,11 @@
+import logging
 from datetime import datetime, timezone
 
 from app.database import get_supabase
 from app.blogs.service import slugify
+from app.storage import ftp_service
+
+logger = logging.getLogger(__name__)
 
 
 def list_all(page: int, limit: int):
@@ -72,7 +76,16 @@ def update(entry_id: str, data: dict):
 
 def delete(entry_id: str):
     db = get_supabase()
+    entry = get_by_id(entry_id)
     result = db.table("launchpad_entries").delete().eq("id", entry_id).execute()
+
+    if entry and entry.get("diagrams"):
+        for url in entry["diagrams"].split("\n"):
+            url = url.strip()
+            remote_path = ftp_service.remote_path_from_url(url) if url else None
+            if remote_path and not ftp_service.delete_file(remote_path):
+                logger.warning("Failed to delete diagram %s for launchpad entry %s", url, entry_id)
+
     return bool(result.data)
 
 

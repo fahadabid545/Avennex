@@ -57,7 +57,7 @@
     html += '</div>';
 
     if (product.cover_image) {
-      html += '<div class="product-article-cover"><img src="' + escHtml(product.cover_image) + '" alt="' + escHtml(product.name) + '"></div>';
+      html += '<div class="product-article-cover"><img src="' + escHtml(product.cover_image) + '" alt="' + escHtml(product.name) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
     }
 
     var videoId = product.video_url ? extractYouTubeId(product.video_url) : '';
@@ -72,7 +72,7 @@
       html += '<h2>Gallery</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < product.gallery.length; g++) {
-        html += '<img class="product-gallery-item" src="' + escHtml(product.gallery[g]) + '" alt="' + escHtml(product.name) + ' screenshot ' + (g + 1) + '">';
+        html += '<img class="product-gallery-item" src="' + escHtml(product.gallery[g]) + '" alt="' + escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="this.style.display=\'none\'">';
       }
       html += '</div></div>';
     }
@@ -497,25 +497,28 @@
   }
 
   function renderContent(text) {
+    var blockTagRe = /^<(h2|h3|ul|ol|blockquote|pre|img|div)[\s>]/i;
     var paragraphs = text.split(/\n\n+/);
     var html = '';
     for (var i = 0; i < paragraphs.length; i++) {
       var p = paragraphs[i].trim();
       if (!p) continue;
-      if (p.indexOf('## ') === 0) {
-        html += '<h2>' + escHtml(p.substring(3)) + '</h2>';
+      if (blockTagRe.test(p)) {
+        html += p;
+      } else if (p.indexOf('## ') === 0) {
+        html += '<h2>' + p.substring(3) + '</h2>';
       } else if (p.indexOf('### ') === 0) {
-        html += '<h3>' + escHtml(p.substring(4)) + '</h3>';
+        html += '<h3>' + p.substring(4) + '</h3>';
       } else if (p.indexOf('- ') === 0 || p.indexOf('\n- ') >= 0) {
         var lines = p.split('\n');
         html += '<ul>';
         for (var j = 0; j < lines.length; j++) {
           var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + escHtml(line) + '</li>';
+          if (line) html += '<li>' + line + '</li>';
         }
         html += '</ul>';
       } else {
-        html += '<p>' + escHtml(p).replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + p.replace(/\n/g, '<br>') + '</p>';
       }
     }
     return html;

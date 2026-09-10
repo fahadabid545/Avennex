@@ -12,11 +12,18 @@ var API = (function () {
       if (res.status === 204) return null;
       if (!res.ok) {
         return res.json().then(function (err) {
-          throw new Error(err.detail || 'Request failed');
+          throw new Error(formatErrorDetail(err.detail) || 'Request failed');
         });
       }
       return res.json();
     });
+  }
+
+  function formatErrorDetail(detail) {
+    if (Array.isArray(detail)) {
+      return detail.map(function (d) { return d.msg || String(d); }).join(', ');
+    }
+    return detail;
   }
 
   function showLoading(el) {

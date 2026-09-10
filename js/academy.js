@@ -34,7 +34,7 @@
         var thumb = p.thumbnail || '';
         html += '<div class="academy-card" data-slug="' + p.slug + '">';
         if (thumb) {
-          html += '<img class="academy-thumb" src="' + thumb + '" alt="' + escHtml(p.title) + '">';
+          html += '<img class="academy-thumb" src="' + thumb + '" alt="' + escHtml(p.title) + '" onerror="this.style.display=\'none\'">';
         } else {
           html += '<div class="academy-thumb"></div>';
         }
@@ -112,7 +112,7 @@
         var thumbUrl = v.thumbnail_url || '';
         html += '<div class="academy-video-item is-playing" data-url="' + escHtml(v.youtube_url) + '" data-idx="0">';
         if (thumbUrl) {
-          html += '<img class="academy-video-thumb" src="' + thumbUrl + '" alt="' + escHtml(v.title) + '">';
+          html += '<img class="academy-video-thumb" src="' + thumbUrl + '" alt="' + escHtml(v.title) + '" onerror="this.style.display=\'none\'">';
         } else {
           html += '<div class="academy-video-thumb"></div>';
         }

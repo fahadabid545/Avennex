@@ -44,7 +44,6 @@
       html += detailItem('Stage', stageLabel(e.stage));
       html += '</div>';
 
-      html += '<a href="#" class="text-link">See full details <span class="text-link-arrow">&rarr;</span></a>';
       html += '</div>';
     }
 

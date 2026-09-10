@@ -58,6 +58,8 @@ def get_job(slug: str):
     job = service.get_by_slug(slug)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("max_applications"):
+        job["application_count"] = service.count_applications(job["id"])
     return job
 
 
@@ -73,7 +75,7 @@ def create_job(body: JobCreate, _user: dict = Depends(get_current_user)):
 
 @router.put("/{id}", response_model=JobResponse)
 def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)):
-    data = body.model_dump(exclude_none=True)
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
@@ -101,12 +103,16 @@ def get_applications(id: str, _user: dict = Depends(get_current_user)):
     return service.list_applications(id)
 
 
-@router.delete("/applications/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/applications/{id}")
 def delete_application(id: str, _user: dict = Depends(get_current_user)):
-    result = service.delete_application(id)
+    result, warnings = service.delete_application(id)
     if not result:
         raise HTTPException(status_code=404, detail="Application not found")
     log_activity(_user["email"], "delete", "application", id, result.get("name", id))
+    response = {"success": True}
+    if warnings:
+        response["warnings"] = warnings
+    return response
 
 
 @router.get("/applications/{id}/resume")

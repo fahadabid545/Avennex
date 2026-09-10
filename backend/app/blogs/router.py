@@ -44,7 +44,7 @@ def create_blog(body: BlogCreate, _user: dict = Depends(get_current_user)):
 
 @router.put("/{id}", response_model=BlogResponse)
 def update_blog(id: str, body: BlogUpdate, _user: dict = Depends(get_current_user)):
-    data = body.model_dump(exclude_none=True)
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]

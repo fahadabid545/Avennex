@@ -31,7 +31,7 @@
         }
       }
 
-      html += '<tr class="jobs-table-row" data-slug="' + job.slug + '" data-created="' + (job.created_at || '') + '">';
+      html += '<tr class="jobs-table-row" data-slug="' + API.escHtml(job.slug) + '" data-created="' + API.escHtml(job.created_at || '') + '">';
       html += '<td>' + (i + 1) + '</td>';
       html += '<td>' + API.escHtml(job.title) + '</td>';
       html += '<td>' + API.escHtml(type.join(' / ')) + '</td>';
@@ -44,7 +44,7 @@
     container.addEventListener('click', function (e) {
       var row = e.target.closest('.jobs-table-row');
       if (row && row.dataset.slug) {
-        window.location.href = 'job-post.html?slug=' + row.dataset.slug;
+        window.location.href = 'job-post.html?slug=' + encodeURIComponent(row.dataset.slug);
       }
     });
   }).catch(function () {

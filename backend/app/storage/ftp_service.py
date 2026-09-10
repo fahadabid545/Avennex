@@ -76,3 +76,9 @@ def public_url(remote_path: str) -> str:
     if path.startswith("public_html/"):
         path = path[len("public_html/"):]
     return f"{PUBLIC_BASE_URL}/{path}"
+
+
+def remote_path_from_url(url: str) -> Optional[str]:
+    if not url or not url.startswith(f"{PUBLIC_BASE_URL}/"):
+        return None
+    return f"public_html/{url[len(PUBLIC_BASE_URL) + 1:]}"

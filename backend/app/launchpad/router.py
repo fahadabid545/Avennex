@@ -67,7 +67,7 @@ def create_entry(body: LaunchpadCreate, _user: dict = Depends(get_current_user))
 
 @router.put("/{id}", response_model=LaunchpadResponse)
 def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_current_user)):
-    data = body.model_dump(exclude_none=True)
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]

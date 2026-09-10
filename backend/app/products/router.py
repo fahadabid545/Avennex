@@ -23,6 +23,15 @@ def list_products(page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50
     return service.list_all(page, limit)
 
 
+@router.get("/admin/all", response_model=list[ProductResponse])
+def list_all_products(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
+    _user: dict = Depends(get_current_user),
+):
+    return service.list_all(page, limit)
+
+
 @router.get("/{slug}", response_model=ProductResponse)
 def get_product(slug: str):
     product = service.get_by_slug(slug)
@@ -43,7 +52,7 @@ def create_product(body: ProductCreate, _user: dict = Depends(get_current_user))
 
 @router.put("/{id}", response_model=ProductResponse)
 def update_product(id: str, body: ProductUpdate, _user: dict = Depends(get_current_user)):
-    data = body.model_dump(exclude_none=True)
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]

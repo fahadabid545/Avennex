@@ -744,11 +744,11 @@
         if (contentEl) d.content = contentEl.value.trim();
         return {
           title: d.title,
-          slug: d.slug || undefined,
-          author: d.author || undefined,
-          excerpt: d.excerpt || undefined,
-          meta_description: d.meta_description || undefined,
-          content: d.content || undefined,
+          slug: d.slug || null,
+          author: d.author || null,
+          excerpt: d.excerpt || null,
+          meta_description: d.meta_description || null,
+          content: d.content || null,
           status: d.status,
         };
       },
@@ -972,7 +972,8 @@
           const ok = await confirmDialog('Delete this application?');
           if (!ok) return;
           try {
-            await AdminAPI.request(`/api/jobs/applications/${delAppId}`, { method: 'DELETE' });
+            const result = await AdminAPI.request(`/api/jobs/applications/${delAppId}`, { method: 'DELETE' });
+            if (result && result.warnings && result.warnings.length) alert(result.warnings.join('\n'));
             showApplications(jobId);
           } catch (err) { alert(err.message); }
         }
@@ -1004,9 +1005,9 @@
         <h1>${esc(job ? job.title : 'Job Application')}</h1>
         <div class="meta">Applicant: ${esc(app.name)} &middot; ${esc(app.email)} &middot; ${formatDate(app.created_at)}</div>
         ${job ? `
-          <h2>Job Description</h2><p>${esc(job.description || '')}</p>
-          ${job.requirements ? `<h2>Requirements</h2><p>${esc(job.requirements)}</p>` : ''}
-          ${job.good_to_have ? `<h2>Good to Have</h2><p>${esc(job.good_to_have)}</p>` : ''}
+          <h2>Job Description</h2><div>${job.description || ''}</div>
+          ${job.requirements ? `<h2>Requirements</h2><div>${job.requirements}</div>` : ''}
+          ${job.good_to_have ? `<h2>Good to Have</h2><div>${job.good_to_have}</div>` : ''}
         ` : ''}
         <h2>Applicant</h2>
         <div class="qa"><div class="q">Name</div><div class="a">${esc(app.name)}</div></div>
@@ -1033,9 +1034,9 @@
         ${job ? `
         <h3 class="review-section-title">Job Details</h3>
         <div class="review-row"><span class="review-label">Title</span><span class="review-value">${esc(job.title)}</span></div>
-        <div class="review-row"><span class="review-label">Description</span><span class="review-value">${esc(job.description || '')}</span></div>
-        ${job.requirements ? `<div class="review-row"><span class="review-label">Requirements</span><span class="review-value">${esc(job.requirements)}</span></div>` : ''}
-        ${job.good_to_have ? `<div class="review-row"><span class="review-label">Good to Have</span><span class="review-value">${esc(job.good_to_have)}</span></div>` : ''}
+        <div class="review-row"><span class="review-label">Description</span><span class="review-value">${job.description || ''}</span></div>
+        ${job.requirements ? `<div class="review-row"><span class="review-label">Requirements</span><span class="review-value">${job.requirements}</span></div>` : ''}
+        ${job.good_to_have ? `<div class="review-row"><span class="review-label">Good to Have</span><span class="review-value">${job.good_to_have}</span></div>` : ''}
         ` : ''}
 
         <h3 class="review-section-title">Applicant</h3>
@@ -1337,14 +1338,14 @@
         if (gthEl) d.good_to_have = gthEl.value.trim();
         return {
           title: d.title,
-          slug: d.slug || undefined,
-          description: d.description || undefined,
-          requirements: d.requirements || undefined,
-          good_to_have: d.good_to_have || undefined,
-          type: d.type || undefined,
-          commitment: d.commitment || undefined,
-          location: d.location || undefined,
-          status: 'open',
+          slug: d.slug || null,
+          description: d.description || null,
+          requirements: d.requirements || null,
+          good_to_have: d.good_to_have || null,
+          type: d.type || null,
+          commitment: d.commitment || null,
+          location: d.location || null,
+          status: d.status || 'open',
           max_applications: d.max_applications ? parseInt(d.max_applications, 10) : null,
           custom_questions: jobCustomQuestions.filter((q) => q.trim()),
           expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : undefined,
@@ -1365,7 +1366,7 @@
   async function loadProducts() {
     showLoading();
     try {
-      const products = await AdminAPI.request('/api/products?limit=50');
+      const products = await AdminAPI.request('/api/products/admin/all?limit=50');
       cachedItems.products = products;
 
       let chatCounts = {};
@@ -1998,23 +1999,23 @@
 
         return {
           name: d.name,
-          slug: d.slug || undefined,
-          tagline: d.tagline || undefined,
-          description: d.description || undefined,
-          content: d.content || undefined,
+          slug: d.slug || null,
+          tagline: d.tagline || null,
+          description: d.description || null,
+          content: d.content || null,
           features: productFeatures.filter((f) => f.text),
           progress: parseInt(d.progress, 10),
           status: d.status,
           display_order: parseInt(d.display_order, 10) || 0,
-          tech_stack: d.tech_stack || undefined,
-          timeline: d.timeline || undefined,
-          video_url: d.video_url || undefined,
+          tech_stack: d.tech_stack || null,
+          timeline: d.timeline || null,
+          video_url: d.video_url || null,
           gallery: productGallery.filter(Boolean),
           external_links: productLinks.filter((l) => l.label && l.url),
           documents: productDocuments,
           metrics: productMetrics.filter((m) => m.name),
           chat_enabled: d.chat_enabled,
-          cover_image: d.cover_image || undefined,
+          cover_image: d.cover_image || null,
         };
       },
       onBack: loadProducts,
@@ -2396,16 +2397,16 @@
 
         return {
           title: d.title,
-          slug: d.slug || undefined,
-          tagline: d.tagline || undefined,
-          description: d.description || undefined,
-          content: d.content || undefined,
-          timeline: d.timeline || undefined,
-          funding_needed: d.funding_needed || undefined,
-          team_needed: d.team_needed || undefined,
-          tech_stack: d.tech_stack || undefined,
-          collaboration_details: d.collaboration_details || undefined,
-          diagrams: diagramStr || undefined,
+          slug: d.slug || null,
+          tagline: d.tagline || null,
+          description: d.description || null,
+          content: d.content || null,
+          timeline: d.timeline || null,
+          funding_needed: d.funding_needed || null,
+          team_needed: d.team_needed || null,
+          tech_stack: d.tech_stack || null,
+          collaboration_details: d.collaboration_details || null,
+          diagrams: diagramStr || null,
           stage: d.stage,
           status: d.status,
         };
@@ -2502,8 +2503,8 @@
       ],
       onSubmit: (d) => ({
         title: d.title,
-        slug: d.slug || undefined,
-        description: d.description || undefined,
+        slug: d.slug || null,
+        description: d.description || null,
         display_order: parseInt(d.display_order, 10) || 0,
       }),
       onBack: loadAcademy,
@@ -2659,10 +2660,17 @@
       const data = {
         title: val('f-title'),
         youtube_url: val('f-url'),
-        description: val('f-description') || undefined,
+        description: val('f-description') || null,
         display_order: parseInt(val('f-order'), 10) || 0,
         playlist_id: playlistId,
       };
+
+      if (!/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(data.youtube_url)) {
+        msg.textContent = 'Enter a valid YouTube URL.';
+        msg.classList.add('form-msg-error');
+        btn.disabled = false;
+        return;
+      }
 
       try {
         if (v.id) {
@@ -3014,7 +3022,7 @@
 
     let settings = {};
     try {
-      const keys = ['chatbot_model', 'chatbot_temperature', 'chatbot_system_prompt', 'chatbot_max_tokens', 'chatbot_top_k', 'chatbot_auto_backup'];
+      const keys = ['chatbot_model', 'chatbot_temperature', 'chatbot_system_prompt', 'chatbot_max_tokens', 'chatbot_top_k', 'chatbot_backup_enabled'];
       const results = await Promise.all(keys.map((k) => AdminAPI.request(`/api/settings/${k}`).catch(() => null)));
       keys.forEach((k, i) => { if (results[i]) settings[k] = results[i].value; });
     } catch {}
@@ -3023,8 +3031,8 @@
     const temp = settings.chatbot_temperature || '0.7';
     const prompt = settings.chatbot_system_prompt || '';
     const maxTok = settings.chatbot_max_tokens || '500';
-    const topK = settings.chatbot_top_k || '3';
-    const autoBackup = settings.chatbot_auto_backup === 'true';
+    const topK = settings.chatbot_top_k || '5';
+    const autoBackup = settings.chatbot_backup_enabled === 'true';
 
     const defaultModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4.1-nano'];
     const isCustomModel = !defaultModels.includes(model);
@@ -3279,7 +3287,7 @@
       const cb = e.target;
       cb.disabled = true;
       try {
-        await AdminAPI.request('/api/settings/chatbot_auto_backup', {
+        await AdminAPI.request('/api/settings/chatbot_backup_enabled', {
           method: 'PUT',
           body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
         });
@@ -3640,7 +3648,11 @@
 
       if (!jobsCleanedUp) {
         jobsCleanedUp = true;
-        AdminAPI.request('/api/jobs/admin/cleanup', { method: 'DELETE' }).catch(() => {});
+        AdminAPI.request('/api/jobs/admin/cleanup', { method: 'DELETE' }).then((result) => {
+          if (result && result.warnings && result.warnings.length) {
+            console.warn('Job cleanup warnings:', result.warnings);
+          }
+        }).catch(() => {});
       }
     } catch {
       showEmpty('Failed to load dashboard.');
@@ -3913,8 +3925,8 @@
           </div>
           <div class="field">
             <label for="f-password">Temporary Password <span class="field-req">Required</span></label>
-            <input type="text" id="f-password" required>
-            <span class="field-hint">The new admin should change this after first login</span>
+            <input type="password" id="f-password" required minlength="8">
+            <span class="field-hint">At least 8 characters. The new admin should change this after first login</span>
           </div>
           <div class="field">
             <label for="f-name">Name</label>
@@ -3942,7 +3954,7 @@
           body: JSON.stringify({
             email: val('f-email'),
             password: val('f-password'),
-            name: val('f-name') || undefined,
+            name: val('f-name') || null,
           }),
         });
         msg.textContent = 'Admin added.';

@@ -1,6 +1,13 @@
 const AdminAPI = (() => {
   const BASE = 'https://avennex.onrender.com';
 
+  function formatErrorDetail(detail) {
+    if (Array.isArray(detail)) {
+      return detail.map((d) => d.msg || String(d)).join(', ');
+    }
+    return detail;
+  }
+
   function getToken() {
     return localStorage.getItem('admin_token');
   }
@@ -61,7 +68,7 @@ const AdminAPI = (() => {
     if (res.status === 204) return {};
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail) || `Request failed (${res.status})`);
     }
     return res.json();
   }
@@ -74,7 +81,7 @@ const AdminAPI = (() => {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Login failed');
+      throw new Error(formatErrorDetail(err.detail) || 'Login failed');
     }
     const data = await res.json();
     setTokens(data.access_token, data.refresh_token);
@@ -100,7 +107,7 @@ const AdminAPI = (() => {
     const res = await fetch(`${BASE}${path}`, { ...opts, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Request failed (${res.status})`);
+      throw new Error(formatErrorDetail(err.detail) || `Request failed (${res.status})`);
     }
     if (res.status === 204) return {};
     return res.json();

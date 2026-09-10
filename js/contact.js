@@ -16,7 +16,12 @@
       message: form.message.value.trim()
     };
 
-    API.post('/contact', data).then(function () {
+    API.post('/contact', data).then(function (res) {
+      if (res && res.success === false) {
+        msg.className = 'form-msg form-msg-error';
+        msg.textContent = res.message || 'Something went wrong. Try again.';
+        return;
+      }
       msg.className = 'form-msg form-msg-success';
       msg.textContent = 'Message sent. We\'ll get back to you soon.';
       form.reset();

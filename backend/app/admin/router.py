@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
 from app.auth.dependencies import get_current_user
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 class AdminCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8)
     name: Optional[str] = None
 
 

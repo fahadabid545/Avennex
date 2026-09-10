@@ -136,17 +136,16 @@ def delete_application(app_id: str):
     db = get_supabase()
     app = db.table("job_applications").select("*").eq("id", app_id).execute()
     if not app.data:
-        return None
+        return None, []
     app_data = app.data[0]
     db.table("job_applications").delete().eq("id", app_id).execute()
 
+    warnings = []
     if app_data.get("resume_url"):
-        try:
-            ftp_service.delete_file(app_data["resume_url"])
-        except Exception as e:
-            logger.warning("Failed to delete resume file for application %s: %s", app_id, e)
+        if not ftp_service.delete_file(app_data["resume_url"]):
+            warnings.append("Application deleted, but the resume file could not be removed from storage.")
 
-    return app_data
+    return app_data, warnings
 
 
 def repost_job(job_id: str, overrides: dict = None):

@@ -48,6 +48,7 @@ class JobResponse(BaseModel):
     expires_at: Optional[datetime] = None
     custom_questions: Optional[list[str]] = None
     max_applications: Optional[int] = None
+    application_count: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     last_edited_by: Optional[str] = None
