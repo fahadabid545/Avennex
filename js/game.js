@@ -10,9 +10,11 @@
   var animFrame = null;
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  var accentColor = '#3b82f6';
-  var groundColor = '#222';
-  var textColor = '#f0f0f0';
+  var accentColor = '#0A0A0A';
+  var groundColor = '#CBCBCB';
+  var textColor = '#0A0A0A';
+  var demo = true;
+  var countdownEl = document.getElementById('game-countdown');
 
   var player, obstacles, score, highScore, speed, gameOver, jumpHeld;
   var groundY;
@@ -23,9 +25,9 @@
   highScore = parseInt(localStorage.getItem('avx_hs') || '0', 10);
 
   var obstacleTypes = [
-    { type: 'bug', color: '#ef4444', w: 18, h: 18 },
-    { type: '500', color: '#f97316', w: 32, h: 22 },
-    { type: 'merge', color: '#f59e0b', w: 24, h: 28 }
+    { type: 'bug', color: '#0A0A0A', w: 18, h: 18 },
+    { type: '500', color: '#3D3D3D', w: 32, h: 22 },
+    { type: 'merge', color: '#5C5C5C', w: 24, h: 28 }
   ];
 
   function resize() {
@@ -57,6 +59,58 @@
     lastTime = 0;
   }
 
+  var demoRestart = 0;
+
+  function autoPilot() {
+    for (var i = 0; i < obstacles.length; i++) {
+      var o = obstacles[i];
+      var gap = o.x - (player.x + player.w);
+      if (gap > 0 && gap < 90 + speed * 8 && player.grounded) {
+        jump();
+        return;
+      }
+    }
+  }
+
+  function startDemo() {
+    if (running) return;
+    demo = true;
+    running = true;
+    overlay.classList.add('is-live');
+    hero.classList.remove('game-active');
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    resize();
+    reset();
+    lastTime = 0;
+    animFrame = requestAnimationFrame(loop);
+    window.addEventListener('resize', resize);
+  }
+
+  function takeOver() {
+    if (!demo) return;
+    var n = 3;
+    if (countdownEl) {
+      countdownEl.classList.add('is-live');
+      countdownEl.textContent = String(n);
+    }
+    var tick = setInterval(function () {
+      n -= 1;
+      if (n > 0) {
+        if (countdownEl) countdownEl.textContent = String(n);
+        return;
+      }
+      clearInterval(tick);
+      if (countdownEl) countdownEl.classList.remove('is-live');
+      demo = false;
+      hero.classList.add('game-active');
+      overlay.classList.add('active');
+      reset();
+      lastTime = 0;
+      window.addEventListener('keydown', onKey);
+      window.addEventListener('keyup', onKeyUp);
+    }, 700);
+  }
+
   function jump() {
     if (player.grounded && !gameOver) {
       player.vy = -10;
@@ -78,7 +132,15 @@
   }
 
   function update(dt) {
-    if (gameOver) return;
+    if (gameOver) {
+      if (demo) {
+        demoRestart += dt;
+        if (demoRestart > 900) { demoRestart = 0; reset(); }
+      }
+      return;
+    }
+
+    if (demo) autoPilot();
 
     score += dt * 0.01;
     speed = 3 + score * 0.08;
@@ -157,7 +219,7 @@
       }
     } else if (o.type === '500') {
       ctx.fillRect(o.x, o.y, o.w, o.h);
-      ctx.fillStyle = '#0a0a0b';
+      ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 11px JetBrains Mono, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -210,7 +272,7 @@
     ctx.fillText(Math.floor(score), w - 20, 20);
 
     if (highScore > 0) {
-      ctx.fillStyle = '#666';
+      ctx.fillStyle = '#767676';
       ctx.font = '400 11px JetBrains Mono, monospace';
       ctx.fillText('HI ' + highScore, w - 20, 40);
     }
@@ -252,7 +314,17 @@
   }
 
   function stop() {
+    if (!demo) {
+      demo = true;
+      hero.classList.remove('game-active');
+      overlay.classList.remove('active');
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKeyUp);
+      reset();
+      return;
+    }
     running = false;
+    overlay.classList.remove('is-live');
     if (animFrame) cancelAnimationFrame(animFrame);
     animFrame = null;
     hero.classList.remove('game-active');
@@ -286,6 +358,7 @@
 
   function onCanvasClick(e) {
     e.stopPropagation();
+    if (demo) { takeOver(); return; }
     if (gameOver) {
       reset();
       lastTime = 0;
@@ -294,14 +367,12 @@
     }
   }
 
-  trigger.addEventListener('click', function () {
-    start();
-  });
+  trigger.addEventListener('click', takeOver);
 
   trigger.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
       e.preventDefault();
-      start();
+      takeOver();
     }
   });
 
@@ -312,8 +383,24 @@
   }, { passive: false });
 
   window.addEventListener('scroll', function () {
-    if (running && window.scrollY > 100) {
-      stop();
-    }
+    if (!demo && window.scrollY > 200) stop();
   }, { passive: true });
+
+  if ('IntersectionObserver' in window) {
+    var heroObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          startDemo();
+        } else if (demo && running) {
+          running = false;
+          if (animFrame) cancelAnimationFrame(animFrame);
+          animFrame = null;
+          overlay.classList.remove('is-live');
+        }
+      });
+    }, { threshold: 0.25 });
+    heroObserver.observe(hero);
+  } else {
+    startDemo();
+  }
 })();

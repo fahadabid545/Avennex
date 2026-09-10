@@ -85,9 +85,19 @@
           <span class="hero-headline-sub">that automate complex workflows.</span>
         </h1>
         <p class="hero-subtext">HR teams buried in manual screening. Store owners priced out of e-commerce tools. Real bottlenecks, turned into products that handle the work.</p>
-        <div class="hero-buttons">
-          <a href="products.html" class="hero-btn-primary">See Our Products</a>
-          <a href="launchpad.html" class="hero-btn-secondary">Explore Launchpad</a>
+        <div class="hero-links">
+          <a href="products.html" class="hero-link">
+            <span class="hero-link-index">01</span>
+            <span class="hero-link-rule" aria-hidden="true"></span>
+            <span class="hero-link-label">See our products</span>
+            <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+          <a href="launchpad.html" class="hero-link">
+            <span class="hero-link-index">02</span>
+            <span class="hero-link-rule" aria-hidden="true"></span>
+            <span class="hero-link-label">Explore the launchpad</span>
+            <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
+          </a>
         </div>
       </div>
 
@@ -96,18 +106,21 @@
         <div class="scroll-indicator-line"></div>
       </div>
 
-      <div class="hero-game-hint" id="game-trigger" role="button" tabindex="0" aria-label="Play the mini game" style="display:none;">
-        <i data-lucide="gamepad-2" width="16" height="16"></i>
-        <span>Play</span>
-      </div>
-
-      <div class="hero-game-overlay" id="game-overlay">
-        <canvas id="game-canvas"></canvas>
+      <div class="hero-game" id="hero-game">
+        <div class="hero-game-overlay" id="game-overlay">
+          <canvas id="game-canvas"></canvas>
+        </div>
+        <div class="game-countdown" id="game-countdown" aria-hidden="true"></div>
         <div class="game-exit-hint">
           <span class="game-exit-arrow">&larr;</span>
           <span>scroll down to exit</span>
         </div>
       </div>
+
+      <button type="button" class="hero-game-cta" id="game-trigger" aria-label="Take over the running demo game">
+        <span class="hero-game-dot" aria-hidden="true"></span>
+        <span>Demo running. Take over.</span>
+      </button>
     </section>
 
     <section class="section brain-section band-dark" id="brain-section" data-animate="fade-left">
@@ -125,63 +138,6 @@
       </div>
     </section>
 
-    <section class="section pipeline-section" id="pipeline-section" data-animate="fade-in">
-      <div class="section-inner">
-        <h2 class="section-heading">From commit to production, every time</h2>
-        <p class="section-subtext">Code ships through four stages. Nothing skips a step.</p>
-
-        <div class="pipeline-flow">
-          <div class="pipeline-stage">
-            <div class="pipeline-node">
-              <i data-lucide="code-2" width="28" height="28"></i>
-            </div>
-            <span class="pipeline-label">Code</span>
-          </div>
-
-          <div class="pipeline-connector">
-            <div class="pipeline-line"></div>
-            <div class="pipeline-dot pipeline-dot-1"></div>
-            <div class="pipeline-dot pipeline-dot-2"></div>
-          </div>
-
-          <div class="pipeline-stage">
-            <div class="pipeline-node">
-              <i data-lucide="hammer" width="28" height="28"></i>
-            </div>
-            <span class="pipeline-label">Build</span>
-          </div>
-
-          <div class="pipeline-connector">
-            <div class="pipeline-line"></div>
-            <div class="pipeline-dot pipeline-dot-1"></div>
-            <div class="pipeline-dot pipeline-dot-2"></div>
-          </div>
-
-          <div class="pipeline-stage">
-            <div class="pipeline-node">
-              <i data-lucide="check-circle" width="28" height="28"></i>
-            </div>
-            <span class="pipeline-label">Test</span>
-          </div>
-
-          <div class="pipeline-connector">
-            <div class="pipeline-line"></div>
-            <div class="pipeline-dot pipeline-dot-1"></div>
-            <div class="pipeline-dot pipeline-dot-2"></div>
-          </div>
-
-          <div class="pipeline-stage">
-            <div class="pipeline-node">
-              <i data-lucide="rocket" width="28" height="28"></i>
-            </div>
-            <span class="pipeline-label">Deploy</span>
-          </div>
-        </div>
-
-        <p class="pipeline-stack">Python, FastAPI, Supabase, vanilla JS. No framework bloat.</p>
-      </div>
-    </section>
-
     <section class="scroll-strip">
       <div class="scroll-strip-track">
         <span class="scroll-strip-text">AI Automation &middot; Product Studio &middot; HR Tech &middot; E-Commerce &middot; Custom Software &middot; Game Development &middot; </span>
@@ -190,62 +146,115 @@
       </div>
     </section>
 
-    <section class="section products-section" data-animate="fade-up">
+    <section class="section dash-section band-dark" id="pipeline-section" data-animate="fade-up">
       <div class="section-inner">
-        <h2 class="section-heading">What We're Building</h2>
-        <p class="section-subtext">Two products in active development. One open launchpad for what comes next.</p>
+        <p class="section-eyebrow">Inside the work</p>
+        <h2 class="section-heading">Pick a workflow. See what gets removed.</h2>
+        <p class="section-subtext">Same pattern behind every product. Find the repetitive part, hand it to the machine, give the person back the judgement call.</p>
 
-        <div class="bento-grid" id="home-bento">
-          <a href="products.html" class="bento-card bento-product">
-            <div class="bento-card-header">
-              <i data-lucide="scan-face" width="24" height="24"></i>
-              <span class="badge badge-green"><span class="badge-dot"></span> In Development</span>
-            </div>
-            <h3 class="bento-card-title">AI HR Platform</h3>
-            <p class="bento-card-text">Screens 500 resumes in the time it takes your HR team to read five. Pulls out the right candidates based on actual job requirements, not keyword tricks. Built for South Asian hiring workflows where volume kills quality.</p>
-            <div class="progress-bar"><div class="progress-fill" style="width: 40%"></div></div>
-          </a>
+        <div class="dash">
+          <div class="dash-tabs" role="tablist" aria-label="Workflows">
+            <button type="button" class="dash-tab is-active" role="tab" aria-selected="true" data-dash="screening">Resume screening</button>
+            <button type="button" class="dash-tab" role="tab" aria-selected="false" data-dash="storefront">Storefront setup</button>
+            <button type="button" class="dash-tab" role="tab" aria-selected="false" data-dash="orders">Order routing</button>
+          </div>
 
-          <a href="products.html" class="bento-card bento-product">
-            <div class="bento-card-header">
-              <i data-lucide="store" width="24" height="24"></i>
-              <span class="badge badge-green"><span class="badge-dot"></span> In Development</span>
+          <div class="dash-body">
+            <div class="dash-card dash-metric">
+              <span class="dash-card-label">Time per cycle</span>
+              <strong class="dash-metric-value" id="dash-value">6 hrs</strong>
+              <span class="dash-metric-note" id="dash-note">down from two full days</span>
             </div>
-            <h3 class="bento-card-title">E-Commerce Builder</h3>
-            <p class="bento-card-text">Most store builders charge monthly fees that eat into thin margins. This one doesn't. Designed for small sellers who need a storefront, payment processing, and order management without the overhead.</p>
-            <div class="progress-bar"><div class="progress-fill" style="width: 25%"></div></div>
-          </a>
 
-          <a href="launchpad.html" class="bento-card bento-card-accent">
-            <div class="bento-card-header">
-              <i data-lucide="rocket" width="24" height="24"></i>
+            <div class="dash-card dash-chart">
+              <span class="dash-card-label">Manual vs automated</span>
+              <div class="dash-bars" id="dash-bars"></div>
             </div>
-            <h3 class="bento-card-title">Launchpad</h3>
-            <p class="bento-card-text">Got skills or ideas? Our upcoming products are open for collaboration before we build them. Browse the concepts, drop feedback, or pitch in on something that interests you.</p>
-          </a>
+
+            <div class="dash-card dash-steps">
+              <span class="dash-card-label">What runs</span>
+              <ol class="dash-step-list" id="dash-steps"></ol>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section stats-strip" id="stats-section" data-animate="fade-in">
+    <section class="section story-scroll" id="story-scroll">
       <div class="section-inner">
-        <div class="stats-row">
-          <div class="stat-item">
-            <span class="stat-number" data-count="2">0</span>
-            <span class="stat-label">Products in Development</span>
+        <div class="story-grid">
+          <div class="story-left">
+            <p class="section-eyebrow">What we're building</p>
+            <h2 class="section-heading">Two products, one operating principle</h2>
+            <div class="story-desc">
+              <p class="story-copy is-active" data-story="0">Recruiters lose whole days to resumes that never had a chance. The platform reads every application against what the role actually needs, then hands back a ranked shortlist with the reasoning attached. Volume stops deciding who gets looked at.</p>
+              <p class="story-copy" data-story="1">Storefront tools priced for Western software budgets don't work for a seller in Lahore moving forty orders a week. This one drops the monthly fee and keeps what matters. Products, payments, orders.</p>
+              <p class="story-copy" data-story="2">Some ideas need pressure before they need code. They get published here first, open for anyone to pick apart or help build. What survives the feedback gets built.</p>
+            </div>
+            <a class="story-link" href="products.html">See all products <span aria-hidden="true">&rarr;</span></a>
           </div>
-          <div class="stat-item">
-            <span class="stat-number" data-count="7" data-suffix="+">0</span>
-            <span class="stat-label">Team Members</span>
+
+          <div class="story-right">
+            <article class="story-item is-active" data-story-item="0">
+              <span class="story-index">01</span>
+              <h3 class="story-title">AI HR Platform</h3>
+              <ul class="story-stack">
+                <li>Resume parsing</li>
+                <li>Signal scoring</li>
+                <li>Ranked shortlist</li>
+                <li>Bulk export</li>
+              </ul>
+            </article>
+
+            <article class="story-item" data-story-item="1">
+              <span class="story-index">02</span>
+              <h3 class="story-title">E-Commerce Builder</h3>
+              <ul class="story-stack">
+                <li>Storefront</li>
+                <li>Local payments</li>
+                <li>Order management</li>
+                <li>No monthly fee</li>
+              </ul>
+            </article>
+
+            <article class="story-item" data-story-item="2">
+              <span class="story-index">03</span>
+              <h3 class="story-title">Launchpad</h3>
+              <ul class="story-stack">
+                <li>Open concepts</li>
+                <li>Public feedback</li>
+                <li>Collaboration</li>
+                <li>Built in the open</li>
+              </ul>
+            </article>
           </div>
-          <div class="stat-item">
-            <span class="stat-number" data-count="2026">0</span>
-            <span class="stat-label">Founded</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" data-count="3">0</span>
-            <span class="stat-label">Launchpad Ideas</span>
-          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section facts-section" id="stats-section" data-animate="fade-in">
+      <div class="section-inner">
+        <div class="facts-grid">
+          <button type="button" class="fact" aria-expanded="false">
+            <span class="fact-value">2</span>
+            <span class="fact-label">Products in development</span>
+            <span class="fact-detail">An HR screening platform and a storefront builder. Both get worked on every week.</span>
+          </button>
+          <button type="button" class="fact" aria-expanded="false">
+            <span class="fact-value">7+</span>
+            <span class="fact-label">People on the team</span>
+            <span class="fact-detail">Engineers, design, and product. Everyone works part-time alongside a day job.</span>
+          </button>
+          <button type="button" class="fact" aria-expanded="false">
+            <span class="fact-value">2026</span>
+            <span class="fact-label">Founded</span>
+            <span class="fact-detail">Started in Lahore after years of shipping other people's software.</span>
+          </button>
+          <button type="button" class="fact" aria-expanded="false">
+            <span class="fact-value">3</span>
+            <span class="fact-label">Ideas on the launchpad</span>
+            <span class="fact-detail">Published before a line of code exists, so the feedback arrives while it still counts.</span>
+          </button>
         </div>
       </div>
     </section>
@@ -374,17 +383,15 @@
     </div>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="js/main.js" defer></script>
   <script src="js/header.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/animations.js" defer></script>
   <script src="js/space-bg.js" defer></script>
   <script src="js/game.js" defer></script>
-  <script src="js/ai-brain.js" defer></script>
-  <script src="js/pipeline.js" defer></script>
+  <script src="js/brain-net.js" defer></script>
   <script src="js/home.js" defer></script>
+  <script src="js/home-sections.js" defer></script>
   <script src="js/chat.js" defer></script>
   <script src="js/schema.js" defer></script>
   <script src="js/chatbot.js" defer></script>

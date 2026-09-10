@@ -1,45 +1,53 @@
 .chatbot-trigger {
   position: fixed;
-  bottom: 24px;
+  bottom: 20px;
   right: 24px;
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #8C1C1C 0%, #4D002F 100%);
+  width: 78px;
+  height: 86px;
+  padding: 0;
+  background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
   cursor: pointer;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 10px 28px rgba(22, 17, 15, 0.28);
   z-index: 9998;
-  transition: transform 0.25s, box-shadow 0.25s, opacity 0.2s;
+  transition: transform 0.25s, opacity 0.2s;
 }
 
 .chatbot-trigger:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.95), 0 16px 36px rgba(140, 28, 28, 0.36);
+  transform: translateY(-4px);
 }
 
 .chatbot-trigger.trigger-closing {
-  transform: scale(0.4);
+  transform: scale(0.5);
   opacity: 0;
   pointer-events: none;
 }
 
 .chatbot-robot {
-  animation: chatbot-robot-bob 3s ease-in-out infinite;
-  transform-origin: 24px 30px;
+  overflow: visible;
+}
+
+.chatbot-robot-body {
+  animation: chatbot-robot-bob 3.2s ease-in-out infinite;
+  transform-origin: 39px 60px;
   transition: transform 0.25s ease;
 }
 
-.chatbot-trigger:hover .chatbot-robot {
+.chatbot-trigger:hover .chatbot-robot-body {
   animation-play-state: paused;
-  transform: rotate(-5deg) scale(1.05);
+  transform: rotate(-4deg) scale(1.04);
+}
+
+.chatbot-robot-shadow {
+  animation: chatbot-shadow 3.2s ease-in-out infinite;
 }
 
 .chatbot-robot-antenna {
-  transform-origin: 24px 10px;
+  transform-origin: 39px 16px;
   transition: transform 0.25s ease;
 }
 
@@ -48,7 +56,7 @@
 }
 
 .chatbot-robot-antenna-tip {
-  transform-origin: 24px 3px;
+  transform-origin: 39px 4px;
   animation: chatbot-tip-pulse 2.4s ease-in-out infinite;
 }
 
@@ -58,7 +66,7 @@
 }
 
 .chatbot-trigger:hover .chatbot-robot-eye {
-  transform: scaleY(1.18);
+  transform: scaleY(1.15);
 }
 
 .chatbot-trigger.blink .chatbot-robot-eye {
@@ -67,28 +75,28 @@
 
 @keyframes chatbot-robot-bob {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  30% { transform: translateY(-2.5px) rotate(-2deg); }
-  70% { transform: translateY(-2.5px) rotate(2deg); }
+  30% { transform: translateY(-4px) rotate(-1.6deg); }
+  70% { transform: translateY(-4px) rotate(1.6deg); }
+}
+
+@keyframes chatbot-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.14; }
+  50% { transform: scaleX(0.86); opacity: 0.08; }
 }
 
 @keyframes chatbot-tip-pulse {
-  0%, 100% { opacity: 0.7; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%, 100% { opacity: 0.5; transform: scale(0.86); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 .chatbot-trigger.pulse {
-  animation: chatbot-pulse 2.4s ease-in-out 3;
-}
-
-@keyframes chatbot-pulse {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 10px 28px rgba(22, 17, 15, 0.28); }
-  50% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 0 0 14px rgba(140, 28, 28, 0.14), 0 10px 28px rgba(22, 17, 15, 0.28); }
+  animation: none;
 }
 
 .chatbot-greeting {
   position: fixed;
-  bottom: 34px;
-  right: 100px;
+  bottom: 44px;
+  right: 112px;
   z-index: 9997;
   max-width: 244px;
   display: flex;

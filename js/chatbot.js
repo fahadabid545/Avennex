@@ -30,20 +30,21 @@
     trigger.className = 'chatbot-trigger pulse';
     trigger.setAttribute('aria-label', 'Open chat');
     trigger.innerHTML =
-      '<svg class="chatbot-robot" width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">' +
-        '<g class="chatbot-robot-antenna">' +
-          '<rect x="23" y="3" width="2" height="7" rx="1" fill="#F3E4E0"/>' +
-          '<circle class="chatbot-robot-antenna-tip" cx="24" cy="3" r="2.6" fill="#FFC24B"/>' +
-        '</g>' +
-        '<rect x="3.5" y="19" width="3.5" height="9" rx="1.75" fill="#F3E4E0"/>' +
-        '<rect x="41" y="19" width="3.5" height="9" rx="1.75" fill="#F3E4E0"/>' +
+      '<svg class="chatbot-robot" width="78" height="86" viewBox="0 0 78 86" fill="none" aria-hidden="true">' +
+        '<ellipse class="chatbot-robot-shadow" cx="39" cy="81" rx="19" ry="4" fill="#0A0A0A" opacity="0.14"/>' +
         '<g class="chatbot-robot-body">' +
-          '<rect x="13" y="37" width="22" height="8" rx="4" fill="#E9D7D2"/>' +
-          '<rect x="8" y="9" width="32" height="29" rx="11" fill="#FFFFFF"/>' +
-          '<rect x="12.5" y="15" width="23" height="13.5" rx="6.75" fill="#1A1113"/>' +
-          '<rect class="chatbot-robot-eye chatbot-robot-eye-l" x="17" y="19" width="4" height="5.5" rx="2" fill="#FFD9A8"/>' +
-          '<rect class="chatbot-robot-eye chatbot-robot-eye-r" x="27" y="19" width="4" height="5.5" rx="2" fill="#FFD9A8"/>' +
-          '<path class="chatbot-robot-smile" d="M19.5 32.5c1.6 1.5 7.4 1.5 9 0" stroke="#C4564A" stroke-width="1.8" stroke-linecap="round"/>' +
+          '<g class="chatbot-robot-antenna">' +
+            '<line x1="39" y1="14" x2="39" y2="5" stroke="#0A0A0A" stroke-width="2.6" stroke-linecap="round"/>' +
+            '<circle class="chatbot-robot-antenna-tip" cx="39" cy="4" r="4" fill="#0A0A0A"/>' +
+          '</g>' +
+          '<rect x="6" y="34" width="8" height="16" rx="4" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.4"/>' +
+          '<rect x="64" y="34" width="8" height="16" rx="4" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.4"/>' +
+          '<rect x="20" y="58" width="38" height="16" rx="7" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.4"/>' +
+          '<rect x="14" y="14" width="50" height="46" rx="16" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.6"/>' +
+          '<rect x="21" y="24" width="36" height="21" rx="10" fill="#0A0A0A"/>' +
+          '<rect class="chatbot-robot-eye chatbot-robot-eye-l" x="28" y="30" width="6" height="9" rx="3" fill="#FFFFFF"/>' +
+          '<rect class="chatbot-robot-eye chatbot-robot-eye-r" x="44" y="30" width="6" height="9" rx="3" fill="#FFFFFF"/>' +
+          '<path class="chatbot-robot-smile" d="M31 52c2.4 2.2 13.6 2.2 16 0" stroke="#0A0A0A" stroke-width="2.4" stroke-linecap="round"/>' +
         '</g>' +
       '</svg>';
     document.body.appendChild(trigger);

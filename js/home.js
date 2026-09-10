@@ -1,6 +1,6 @@
 (function () {
   var toggleSections = [
-    { key: 'game_enabled', el: document.getElementById('game-trigger') },
+    { key: 'game_enabled', el: document.getElementById('hero-game') },
     { key: 'ai_brain_enabled', el: document.getElementById('brain-section') },
     { key: 'pipeline_enabled', el: document.getElementById('pipeline-section') },
     { key: 'stats_enabled', el: document.getElementById('stats-section') },
@@ -19,34 +19,6 @@
       t.el.style.display = '';
     });
   });
-
-  var grid = document.getElementById('home-bento');
-  if (!grid) return;
-
-  API.get('/products').then(function (products) {
-    if (!products || products.length === 0) return;
-
-    var slots = grid.querySelectorAll('.bento-product');
-    var count = Math.min(products.length, slots.length);
-
-    for (var i = 0; i < count; i++) {
-      var p = products[i];
-      var card = slots[i];
-
-      var title = card.querySelector('.bento-card-title');
-      var text = card.querySelector('.bento-card-text');
-      var fill = card.querySelector('.progress-fill');
-      var badge = card.querySelector('.badge');
-
-      if (title) title.textContent = p.name;
-      if (text && p.tagline) text.textContent = p.tagline;
-      if (fill && typeof p.progress === 'number') fill.style.width = p.progress + '%';
-      if (badge) {
-        var label = p.status === 'launched' ? 'Launched' : 'In Development';
-        badge.innerHTML = '<span class="badge-dot"></span> ' + label;
-      }
-    }
-  }).catch(function () {});
 
   var faqList = document.getElementById('faq-list');
   var faqSection = document.getElementById('faq-section');
