@@ -28,10 +28,19 @@
     trigger = document.createElement('button');
     trigger.className = 'chatbot-trigger pulse';
     trigger.setAttribute('aria-label', 'Open chat');
-    trigger.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>';
+    trigger.innerHTML =
+      '<svg class="chatbot-robot" width="34" height="34" viewBox="0 0 40 40" fill="none">' +
+        '<rect class="chatbot-robot-antenna-line" x="19" y="4" width="2" height="7" rx="1" fill="var(--accent-sun)"/>' +
+        '<circle class="chatbot-robot-antenna-tip" cx="20" cy="4" r="2.5" fill="var(--accent-sun)"/>' +
+        '<rect class="chatbot-robot-head" x="8" y="11" width="24" height="22" rx="8" fill="#fff" fill-opacity="0.14" stroke="#fff" stroke-width="1.5"/>' +
+        '<rect class="chatbot-robot-eye chatbot-robot-eye-l" x="14" y="19" width="4" height="6" rx="2" fill="#fff"/>' +
+        '<rect class="chatbot-robot-eye chatbot-robot-eye-r" x="22" y="19" width="4" height="6" rx="2" fill="#fff"/>' +
+      '</svg>';
     document.body.appendChild(trigger);
 
     setTimeout(function () { trigger.classList.remove('pulse'); }, 6000);
+
+    scheduleBlink();
 
     panel = document.createElement('div');
     panel.className = 'chatbot-panel';
@@ -60,7 +69,10 @@
     trigger.addEventListener('click', function () {
       open = true;
       panel.classList.add('open');
-      trigger.style.display = 'none';
+      trigger.classList.add('trigger-closing');
+      setTimeout(function () {
+        if (open) trigger.style.display = 'none';
+      }, 220);
       inputEl.focus();
     });
 
@@ -68,6 +80,9 @@
       open = false;
       panel.classList.remove('open');
       trigger.style.display = '';
+      requestAnimationFrame(function () {
+        trigger.classList.remove('trigger-closing');
+      });
     });
 
     inputEl.addEventListener('input', function () {
@@ -81,6 +96,19 @@
     sendBtn.addEventListener('click', function () {
       if (!sendBtn.disabled) send();
     });
+  }
+
+  function scheduleBlink() {
+    var delay = 4000 + Math.random() * 2000;
+    setTimeout(function () {
+      if (trigger && !open) {
+        trigger.classList.add('blink');
+        setTimeout(function () {
+          if (trigger) trigger.classList.remove('blink');
+        }, 220);
+      }
+      scheduleBlink();
+    }, delay);
   }
 
   function addBotMessage(text, sources) {
