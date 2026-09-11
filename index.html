@@ -25,18 +25,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/reset.css?v=202609110807">
-  <link rel="stylesheet" href="css/variables.css?v=202609110807">
-  <link rel="stylesheet" href="css/global.css?v=202609110807">
-  <link rel="stylesheet" href="css/layout.css?v=202609110807">
-  <link rel="stylesheet" href="css/header.css?v=202609110807">
-  <link rel="stylesheet" href="css/footer.css?v=202609110807">
-  <link rel="stylesheet" href="css/animations.css?v=202609110807">
-  <link rel="stylesheet" href="css/hero.css?v=202609110807">
-  <link rel="stylesheet" href="css/components.css?v=202609110807">
+  <link rel="stylesheet" href="css/reset.css?v=202609111100">
+  <link rel="stylesheet" href="css/variables.css?v=202609111100">
+  <link rel="stylesheet" href="css/global.css?v=202609111100">
+  <link rel="stylesheet" href="css/layout.css?v=202609111100">
+  <link rel="stylesheet" href="css/header.css?v=202609111100">
+  <link rel="stylesheet" href="css/footer.css?v=202609111100">
+  <link rel="stylesheet" href="css/animations.css?v=202609111100">
+  <link rel="stylesheet" href="css/hero.css?v=202609111100">
+  <link rel="stylesheet" href="css/components.css?v=202609111100">
 
-  <link rel="stylesheet" href="css/theme.css?v=202609110807">
-  <link rel="stylesheet" href="css/chatbot.css?v=202609110807">
+  <link rel="stylesheet" href="css/theme.css?v=202609111100">
+  <link rel="stylesheet" href="css/chatbot.css?v=202609111100">
   <script src="https://unpkg.com/lucide@0.460.0"></script>
 </head>
 <body data-header-transparent="true">
@@ -105,13 +105,16 @@
       </div>
 
       <div class="hero-game" id="hero-game">
-        <div class="hero-game-overlay" id="game-overlay" role="button" tabindex="0" aria-label="Play the game">
+        <div class="hero-game-overlay" id="game-overlay">
           <canvas id="game-canvas"></canvas>
         </div>
-        <div class="game-countdown" id="game-countdown" aria-hidden="true"></div>
-        <div class="game-exit-hint">
-          <span class="game-exit-arrow">&larr;</span>
-          <span>scroll down to exit</span>
+        <button type="button" class="game-play-tab" id="game-play-tab">
+          <span class="game-play-tab-dot" aria-hidden="true"></span>
+          <span>Click to play</span>
+        </button>
+        <div class="game-scroll-hint" aria-hidden="true">
+          <span class="game-scroll-arrow">&darr;</span>
+          <span>Scroll down to continue on the site</span>
         </div>
       </div>
 
@@ -230,22 +233,22 @@
       <div class="section-inner">
         <div class="facts-grid">
           <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value">2</span>
+            <span class="fact-value" id="fact-products">2</span>
             <span class="fact-label">Products in development</span>
             <span class="fact-detail">An HR screening platform and a storefront builder. Both get worked on every week.</span>
           </button>
           <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value">7+</span>
+            <span class="fact-value" id="fact-team">7</span>
             <span class="fact-label">People on the team</span>
             <span class="fact-detail">Engineers, design, and product. Everyone works part-time alongside a day job.</span>
           </button>
           <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value">2026</span>
+            <span class="fact-value">2022</span>
             <span class="fact-label">Founded</span>
             <span class="fact-detail">Started in Lahore after years of shipping other people's software.</span>
           </button>
           <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value">3</span>
+            <span class="fact-value" id="fact-launchpad">3</span>
             <span class="fact-label">Ideas on the launchpad</span>
             <span class="fact-detail">Published before a line of code exists, so the feedback arrives while it still counts.</span>
           </button>
@@ -279,8 +282,10 @@
 
     <section class="section chat-section" id="chat-section" data-animate="fade-up">
       <div class="section-inner">
-        <h2 class="section-heading">Say something</h2>
-        <p class="section-subtext">Public board. Drop a message, we read everything and reply when there's something worth saying.</p>
+        <div class="chat-intro">
+          <h2 class="section-heading">Say something</h2>
+          <p class="section-subtext">Public board. Drop a message, we read everything and reply when there's something worth saying.</p>
+        </div>
 
         <div class="chat-board">
           <div class="chat-messages" id="chat-messages"></div>
@@ -376,18 +381,18 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=202609110807" defer></script>
-  <script src="js/header.js?v=202609110807" defer></script>
-  <script src="js/api.js?v=202609110807" defer></script>
-  <script src="js/animations.js?v=202609110807" defer></script>
-  <script src="js/space-bg.js?v=202609110807" defer></script>
-  <script src="js/game.js?v=202609110807" defer></script>
-  <script src="js/brain-net.js?v=202609110829" defer></script>
-  <script src="js/home.js?v=202609110807" defer></script>
-  <script src="js/home-sections.js?v=202609110807" defer></script>
-  <script src="js/chat.js?v=202609110807" defer></script>
-  <script src="js/schema.js?v=202609110807" defer></script>
-  <script src="js/chatbot.js?v=202609110807" defer></script>
+  <script src="js/main.js?v=202609111100" defer></script>
+  <script src="js/header.js?v=202609111100" defer></script>
+  <script src="js/api.js?v=202609111100" defer></script>
+  <script src="js/animations.js?v=202609111100" defer></script>
+  <script src="js/space-bg.js?v=202609111100" defer></script>
+  <script src="js/game.js?v=202609111100" defer></script>
+  <script src="js/brain-net.js?v=202609111100" defer></script>
+  <script src="js/home.js?v=202609111100" defer></script>
+  <script src="js/home-sections.js?v=202609111100" defer></script>
+  <script src="js/chat.js?v=202609111100" defer></script>
+  <script src="js/schema.js?v=202609111100" defer></script>
+  <script src="js/chatbot.js?v=202609111100" defer></script>
   <script>if (typeof lucide !== "undefined") lucide.createIcons();</script>
 
 </body>

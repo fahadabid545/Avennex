@@ -365,3 +365,73 @@
     border-bottom: 1px solid var(--border);
   }
 }
+
+/* Suggested questions: cards before the first message, chips afterwards */
+
+.chatbot-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 12px;
+  flex: 0 0 auto;
+}
+
+.chatbot-suggestions:empty {
+  display: none;
+}
+
+.chatbot-suggest-card {
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.chatbot-suggest-card:hover {
+  border-color: var(--tone);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.chatbot-suggestions.is-chips {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 7px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding-bottom: 10px;
+}
+
+.chatbot-suggestions.is-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chatbot-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 7px 13px;
+  background: var(--tone-soft);
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--tone);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chatbot-chip:hover {
+  background: var(--surface-3);
+  border-color: var(--tone);
+}

@@ -127,8 +127,8 @@
   function progress() {
     var rect = band.getBoundingClientRect();
     var vh = window.innerHeight || document.documentElement.clientHeight;
-    var start = vh * 0.8;
-    var end = vh * 0.15;
+    var start = vh * 0.95;
+    var end = -rect.height * 0.35;
     if (rect.top >= start) return 0;
     if (rect.top <= end) return 1;
     var t = (start - rect.top) / (start - end);
@@ -151,4 +151,34 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   paint();
+})();
+
+(function () {
+  var products = document.getElementById('fact-products');
+  var launchpad = document.getElementById('fact-launchpad');
+  var team = document.getElementById('fact-team');
+  if (typeof API === 'undefined') return;
+
+  function set(el, value) {
+    if (!el || value === null || value === undefined) return;
+    el.textContent = String(value);
+  }
+
+  if (products) {
+    API.get('/products').then(function (list) {
+      if (Array.isArray(list)) set(products, list.length);
+    }).catch(function () {});
+  }
+
+  if (launchpad) {
+    API.get('/launchpad').then(function (list) {
+      if (Array.isArray(list)) set(launchpad, list.length);
+    }).catch(function () {});
+  }
+
+  if (team) {
+    API.get('/settings/team_size').then(function (setting) {
+      if (setting && setting.value) set(team, setting.value);
+    }).catch(function () {});
+  }
 })();

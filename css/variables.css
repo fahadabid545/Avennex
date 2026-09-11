@@ -40,9 +40,23 @@
   --font-mono: 'JetBrains Mono', monospace;
   --font-display: 'Inter', sans-serif;
 
-  --shadow-sm: 0 1px 2px rgba(10, 10, 10, 0.05);
-  --shadow-card: 0 1px 2px rgba(10, 10, 10, 0.05), 0 6px 18px rgba(10, 10, 10, 0.05);
-  --shadow-lift: 0 2px 4px rgba(10, 10, 10, 0.06), 0 14px 34px rgba(10, 10, 10, 0.10);
+  --shadow-sm: 0 1px 2px rgba(20, 24, 34, 0.06);
+  --shadow-card: 0 1px 2px rgba(20, 24, 34, 0.05), 0 8px 24px rgba(20, 24, 34, 0.07);
+  --shadow-lift: 0 2px 6px rgba(20, 24, 34, 0.07), 0 20px 46px rgba(20, 24, 34, 0.13);
+
+  /* tonal surfaces: the theme stays black and light, these carry a faint cool
+     cast so stacked cards separate from the page instead of vanishing into it */
+  --surface-1: #FFFFFF;
+  --surface-2: #F6F7F9;
+  --surface-3: #EDEFF3;
+  --surface-line: #E2E5EB;
+  --tone: #2C3648;
+  --tone-soft: rgba(44, 54, 72, 0.07);
+
+  --dark-surface-1: #141619;
+  --dark-surface-2: #1B1E23;
+  --dark-surface-line: #2A2E35;
+  --tone-on-dark: #C3CBD9;
 
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;

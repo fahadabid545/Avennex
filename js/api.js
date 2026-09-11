@@ -55,6 +55,25 @@ var API = (function () {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // content saved before uploads returned absolute URLs still carries paths like
+  // /uploads/x.jpg, which resolve against this site rather than the API host
+  function absolutise(html) {
+    return String(html).replace(/(<img\b[^>]*?\bsrc=)(["'])(?!https?:|data:|blob:)([^"']*)\2/gi,
+      function (all, head, quote, path) {
+        if (!path) return all;
+        var abs = BASE.replace(/\/api$/, '') + (path.charAt(0) === '/' ? path : '/' + path);
+        return head + quote + abs + quote;
+      });
+  }
+
+  // light markdown inside a paragraph: `code`, **bold**, *italic*
+  function inlineMd(str) {
+    return str
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?]|$)/g, '$1<em>$2</em>');
+  }
+
   function renderRichText(text) {
     if (!text) return '';
     var blockTagRe = /<(h[1-6]|ul|ol|li|blockquote|pre|img|div|table|p)[\s>/]/i;
@@ -66,22 +85,27 @@ var API = (function () {
       if (blockTagRe.test(para)) {
         html += para;
       } else if (para.indexOf('## ') === 0) {
-        html += '<h2>' + para.substring(3) + '</h2>';
+        html += '<h2>' + inlineMd(para.substring(3)) + '</h2>';
       } else if (para.indexOf('### ') === 0) {
-        html += '<h3>' + para.substring(4) + '</h3>';
+        html += '<h3>' + inlineMd(para.substring(4)) + '</h3>';
+      } else if (para.indexOf('> ') === 0) {
+        html += '<blockquote>' + inlineMd(para.replace(/^>\s?/gm, '').trim()).replace(/\n/g, '<br>') + '</blockquote>';
+      } else if (para.indexOf('```') === 0) {
+        var fenced = para.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '');
+        html += '<pre><code>' + escHtml(fenced) + '</code></pre>';
       } else if (para.indexOf('- ') === 0 || para.indexOf('\n- ') >= 0) {
         var lines = para.split('\n');
         html += '<ul>';
         for (var j = 0; j < lines.length; j++) {
           var line = lines[j].replace(/^-\s*/, '').trim();
-          if (line) html += '<li>' + line + '</li>';
+          if (line) html += '<li>' + inlineMd(line) + '</li>';
         }
         html += '</ul>';
       } else {
-        html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + inlineMd(para).replace(/\n/g, '<br>') + '</p>';
       }
     }
-    return html;
+    return absolutise(html);
   }
 
   function imgFallback(img) {
@@ -102,6 +126,7 @@ var API = (function () {
     daysUntil: daysUntil,
     escHtml: escHtml,
     renderRichText: renderRichText,
+    absolutise: absolutise,
     imgFallback: imgFallback,
     BASE_URL: BASE
   };

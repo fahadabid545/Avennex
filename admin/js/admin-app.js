@@ -3829,7 +3829,7 @@
       'chatbot_visible', 'product_chat_enabled', 'chat_show_details', 'emails_enabled',
       'space_bg_enabled', 'animations_enabled',
       'game_enabled', 'ai_brain_enabled', 'pipeline_enabled', 'stats_enabled', 'home_chat_enabled', 'faq_enabled',
-      'default_blog_status', 'default_job_expiry_days',
+      'default_blog_status', 'default_job_expiry_days', 'team_size',
     ];
 
     const vals = {};
@@ -3897,6 +3897,12 @@
           <input type="number" id="s-job-expiry" min="1" max="365" value="${vals.default_job_expiry_days || '30'}">
           <span class="form-msg settings-msg" data-msg-for="s-job-expiry" style="margin-top:4px"></span>
         </div>
+        <div class="field" style="max-width:300px">
+          <label for="s-team-size">Team size shown on the homepage</label>
+          <input type="number" id="s-team-size" min="1" max="999" value="${vals.team_size || '7'}">
+          <span class="field-hint">Appears under "People on the team"</span>
+          <span class="form-msg settings-msg" data-msg-for="s-team-size" style="margin-top:4px"></span>
+        </div>
         <div class="form-actions">
           <button class="btn btn-primary btn-sm" id="s-save-defaults">Save Defaults</button>
         </div>
@@ -3931,6 +3937,7 @@
       btn.disabled = true;
       const blogStatus = document.getElementById('s-blog-status').value;
       const jobExpiry = document.getElementById('s-job-expiry').value;
+      const teamSize = document.getElementById('s-team-size').value;
 
       try {
         await Promise.all([
@@ -3941,6 +3948,10 @@
           AdminAPI.request('/api/settings/default_job_expiry_days', {
             method: 'PUT',
             body: JSON.stringify({ value: jobExpiry }),
+          }),
+          AdminAPI.request('/api/settings/team_size', {
+            method: 'PUT',
+            body: JSON.stringify({ value: teamSize }),
           }),
         ]);
         showMsg('s-blog-status', 'Saved', true);

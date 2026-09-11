@@ -9,6 +9,37 @@
   var open = false;
   var sending = false;
   var greeting = null;
+  var suggestEl = null;
+  var started = false;
+
+  var SUGGESTIONS = [
+    'What does Avennex build?',
+    'Are you hiring?',
+    'How much does a project cost?',
+    'What is the Launchpad?',
+    'How do I get in touch?',
+    'Who is on the team?'
+  ];
+
+  function renderSuggestions() {
+    if (!suggestEl) return;
+    suggestEl.className = 'chatbot-suggestions' + (started ? ' is-chips' : '');
+    suggestEl.innerHTML = '';
+    for (var i = 0; i < SUGGESTIONS.length; i++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = started ? 'chatbot-chip' : 'chatbot-suggest-card';
+      b.textContent = SUGGESTIONS[i];
+      b.addEventListener('click', askSuggestion);
+      suggestEl.appendChild(b);
+    }
+  }
+
+  function askSuggestion(e) {
+    if (sending) return;
+    inputEl.value = e.currentTarget.textContent;
+    send();
+  }
 
   function init() {
     fetch(BASE + '/settings/chatbot_visible')
@@ -59,6 +90,7 @@
         '</button>' +
       '</div>' +
       '<div class="chatbot-messages" id="chatbot-messages"></div>' +
+      '<div class="chatbot-suggestions" id="chatbot-suggestions"></div>' +
       '<div class="chatbot-input-area">' +
         '<input class="chatbot-input" id="chatbot-input" placeholder="Ask a question..." maxlength="1000" autocomplete="off">' +
         '<button class="chatbot-send" id="chatbot-send" disabled aria-label="Send">' +
@@ -70,8 +102,10 @@
     messagesEl = document.getElementById('chatbot-messages');
     inputEl = document.getElementById('chatbot-input');
     sendBtn = document.getElementById('chatbot-send');
+    suggestEl = document.getElementById('chatbot-suggestions');
 
     addBotMessage('Hi! Ask me anything about Avennex.');
+    renderSuggestions();
 
     function openPanel() {
       dismissGreeting();
@@ -216,6 +250,11 @@
 
     addUserMessage(msg);
     showTyping();
+
+    if (!started) {
+      started = true;
+      renderSuggestions();
+    }
 
     var headers = { 'Content-Type': 'application/json' };
     if (sessionToken) headers['X-Chat-Token'] = sessionToken;
