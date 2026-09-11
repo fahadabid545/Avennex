@@ -1,4 +1,17 @@
 (function () {
+  var inkBand = document.querySelector('.band-shift');
+  var inkValue = 0;
+
+  function readInk() {
+    if (!inkBand) { inkValue = 255; return; }
+    var d = parseFloat(getComputedStyle(inkBand).getPropertyValue('--darkness')) || 0;
+    inkValue = Math.round(255 * d);
+  }
+
+  function ink(alpha) {
+    return 'rgba(' + inkValue + ',' + inkValue + ',' + inkValue + ',' + alpha + ')';
+  }
+
   var host = document.getElementById('brain-canvas-wrap');
   if (!host) return;
 
@@ -64,6 +77,7 @@
   function draw(time) {
     if (!running) return;
 
+    readInk();
     ctx.clearRect(0, 0, w, h);
 
     var i, n;
@@ -87,7 +101,7 @@
       var a = nodes[edges[i][0]];
       var b = nodes[edges[i][1]];
       var lift = Math.max(a.lift, b.lift);
-      ctx.strokeStyle = 'rgba(255,255,255,' + (0.07 + lift * 0.28) + ')';
+      ctx.strokeStyle = ink(0.07 + lift * 0.28);
       ctx.beginPath();
       ctx.moveTo(a.x * w, a.y * h);
       ctx.lineTo(b.x * w, b.y * h);
@@ -108,7 +122,7 @@
       var x = (na.x + (nb.x - na.x) * p.t) * w;
       var y = (na.y + (nb.y - na.y) * p.t) * h;
       var fade = Math.sin(p.t * Math.PI);
-      ctx.fillStyle = 'rgba(255,255,255,' + (0.85 * fade) + ')';
+      ctx.fillStyle = ink(0.85 * fade);
       ctx.beginPath();
       ctx.arc(x, y, 2.2, 0, Math.PI * 2);
       ctx.fill();
@@ -116,7 +130,7 @@
 
     for (i = 0; i < nodes.length; i++) {
       n = nodes[i];
-      ctx.fillStyle = 'rgba(255,255,255,' + (0.38 + n.lift * 0.6) + ')';
+      ctx.fillStyle = ink(0.38 + n.lift * 0.6);
       ctx.beginPath();
       ctx.arc(n.x * w, n.y * h, n.r + n.lift * 1.6, 0, Math.PI * 2);
       ctx.fill();

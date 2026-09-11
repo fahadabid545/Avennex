@@ -117,3 +117,38 @@
     });
   });
 })();
+
+(function () {
+  var band = document.querySelector('.band-shift');
+  if (!band) return;
+
+  var ticking = false;
+
+  function progress() {
+    var rect = band.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    var start = vh * 0.8;
+    var end = vh * 0.15;
+    if (rect.top >= start) return 0;
+    if (rect.top <= end) return 1;
+    var t = (start - rect.top) / (start - end);
+    return t * t * (3 - 2 * t);
+  }
+
+  function paint() {
+    ticking = false;
+    var p = progress();
+    band.style.setProperty('--darkness', p.toFixed(3));
+    band.classList.toggle('is-dark', p > 0.5);
+  }
+
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(paint);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  paint();
+})();

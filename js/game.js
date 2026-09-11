@@ -1,8 +1,7 @@
 (function () {
-  var trigger = document.getElementById('game-trigger');
   var overlay = document.getElementById('game-overlay');
   var canvas = document.getElementById('game-canvas');
-  if (!trigger || !overlay || !canvas) return;
+  if (!overlay || !canvas) return;
 
   var ctx = canvas.getContext('2d');
   var hero = document.querySelector('.hero');
@@ -10,9 +9,9 @@
   var animFrame = null;
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  var accentColor = '#0A0A0A';
-  var groundColor = '#CBCBCB';
-  var textColor = '#0A0A0A';
+  var INK_DARK = { ink: '#0A0A0A', ink2: '#3D3D3D', ink3: '#5C5C5C', ground: '#CBCBCB', muted: '#767676', label: '#FFFFFF' };
+  var INK_LIGHT = { ink: '#FFFFFF', ink2: '#D4D4D4', ink3: '#A8A8A8', ground: '#3D3D3D', muted: '#767676', label: '#0A0A0A' };
+  var palette = INK_DARK;
   var demo = true;
   var countdownEl = document.getElementById('game-countdown');
 
@@ -21,13 +20,14 @@
   var lastTime = 0;
   var spawnTimer = 0;
   var spawnInterval = 1800;
+  var HUD_TOP = 96;
 
   highScore = parseInt(localStorage.getItem('avx_hs') || '0', 10);
 
   var obstacleTypes = [
-    { type: 'bug', color: '#0A0A0A', w: 18, h: 18 },
-    { type: '500', color: '#3D3D3D', w: 32, h: 22 },
-    { type: 'merge', color: '#5C5C5C', w: 24, h: 28 }
+    { type: 'bug', tone: 'ink', w: 18, h: 18 },
+    { type: '500', tone: 'ink2', w: 32, h: 22 },
+    { type: 'merge', tone: 'ink3', w: 24, h: 28 }
   ];
 
   function resize() {
@@ -75,6 +75,7 @@
   function startDemo() {
     if (running) return;
     demo = true;
+    palette = INK_DARK;
     running = true;
     overlay.classList.add('is-live');
     hero.classList.remove('game-active');
@@ -102,6 +103,8 @@
       clearInterval(tick);
       if (countdownEl) countdownEl.classList.remove('is-live');
       demo = false;
+      palette = INK_LIGHT;
+      document.body.classList.add('game-fullscreen');
       hero.classList.add('game-active');
       overlay.classList.add('active');
       reset();
@@ -187,7 +190,7 @@
   function drawPlayer() {
     var px = player.x;
     var py = player.y;
-    ctx.fillStyle = accentColor;
+    ctx.fillStyle = palette.ink;
     ctx.beginPath();
     ctx.moveTo(px, py);
     ctx.lineTo(px + player.w, py);
@@ -197,14 +200,15 @@
   }
 
   function drawObstacle(o) {
-    ctx.fillStyle = o.color;
+    var color = palette[o.tone] || palette.ink;
+    ctx.fillStyle = color;
     if (o.type === 'bug') {
       var cx = o.x + o.w / 2;
       var cy = o.y + o.h / 2;
       ctx.beginPath();
       ctx.ellipse(cx, cy, o.w / 2, o.h / 2.5, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = o.color;
+      ctx.strokeStyle = color;
       ctx.lineWidth = 1.5;
       for (var a = 0; a < 3; a++) {
         var ang = -0.6 + a * 0.6;
@@ -219,13 +223,13 @@
       }
     } else if (o.type === '500') {
       ctx.fillRect(o.x, o.y, o.w, o.h);
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = palette.label;
       ctx.font = 'bold 11px JetBrains Mono, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('500', o.x + o.w / 2, o.y + o.h / 2);
     } else if (o.type === 'merge') {
-      ctx.strokeStyle = o.color;
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(o.x + o.w / 2, o.y);
@@ -237,7 +241,7 @@
       ctx.lineTo(o.x + o.w, o.y + o.h * 0.6);
       ctx.lineTo(o.x + o.w / 2, o.y + o.h);
       ctx.stroke();
-      ctx.fillStyle = o.color;
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(o.x + o.w / 2, o.y, 3, 0, Math.PI * 2);
       ctx.fill();
@@ -252,7 +256,7 @@
     var h = canvas.height / dpr;
     ctx.clearRect(0, 0, w, h);
 
-    ctx.strokeStyle = groundColor;
+    ctx.strokeStyle = palette.ground;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, groundY + 1);
@@ -265,20 +269,20 @@
       drawObstacle(obstacles[i]);
     }
 
-    ctx.fillStyle = textColor;
+    ctx.fillStyle = palette.ink;
     ctx.font = '500 14px JetBrains Mono, monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText(Math.floor(score), w - 20, 20);
+    ctx.fillText(Math.floor(score), w - 20, HUD_TOP);
 
     if (highScore > 0) {
-      ctx.fillStyle = '#767676';
+      ctx.fillStyle = palette.muted;
       ctx.font = '400 11px JetBrains Mono, monospace';
-      ctx.fillText('HI ' + highScore, w - 20, 40);
+      ctx.fillText('HI ' + highScore, w - 20, HUD_TOP + 20);
     }
 
     if (gameOver) {
-      ctx.fillStyle = textColor;
+      ctx.fillStyle = palette.ink;
       ctx.font = '600 18px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -301,6 +305,8 @@
 
   function start() {
     running = true;
+    palette = INK_LIGHT;
+    document.body.classList.add('game-fullscreen');
     hero.classList.add('game-active');
     overlay.classList.add('active');
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -314,6 +320,8 @@
   }
 
   function stop() {
+    palette = INK_DARK;
+    document.body.classList.remove('game-fullscreen');
     if (!demo) {
       demo = true;
       hero.classList.remove('game-active');
@@ -367,16 +375,14 @@
     }
   }
 
-  trigger.addEventListener('click', takeOver);
+  overlay.addEventListener('click', onCanvasClick);
 
-  trigger.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-      e.preventDefault();
-      takeOver();
-    }
+  overlay.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    e.preventDefault();
+    onCanvasClick(e);
   });
 
-  canvas.addEventListener('click', onCanvasClick);
   canvas.addEventListener('touchstart', function (e) {
     e.preventDefault();
     onCanvasClick(e);

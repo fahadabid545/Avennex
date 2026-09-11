@@ -1025,7 +1025,7 @@
 
 .story-content {
   max-width: 720px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .story-content p {
@@ -1510,7 +1510,7 @@
 
 .legal-content {
   max-width: 720px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .legal-updated {
