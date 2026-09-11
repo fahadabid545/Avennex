@@ -107,6 +107,31 @@ def count_by_products(product_ids: list[str]):
     return counts
 
 
+def daily_activity(product_id: str, days: int = 90):
+    """Real message counts per day, used by the public discussion chart."""
+    db = get_supabase()
+    from datetime import timedelta
+    midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    start = midnight - timedelta(days=days - 1)
+    result = (
+        db.table("product_chat_messages")
+        .select("created_at")
+        .eq("product_id", product_id)
+        .gte("created_at", start.isoformat())
+        .execute()
+    )
+    counts = {}
+    for row in (result.data or []):
+        day = row["created_at"][:10]
+        counts[day] = counts.get(day, 0) + 1
+
+    series = []
+    for offset in range(days):
+        day = (start + timedelta(days=offset)).date().isoformat()
+        series.append({"date": day, "count": counts.get(day, 0)})
+    return series
+
+
 def count_by_product_daily(product_id: str):
     db = get_supabase()
     cutoff = (datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0))

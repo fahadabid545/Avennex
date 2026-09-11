@@ -488,7 +488,7 @@
 
   let dashboardBuilder = null;
 
-  function dashboardStep(hintText) {
+  function dashboardStep(kind, hintText) {
     return {
       fields: [],
       onMount: (config) => {
@@ -499,7 +499,7 @@
         wrap.innerHTML = `
           <div class="dashb-layout">
             <div class="field">
-              <label>Live dashboard <span class="field-opt">Optional</span></label>
+              <label>Dashboard data <span class="field-opt">Optional</span></label>
               <span class="field-hint">${hintText}</span>
               <div id="dash-builder"></div>
             </div>
@@ -521,30 +521,46 @@
         if (dashboardBuilder) dashboardBuilder.destroy();
         dashboardBuilder = AdminDashboardBuilder.mount(
           document.getElementById('dash-builder'),
-          config.formData.dashboard,
-          config.formData.metrics,
-          { previewHost: document.getElementById('dash-preview') }
+          config.formData,
+          {
+            kind: kind,
+            previewHost: document.getElementById('dash-preview'),
+            context: () => ({
+              name: config.formData.name || config.formData.title || '',
+              status: config.formData.status,
+              stage: config.formData.stage,
+              progress: config.formData.progress,
+              progress_history: (config.item && config.item.progress_history) || [],
+              features: kind === 'product' ? productFeatures : [],
+              comments: (config.item && config.item.comments) || [],
+            }),
+          }
         );
       },
     };
   }
 
-  function dashboardSummary(cfg) {
-    if (!cfg || cfg.enabled === false) return 'Hidden';
+  function dashboardSummary(d) {
     const bits = [];
-    const counts = [['countdowns', 'countdown'], ['kpis', 'card'], ['charts', 'chart'],
-      ['cohorts', 'retention grid'], ['tables', 'breakdown'], ['health', 'target'], ['milestones', 'milestone']];
-    counts.forEach(([key, label]) => {
-      const n = Array.isArray(cfg[key]) ? cfg[key].length : 0;
-      if (n) bits.push(`${n} ${label}${n > 1 ? 's' : ''}`);
-    });
-    if (cfg.reliability) bits.push('service health');
-    return bits.length ? bits.join(', ') : 'Empty';
+    if (d.start_date || d.target_date) {
+      bits.push(`${d.start_date || 'no start'} to ${d.target_date || 'no target'}`);
+    }
+    const milestones = Array.isArray(d.milestones) ? d.milestones.filter((m) => m.label) : [];
+    if (milestones.length) {
+      bits.push(`${milestones.length} milestone${milestones.length > 1 ? 's' : ''} (${milestones.filter((m) => m.done).length} reached)`);
+    }
+    const metrics = Array.isArray(d.metrics) ? d.metrics.filter((m) => m.name) : [];
+    if (metrics.length) bits.push(`${metrics.length} metric${metrics.length > 1 ? 's' : ''}`);
+    return bits.length ? bits.join(', ') : 'Nothing set';
   }
 
   function collectDashboard(config) {
     if (!dashboardBuilder || !document.getElementById('dash-builder')) return;
-    config.formData.dashboard = dashboardBuilder.value();
+    const data = dashboardBuilder.value();
+    config.formData.start_date = data.start_date;
+    config.formData.target_date = data.target_date;
+    config.formData.milestones = data.milestones;
+    config.formData.metrics = data.metrics;
   }
 
   // ── Multi-step form engine ──
@@ -685,7 +701,6 @@
     if (typeof productGallery !== 'undefined') config.formData.gallery = [...productGallery];
     if (typeof productLinks !== 'undefined') config.formData.external_links = [...productLinks];
     if (typeof productDocuments !== 'undefined') config.formData.documents = [...productDocuments];
-    if (typeof productMetrics !== 'undefined') config.formData.metrics = [...productMetrics];
   }
 
   function renderField(f, data) {
@@ -1609,6 +1624,13 @@
             { name: 'expires_at', id: 'f-expires', label: 'Expiry Date', type: 'date', required: true },
           ],
           onMount: (config) => {
+            const lpProgress = document.getElementById('f-progress');
+            const lpProgressVal = document.getElementById('f-progress-val');
+            if (lpProgress && lpProgressVal) {
+              lpProgress.addEventListener('input', () => {
+                lpProgressVal.textContent = lpProgress.value + '%';
+              });
+            }
             const titleInput = document.getElementById('f-title');
             const slugInput = document.getElementById('f-slug');
             if (titleInput && slugInput) {
@@ -1958,6 +1980,10 @@
       <div class="feature-row">
         <input type="text" class="feature-icon" value="${esc(f.icon)}" placeholder="Icon name" data-idx="${i}" data-field="icon">
         <input type="text" value="${esc(f.text)}" placeholder="Feature text" data-idx="${i}" data-field="text">
+        <label class="feature-done" title="Tick once this feature is built">
+          <input type="checkbox" data-idx="${i}" data-field="done" ${f.done ? 'checked' : ''}>
+          <span>Built</span>
+        </label>
         <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
       </div>`).join('');
   }
@@ -1996,7 +2022,9 @@
 
   function productForm(item) {
     const p = item || {};
-    productFeatures = Array.isArray(p.features) ? [...p.features] : [];
+    productFeatures = (Array.isArray(p.features) ? p.features : []).map((f) => ({
+      icon: f.icon || '', text: f.text || '', done: f.done === true,
+    }));
     productGallery = Array.isArray(p.gallery) ? [...p.gallery] : [];
     productLinks = Array.isArray(p.external_links) ? [...p.external_links] : [];
     productDocuments = Array.isArray(p.documents) ? [...p.documents] : [];
@@ -2017,7 +2045,9 @@
       chat_enabled: p.chat_enabled || false,
       cover_image: p.cover_image || '',
       video_url: p.video_url || '',
-      dashboard: p.dashboard || null,
+      start_date: (p.start_date || '').slice(0, 10),
+      target_date: (p.target_date || '').slice(0, 10),
+      milestones: Array.isArray(p.milestones) ? [...p.milestones] : [],
       metrics: productMetrics,
     };
 
@@ -2040,7 +2070,7 @@
               { value: 'launched', label: 'Launched' },
               { value: 'paused', label: 'Paused' },
             ]},
-            { name: 'progress', id: 'f-progress', label: 'Progress', type: 'range' },
+            { name: 'progress', id: 'f-progress', label: 'Progress', type: 'range', hint: 'Each save records a point on the velocity chart' },
             { name: 'display_order', id: 'f-order', label: 'Display Order', type: 'number', hint: 'Lower numbers appear first' },
             { name: 'cover_image', id: 'f-cover', label: 'Cover Image', placeholder: 'https://... or upload' },
           ],
@@ -2159,7 +2189,7 @@
 
             renderFeatures();
             document.getElementById('add-feature').addEventListener('click', () => {
-              productFeatures.push({ icon: '', text: '' });
+              productFeatures.push({ icon: '', text: '', done: false });
               renderFeatures();
             });
 
@@ -2171,13 +2201,14 @@
               }
             });
 
-            document.getElementById('features-list').addEventListener('input', (e) => {
+            const featureEdit = (e) => {
               const idx = e.target.dataset.idx;
               const field = e.target.dataset.field;
-              if (idx !== undefined && field) {
-                productFeatures[Number(idx)][field] = e.target.value;
-              }
-            });
+              if (idx === undefined || !field) return;
+              productFeatures[Number(idx)][field] = field === 'done' ? e.target.checked : e.target.value;
+            };
+            document.getElementById('features-list').addEventListener('input', featureEdit);
+            document.getElementById('features-list').addEventListener('change', featureEdit);
           },
         },
         {
@@ -2282,7 +2313,7 @@
 
           },
         },
-        dashboardStep('Adoption, reliability, retention and roadmap for this product. Readers get tabs, a time range filter and their own chart controls, and every date keeps counting on its own.'),
+        dashboardStep('product', 'Dates, milestones and your own metrics. The roadmap counts down live from these, and nothing shows on the public page unless you enter it here.'),
         {
           review: true,
           fields: [],
@@ -2307,7 +2338,8 @@
               ['Gallery Images', productGallery.filter(Boolean).length],
               ['External Links', productLinks.filter((l) => l.label && l.url).length],
               ['Documents', productDocuments.length],
-              ['Dashboard', dashboardSummary(d.dashboard)],
+              ['Dashboard data', dashboardSummary(d)],
+              ['Features built', productFeatures.filter((f) => f.done).length + ' of ' + productFeatures.filter((f) => f.text).length],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
@@ -2337,7 +2369,9 @@
           tagline: d.tagline || null,
           description: d.description || null,
           content: d.content || null,
-          features: productFeatures.filter((f) => f.text),
+          features: productFeatures.filter((f) => f.text).map((f) => ({
+            icon: f.icon || '', text: f.text, done: f.done === true,
+          })),
           progress: parseInt(d.progress, 10),
           status: d.status,
           display_order: parseInt(d.display_order, 10) || 0,
@@ -2347,8 +2381,10 @@
           gallery: productGallery.filter(Boolean),
           external_links: productLinks.filter((l) => l.label && l.url),
           documents: productDocuments,
-          metrics: productMetrics.filter((m) => m.name),
-          dashboard: d.dashboard || null,
+          metrics: Array.isArray(d.metrics) ? d.metrics.filter((m) => m.name) : [],
+          start_date: d.start_date || null,
+          target_date: d.target_date || null,
+          milestones: Array.isArray(d.milestones) ? d.milestones.filter((m) => m.label) : [],
           chat_enabled: d.chat_enabled,
           cover_image: d.cover_image || null,
         };
@@ -2505,7 +2541,11 @@
       diagrams: lp.diagrams || '',
       stage: lp.stage || 'concept',
       status: lp.status || 'active',
-      dashboard: lp.dashboard || null,
+      progress: lp.progress ?? 0,
+      start_date: (lp.start_date || '').slice(0, 10),
+      target_date: (lp.target_date || '').slice(0, 10),
+      milestones: Array.isArray(lp.milestones) ? [...lp.milestones] : [],
+      metrics: Array.isArray(lp.metrics) ? [...lp.metrics] : [],
     };
 
     renderStepForm({
@@ -2532,6 +2572,7 @@
               { value: 'active', label: 'Active' },
               { value: 'closed', label: 'Closed' },
             ]},
+            { name: 'progress', id: 'f-progress', label: 'Progress', type: 'range', hint: 'Each save records a point on the velocity chart' },
           ],
           onMount: (config) => {
             const titleInput = document.getElementById('f-title');
@@ -2676,7 +2717,7 @@
             });
           },
         },
-        dashboardStep('Countdowns, headline numbers, charts and milestones for this idea. Readers get tabs and chart controls, and every date keeps counting on its own.'),
+        dashboardStep('launchpad', 'Dates, milestones and your own metrics for this idea. The roadmap counts down live from these.'),
         {
           review: true,
           fields: [],
@@ -2695,7 +2736,8 @@
               ['Funding Needed', d.funding_needed],
               ['Team Needed', d.team_needed],
               ['Tech Stack', d.tech_stack],
-              ['Dashboard', dashboardSummary(d.dashboard)],
+              ['Progress', (d.progress ?? 0) + '%'],
+              ['Dashboard data', dashboardSummary(d)],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
@@ -2748,7 +2790,11 @@
           diagrams: diagramStr || null,
           stage: d.stage,
           status: d.status,
-          dashboard: d.dashboard || null,
+          progress: parseInt(d.progress, 10) || 0,
+          metrics: Array.isArray(d.metrics) ? d.metrics.filter((m) => m.name) : [],
+          start_date: d.start_date || null,
+          target_date: d.target_date || null,
+          milestones: Array.isArray(d.milestones) ? d.milestones.filter((m) => m.label) : [],
         };
       },
       onBack: loadLaunchpad,

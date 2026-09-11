@@ -17,3 +17,17 @@ alter table job_applications add column if not exists email_status text;
 -- Product and launchpad dashboards
 alter table products add column if not exists dashboard jsonb;
 alter table launchpad_entries add column if not exists dashboard jsonb;
+
+-- Roadmap, milestones and progress history (admin managed)
+alter table products add column if not exists start_date date;
+alter table products add column if not exists target_date date;
+alter table products add column if not exists milestones jsonb default '[]'::jsonb;
+alter table products add column if not exists progress_history jsonb default '[]'::jsonb;
+
+alter table launchpad_entries add column if not exists start_date date;
+alter table launchpad_entries add column if not exists target_date date;
+alter table launchpad_entries add column if not exists milestones jsonb default '[]'::jsonb;
+alter table launchpad_entries add column if not exists progress integer default 0;
+alter table launchpad_entries add column if not exists progress_history jsonb default '[]'::jsonb;
+alter table launchpad_entries add column if not exists metrics jsonb default '[]'::jsonb;
+alter table products add column if not exists metrics jsonb default '[]'::jsonb;

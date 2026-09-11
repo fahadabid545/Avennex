@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from app.database import get_supabase
 from app.blogs.service import slugify
+from app.progress_history import stamp as stamp_progress
 from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ def create(data: dict):
     db = get_supabase()
     if not data.get("slug"):
         data["slug"] = slugify(data["title"])
+    stamp_progress(data)
     result = db.table("launchpad_entries").insert(data).execute()
     return result.data[0] if result.data else None
 
@@ -70,6 +72,10 @@ def create(data: dict):
 def update(entry_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        stamp_progress(data, get_by_id(entry_id))
+    except Exception as e:
+        logger.warning("Progress history lookup failed for entry %s: %s", entry_id, e)
     result = db.table("launchpad_entries").update(data).eq("id", entry_id).execute()
     return result.data[0] if result.data else None
 

@@ -48,6 +48,27 @@ def send_message(slug: str, body: ProductChatMessageCreate, request: Request):
         raise HTTPException(status_code=500, detail="Failed to send message")
 
 
+@router.get("/{slug}/chat/activity")
+def chat_activity(slug: str, days: int = 90):
+    product = get_by_slug(slug)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    window = max(7, min(365, days))
+    try:
+        series = service.daily_activity(product["id"], window)
+        total = sum(point["count"] for point in series)
+        return {"success": True, "daily": series, "total": total, "days": window, "warnings": []}
+    except Exception as e:
+        logger.error("Failed to read chat activity for %s: %s", slug, e)
+        return {
+            "success": False,
+            "daily": [],
+            "total": 0,
+            "days": window,
+            "warnings": [f"discussion activity unavailable: {e}"],
+        }
+
+
 @router.get("/{slug}/chat/messages")
 def list_messages(slug: str):
     product = get_by_slug(slug)

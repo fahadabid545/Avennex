@@ -115,9 +115,34 @@
     var host = document.getElementById('launchpad-dashboard');
     if (!host || typeof AvennexDashboard === 'undefined') return;
     if (dashboard) dashboard.destroy();
-    dashboard = AvennexDashboard.mount(host, entry.dashboard, {
+    dashboard = AvennexDashboard.mount(host, entry, {
+      kind: 'launchpad',
+      refresh_seconds: 60,
       refresh: function () { return API.get('/launchpad/' + encodeURIComponent(slug)); },
-    }, entry.metrics);
+      activity: function () { return commentActivity(entry.comments); },
+    });
+  }
+
+  function commentActivity(comments) {
+    var days = 90;
+    var counts = {};
+    (comments || []).forEach(function (c) {
+      if (c && c.created_at) {
+        var day = String(c.created_at).slice(0, 10);
+        counts[day] = (counts[day] || 0) + 1;
+      }
+    });
+    var series = [];
+    var start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (days - 1));
+    for (var i = 0; i < days; i++) {
+      var d = new Date(start);
+      d.setDate(start.getDate() + i);
+      var key = d.toISOString().slice(0, 10);
+      series.push({ date: key, count: counts[key] || 0 });
+    }
+    return series;
   }
 
   function showComments(entry) {

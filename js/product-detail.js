@@ -78,7 +78,7 @@
       html += '</div></div>';
     }
 
-    if (typeof product.progress === 'number') {
+    if (typeof product.progress === 'number' && product.status !== 'launched') {
       html += '<div class="product-progress product-progress-detail product-wide-band">';
       html += '<div class="product-progress-header">';
       html += '<span class="product-progress-label">Development Progress</span>';
@@ -167,9 +167,16 @@
     var host = document.getElementById('product-dashboard');
     if (!host || typeof AvennexDashboard === 'undefined') return;
     if (dashboard) dashboard.destroy();
-    dashboard = AvennexDashboard.mount(host, product.dashboard, {
+    dashboard = AvennexDashboard.mount(host, product, {
+      kind: 'product',
+      refresh_seconds: 60,
       refresh: function () { return API.get('/products/' + encodeURIComponent(slug)); },
-    }, product.metrics);
+      activity: function () {
+        return API.get('/products/' + encodeURIComponent(slug) + '/chat/activity')
+          .then(function (res) { return res && res.daily ? res.daily : []; })
+          .catch(function () { return []; });
+      },
+    });
   }
 
   function buildDocumentsSection(documents) {

@@ -65,7 +65,10 @@ create table products (
   tech_stack text,
   chat_enabled boolean default false,
   cover_image text,
-  dashboard jsonb,
+  start_date date,
+  target_date date,
+  milestones jsonb default '[]'::jsonb,
+  progress_history jsonb default '[]'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -104,7 +107,12 @@ create table launchpad_entries (
   diagrams text,
   stage text default 'concept' check (stage in ('concept', 'planning', 'open-for-feedback', 'building')),
   status text default 'active' check (status in ('active', 'closed')),
-  dashboard jsonb,
+  progress integer default 0 check (progress >= 0 and progress <= 100),
+  start_date date,
+  target_date date,
+  milestones jsonb default '[]'::jsonb,
+  progress_history jsonb default '[]'::jsonb,
+  metrics jsonb default '[]'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

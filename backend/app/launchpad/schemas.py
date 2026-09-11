@@ -17,7 +17,11 @@ class LaunchpadCreate(BaseModel):
     diagrams: Optional[str] = None
     stage: Optional[str] = "concept"
     status: Optional[str] = "active"
-    dashboard: Optional[Any] = None
+    progress: Optional[int] = 0
+    start_date: Optional[str] = None
+    target_date: Optional[str] = None
+    milestones: Optional[Any] = None
+    metrics: Optional[Any] = None
 
 
 class LaunchpadUpdate(BaseModel):
@@ -34,7 +38,11 @@ class LaunchpadUpdate(BaseModel):
     diagrams: Optional[str] = None
     stage: Optional[str] = None
     status: Optional[str] = None
-    dashboard: Optional[Any] = None
+    progress: Optional[int] = None
+    start_date: Optional[str] = None
+    target_date: Optional[str] = None
+    milestones: Optional[Any] = None
+    metrics: Optional[Any] = None
 
 
 class LaunchpadResponse(BaseModel):
@@ -52,7 +60,12 @@ class LaunchpadResponse(BaseModel):
     diagrams: Optional[str] = None
     stage: str
     status: str
-    dashboard: Optional[Any] = None
+    progress: Optional[int] = 0
+    start_date: Optional[str] = None
+    target_date: Optional[str] = None
+    milestones: Optional[Any] = []
+    metrics: Optional[Any] = []
+    progress_history: Optional[Any] = []
     created_at: datetime
     updated_at: datetime
     last_edited_by: Optional[str] = None

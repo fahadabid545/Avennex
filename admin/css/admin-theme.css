@@ -1356,12 +1356,12 @@ body.is-splitting .editor-split-handle::before {
   background: var(--bg-secondary);
 }
 
-.dashb-preview-stage .dash-delta.is-up {
+.dashb-preview-stage .dash-chip.is-up {
   color: var(--success);
   background: var(--success-soft);
 }
 
-.dashb-preview-stage .dash-delta.is-down {
+.dashb-preview-stage .dash-chip.is-down {
   color: var(--danger);
   background: var(--danger-soft);
 }
@@ -1384,4 +1384,40 @@ body.is-splitting .editor-split-handle::before {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.feature-row .feature-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.feature-row .feature-done input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.dashb .dashb-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.dashb .dashb-check input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
