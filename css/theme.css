@@ -1904,3 +1904,109 @@ body.game-fullscreen .chatbot-greeting {
   max-height: 460px;
   object-fit: cover;
 }
+
+/* ==========================================================
+   Product, team and board detail
+   ========================================================== */
+
+.product-progress-detail {
+  max-width: 100%;
+  margin: 0 0 var(--space-xl);
+}
+
+.feature-grid {
+  gap: var(--space-sm) var(--space-md);
+  margin: var(--space-xl) 0;
+}
+
+.feature-item {
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* the slot is held open whether or not the icon has painted, so a label can
+   never sit left of the column it belongs to */
+.feature-item i,
+.feature-item svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 0;
+  color: var(--tone);
+}
+
+.band-dark .feature-item {
+  background: var(--dark-surface-2);
+  border-color: var(--dark-surface-line);
+}
+
+.product-placeholder {
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-image:
+    linear-gradient(to right, var(--tone-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tone-soft) 1px, transparent 1px),
+    linear-gradient(140deg, var(--surface-1), var(--surface-3));
+  background-size: 28px 28px, 28px 28px, auto;
+}
+
+.team-photo {
+  background: linear-gradient(145deg, var(--surface-2), var(--surface-3));
+  border: 1px solid var(--surface-line);
+  color: var(--tone);
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.band-dark .team-photo {
+  background: linear-gradient(145deg, var(--dark-surface-2), var(--dark-surface-1));
+  border-color: var(--dark-surface-line);
+  color: var(--tone-on-dark);
+  box-shadow: none;
+}
+
+.chat-empty {
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--surface-1);
+  border: 1px dashed var(--surface-line);
+  border-radius: var(--radius-lg);
+}
+
+.team-card {
+  width: 190px;
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+}
+
+.team-photo {
+  width: 104px;
+  height: 104px;
+  font-size: 2rem;
+  margin: 0 auto var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .team-card {
+    width: 150px;
+  }
+
+  .team-photo {
+    width: 88px;
+    height: 88px;
+    font-size: 1.7rem;
+  }
+}

@@ -435,3 +435,26 @@
   background: var(--surface-3);
   border-color: var(--tone);
 }
+
+.chatbot-suggest-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chatbot-suggest-card::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-top: 1.5px solid var(--text-muted);
+  border-right: 1.5px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.chatbot-suggest-card:hover::after {
+  border-color: var(--tone);
+  transform: rotate(45deg) translate(2px, -2px);
+}

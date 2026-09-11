@@ -22,6 +22,10 @@
   var spawnInterval = 1800;
   var runPhase = 0;
   var HUD_TOP = 96;
+  var JUMP_V = 11.5;
+  var JUMP_V_DEMO = 9.6;
+  var GRAVITY = 0.72;
+  var GRAVITY_HOLD = 0.44;
   var scale = 1;
 
   highScore = parseInt(localStorage.getItem('avx_hs') || '0', 10);
@@ -37,7 +41,10 @@
     // the play surface is much taller in full view than in the hero strip, so
     // the runner and the ground line scale with it instead of hugging the floor
     scale = Math.max(1, Math.min(2.1, rect.height / 360));
-    groundY = demo ? rect.height - 90 : rect.height * 0.74;
+    // the ambient run sits in the empty band under the hero copy, so it stays
+    // small and low instead of drawing over the headline links
+    if (demo) scale = Math.min(scale, 1.15);
+    groundY = demo ? rect.height - 56 : rect.height * 0.74;
   }
 
   function resize() {
@@ -64,14 +71,36 @@
     lastTime = 0;
   }
 
+  // the jump arc is fixed, so the only safe moment to leave the ground is a
+  // window solved from the physics, not a fixed pixel distance
   function autoPilot() {
+    if (!player.grounded || gameOver) return;
+    var g = GRAVITY * scale;
+    var v = jumpV() * scale;
+    var hs = speed * 1.6 * scale;
+    if (hs <= 0) return;
+
     for (var i = 0; i < obstacles.length; i++) {
       var o = obstacles[i];
+      if (o.x + o.w < player.x) continue;
+
       var gap = o.x - (player.x + player.w);
-      if (gap > 0 && gap < 100 + speed * 9 && player.grounded) {
-        jump();
+      var need = o.h + 6 * scale;
+      var disc = v * v - 2 * g * need;
+      if (disc <= 0) {
+        if (gap <= hs * 8) jump();
         return;
       }
+
+      var root = Math.sqrt(disc);
+      var lo = hs * (v - root) / g;
+      var hi = hs * (v + root) / g - (player.w + o.w);
+      if (hi < lo) {
+        if (gap <= lo) jump();
+        return;
+      }
+      if (gap <= (lo + hi) / 2) jump();
+      return;
     }
   }
 
@@ -111,9 +140,15 @@
     window.addEventListener('keyup', onKeyUp);
   }
 
+  // the ambient run clears a cactus with room to spare and nothing more, so it
+  // never arcs up into the hero copy
+  function jumpV() {
+    return demo ? JUMP_V_DEMO : JUMP_V;
+  }
+
   function jump() {
     if (player.grounded && !gameOver) {
-      player.vy = -11.5 * Math.sqrt(scale);
+      player.vy = -jumpV() * scale;
       player.grounded = false;
     }
   }
@@ -139,7 +174,7 @@
     var step = dt / 16;
     runPhase += step * (0.22 + speed * 0.03);
 
-    player.vy += (jumpHeld && player.vy < 0 ? 0.44 : 0.72) * step * scale;
+    player.vy += (jumpHeld && player.vy < 0 ? GRAVITY_HOLD : GRAVITY) * step * scale;
     player.y += player.vy * step;
     if (player.y >= groundY) {
       player.y = groundY;
@@ -311,16 +346,18 @@
       drawCactus(obstacles[i]);
     }
 
-    ctx.fillStyle = palette.ink;
-    ctx.font = '500 14px JetBrains Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillText(Math.floor(score), w - 24, HUD_TOP);
+    if (!demo) {
+      ctx.fillStyle = palette.ink;
+      ctx.font = '500 14px JetBrains Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText(Math.floor(score), w - 24, HUD_TOP);
 
-    if (highScore > 0) {
-      ctx.fillStyle = palette.muted;
-      ctx.font = '400 11px JetBrains Mono, monospace';
-      ctx.fillText('HI ' + highScore, w - 24, HUD_TOP + 20);
+      if (highScore > 0) {
+        ctx.fillStyle = palette.muted;
+        ctx.font = '400 11px JetBrains Mono, monospace';
+        ctx.fillText('HI ' + highScore, w - 24, HUD_TOP + 20);
+      }
     }
 
     if (gameOver) {

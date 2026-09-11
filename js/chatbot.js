@@ -25,7 +25,10 @@
     if (!suggestEl) return;
     suggestEl.className = 'chatbot-suggestions' + (started ? ' is-chips' : '');
     suggestEl.innerHTML = '';
-    for (var i = 0; i < SUGGESTIONS.length; i++) {
+    // a full list of cards fills the panel before the chat has said anything,
+    // so only a few lead, and the rest come back as chips once it starts
+    var shown = started ? SUGGESTIONS.length : 4;
+    for (var i = 0; i < shown; i++) {
       var b = document.createElement('button');
       b.type = 'button';
       b.className = started ? 'chatbot-chip' : 'chatbot-suggest-card';
