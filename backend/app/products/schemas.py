@@ -22,6 +22,7 @@ class ProductCreate(BaseModel):
     external_links: Optional[Any] = None
     documents: Optional[Any] = None
     metrics: Optional[Any] = None
+    dashboard: Optional[Any] = None
 
 
 class ProductUpdate(BaseModel):
@@ -43,6 +44,7 @@ class ProductUpdate(BaseModel):
     external_links: Optional[Any] = None
     documents: Optional[Any] = None
     metrics: Optional[Any] = None
+    dashboard: Optional[Any] = None
 
 
 class ProductResponse(BaseModel):
@@ -69,3 +71,4 @@ class ProductResponse(BaseModel):
     external_links: Optional[Any] = []
     documents: Optional[Any] = []
     metrics: Optional[Any] = []
+    dashboard: Optional[Any] = None

@@ -12,6 +12,7 @@
   API.showLoading(content);
 
   var currentEntry = null;
+  var dashboard = null;
 
   API.get('/launchpad/' + encodeURIComponent(slug)).then(function (entry) {
     if (!entry) {
@@ -51,6 +52,8 @@
       html += '<p class="product-article-tagline">' + API.escHtml(entry.tagline) + '</p>';
     }
     html += '</div>';
+
+    html += '<div id="launchpad-dashboard" class="product-dashboard-mount"></div>';
 
     if (entry.content) {
       html += '<div class="product-article-body">' + API.renderRichText(entry.content) + '</div>';
@@ -102,10 +105,20 @@
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
+    mountDashboard(entry);
     showComments(entry);
   }).catch(function (err) {
     API.showError(content, err.message || 'Could not load this entry.');
   });
+
+  function mountDashboard(entry) {
+    var host = document.getElementById('launchpad-dashboard');
+    if (!host || typeof AvennexDashboard === 'undefined') return;
+    if (dashboard) dashboard.destroy();
+    dashboard = AvennexDashboard.mount(host, entry.dashboard, {
+      refresh: function () { return API.get('/launchpad/' + encodeURIComponent(slug)); },
+    }, entry.metrics);
+  }
 
   function showComments(entry) {
     var section = document.getElementById('lp-comments-section');

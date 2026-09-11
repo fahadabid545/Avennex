@@ -16,6 +16,7 @@
   API.showLoading(content);
 
   var currentProduct = null;
+  var dashboard = null;
 
   API.get('/products/' + encodeURIComponent(slug)).then(function (product) {
     if (!product) {
@@ -87,6 +88,8 @@
       html += '</div>';
     }
 
+    html += '<div id="product-dashboard" class="product-dashboard-mount"></div>';
+
     if (product.content) {
       html += '<div class="product-article-body">' + API.renderRichText(product.content) + '</div>';
     } else if (product.description) {
@@ -106,10 +109,6 @@
       }
       html += '</div>';
       html += '</div>';
-    }
-
-    if (product.metrics && product.metrics.length) {
-      html += buildMetricsSection(product.metrics);
     }
 
     if (product.documents && product.documents.length) {
@@ -141,7 +140,7 @@
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    if (product.metrics && product.metrics.length) renderMetricCharts(product.metrics);
+    mountDashboard(product);
     if (product.documents && product.documents.length) initDocumentViewer(product.documents);
 
     initChat(product);
@@ -164,107 +163,13 @@
     return html;
   }
 
-  function buildMetricsSection(metrics) {
-    var stats = metrics.filter(function (m) { return m.chart_type === 'stat'; });
-    var lines = metrics.filter(function (m) { return m.chart_type === 'line'; });
-    var bars = metrics.filter(function (m) { return m.chart_type === 'bar'; });
-    var donuts = metrics.filter(function (m) { return m.chart_type === 'donut'; });
-
-    var html = '<div class="product-article-section product-metrics-section">';
-    html += '<h2>Metrics</h2>';
-
-    if (stats.length) {
-      html += '<div class="metrics-stat-row">';
-      for (var i = 0; i < stats.length; i++) {
-        html += '<div class="metrics-stat-card">';
-        html += '<div class="metrics-stat-value">' + API.escHtml(String(stats[i].value)) + (stats[i].unit ? ' <span class="metrics-stat-unit">' + API.escHtml(stats[i].unit) + '</span>' : '') + '</div>';
-        html += '<div class="metrics-stat-label">' + API.escHtml(stats[i].name) + '</div>';
-        html += '</div>';
-      }
-      html += '</div>';
-    }
-
-    if (lines.length || bars.length || donuts.length) {
-      html += '<div class="metrics-chart-grid">';
-      for (var j = 0; j < lines.length; j++) {
-        html += '<div class="metrics-chart-card"><h3>' + API.escHtml(lines[j].name) + '</h3><canvas id="metric-line-' + j + '"></canvas></div>';
-      }
-      for (var k = 0; k < donuts.length; k++) {
-        html += '<div class="metrics-chart-card metrics-chart-card-donut"><h3>' + API.escHtml(donuts[k].name) + '</h3><canvas id="metric-donut-' + k + '"></canvas></div>';
-      }
-      if (bars.length) {
-        html += '<div class="metrics-chart-card"><h3>Comparison</h3><canvas id="metric-bar"></canvas></div>';
-      }
-      html += '</div>';
-    }
-
-    html += '</div>';
-    return html;
-  }
-
-  function renderMetricCharts(metrics) {
-    if (typeof Chart === 'undefined') return;
-    var lines = metrics.filter(function (m) { return m.chart_type === 'line'; });
-    var bars = metrics.filter(function (m) { return m.chart_type === 'bar'; });
-    var donuts = metrics.filter(function (m) { return m.chart_type === 'donut'; });
-
-    var baseOpts = {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888', font: { size: 10 } } },
-        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#888' } },
-      },
-    };
-
-    lines.forEach(function (m, i) {
-      var el = document.getElementById('metric-line-' + i);
-      if (!el) return;
-      var points = m.points || [];
-      new Chart(el, {
-        type: 'line',
-        data: {
-          labels: points.map(function (p) { return p.date; }),
-          datasets: [{ data: points.map(function (p) { return p.value; }), borderColor: '#3b82f6', backgroundColor: '#3b82f622', tension: 0.3, fill: true, pointRadius: 2 }],
-        },
-        options: baseOpts,
-      });
-    });
-
-    donuts.forEach(function (m, i) {
-      var el = document.getElementById('metric-donut-' + i);
-      if (!el) return;
-      var val = Math.max(0, Math.min(100, m.value || 0));
-      new Chart(el, {
-        type: 'doughnut',
-        data: {
-          labels: [m.name, 'Remaining'],
-          datasets: [{ data: [val, 100 - val], backgroundColor: ['#3b82f6', 'rgba(255,255,255,0.08)'], borderWidth: 0 }],
-        },
-        options: { responsive: true, cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: true } } },
-      });
-      var wrap = el.closest('.metrics-chart-card-donut');
-      if (wrap) {
-        var label = document.createElement('div');
-        label.className = 'metrics-donut-center';
-        label.textContent = val + (m.unit || '%');
-        wrap.appendChild(label);
-      }
-    });
-
-    if (bars.length) {
-      var barEl = document.getElementById('metric-bar');
-      if (barEl) {
-        new Chart(barEl, {
-          type: 'bar',
-          data: {
-            labels: bars.map(function (m) { return m.name; }),
-            datasets: [{ data: bars.map(function (m) { return m.value || 0; }), backgroundColor: '#3b82f6', borderRadius: 4 }],
-          },
-          options: baseOpts,
-        });
-      }
-    }
+  function mountDashboard(product) {
+    var host = document.getElementById('product-dashboard');
+    if (!host || typeof AvennexDashboard === 'undefined') return;
+    if (dashboard) dashboard.destroy();
+    dashboard = AvennexDashboard.mount(host, product.dashboard, {
+      refresh: function () { return API.get('/products/' + encodeURIComponent(slug)); },
+    }, product.metrics);
   }
 
   function buildDocumentsSection(documents) {

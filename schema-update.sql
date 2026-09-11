@@ -13,3 +13,7 @@ insert into settings (key, value) values ('chat_show_details', 'true') on confli
 -- Email status tracking
 alter table chat_messages add column if not exists email_status text;
 alter table job_applications add column if not exists email_status text;
+
+-- Product and launchpad dashboards
+alter table products add column if not exists dashboard jsonb;
+alter table launchpad_entries add column if not exists dashboard jsonb;

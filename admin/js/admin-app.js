@@ -484,6 +484,67 @@
     return `<a href="${url}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm view-site-link">View on Site</a>`;
   }
 
+  // ── Dashboard builder ──
+
+  let dashboardBuilder = null;
+
+  function dashboardStep(hintText) {
+    return {
+      fields: [],
+      onMount: (config) => {
+        const wrap = document.querySelector('.step-content');
+        if (!wrap) return;
+        const card = document.querySelector('.form-card');
+        if (card) card.classList.add('has-split');
+        wrap.innerHTML = `
+          <div class="dashb-layout">
+            <div class="field">
+              <label>Live dashboard <span class="field-opt">Optional</span></label>
+              <span class="field-hint">${hintText}</span>
+              <div id="dash-builder"></div>
+            </div>
+            <div class="dashb-preview-panel">
+              <div class="dashb-preview-head">
+                <h4>Live preview</h4>
+                <span class="field-hint">Exactly what visitors see</span>
+              </div>
+              <div class="dashb-preview-stage" id="dash-preview"></div>
+            </div>
+          </div>`;
+
+        if (typeof AdminDashboardBuilder === 'undefined') {
+          document.getElementById('dash-builder').innerHTML =
+            '<p class="dashb-empty">The dashboard builder did not load. Refresh the page and try again.</p>';
+          return;
+        }
+
+        if (dashboardBuilder) dashboardBuilder.destroy();
+        dashboardBuilder = AdminDashboardBuilder.mount(
+          document.getElementById('dash-builder'),
+          config.formData.dashboard,
+          config.formData.metrics,
+          { previewHost: document.getElementById('dash-preview') }
+        );
+      },
+    };
+  }
+
+  function dashboardSummary(cfg) {
+    if (!cfg || cfg.enabled === false) return 'Hidden';
+    const bits = [];
+    const counts = [['countdowns', 'countdown'], ['kpis', 'card'], ['charts', 'chart'], ['health', 'target'], ['milestones', 'milestone']];
+    counts.forEach(([key, label]) => {
+      const n = Array.isArray(cfg[key]) ? cfg[key].length : 0;
+      if (n) bits.push(`${n} ${label}${n > 1 ? 's' : ''}`);
+    });
+    return bits.length ? bits.join(', ') : 'Empty';
+  }
+
+  function collectDashboard(config) {
+    if (!dashboardBuilder || !document.getElementById('dash-builder')) return;
+    config.formData.dashboard = dashboardBuilder.value();
+  }
+
   // ── Multi-step form engine ──
 
   function renderStepForm(config) {
@@ -571,6 +632,7 @@
   }
 
   function collectStepData(step, config) {
+    collectDashboard(config);
     if (step.review) {
       const statusEl = document.getElementById('f-status');
       if (statusEl) config.formData.status = statusEl.value;
@@ -1930,34 +1992,6 @@
       </div>`).join('');
   }
 
-  function renderProductMetrics() {
-    const list = document.getElementById('metrics-list');
-    if (!list) return;
-    list.innerHTML = productMetrics.map((m, i) => `
-      <div class="metric-row" data-idx="${i}">
-        <div class="feature-row">
-          <input type="text" value="${esc(m.name)}" placeholder="Metric name (e.g. Monthly Active Users)" data-idx="${i}" data-field="name">
-          <input type="text" value="${esc(m.unit)}" placeholder="Unit (optional, e.g. %, $, users)" data-idx="${i}" data-field="unit" style="max-width:160px">
-          <select data-idx="${i}" data-field="chart_type" style="max-width:130px">
-            <option value="stat" ${m.chart_type === 'stat' ? 'selected' : ''}>Stat</option>
-            <option value="line" ${m.chart_type === 'line' ? 'selected' : ''}>Line (trend)</option>
-            <option value="bar" ${m.chart_type === 'bar' ? 'selected' : ''}>Bar (compare)</option>
-            <option value="donut" ${m.chart_type === 'donut' ? 'selected' : ''}>Donut (%)</option>
-          </select>
-          <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
-        </div>
-        ${m.chart_type === 'line' ? `
-          <div class="field" style="margin-top:4px">
-            <label>Data points <span class="field-opt">One per line: date,value</span></label>
-            <textarea rows="3" data-idx="${i}" data-field="points" placeholder="2026-01-01,120&#10;2026-01-08,145">${esc((m.points || []).map((pt) => `${pt.date},${pt.value}`).join('\n'))}</textarea>
-          </div>` : `
-          <div class="field" style="margin-top:4px;max-width:200px">
-            <label>Value</label>
-            <input type="number" value="${m.value ?? ''}" data-idx="${i}" data-field="value">
-          </div>`}
-      </div>`).join('');
-  }
-
   function productForm(item) {
     const p = item || {};
     productFeatures = Array.isArray(p.features) ? [...p.features] : [];
@@ -1981,6 +2015,8 @@
       chat_enabled: p.chat_enabled || false,
       cover_image: p.cover_image || '',
       video_url: p.video_url || '',
+      dashboard: p.dashboard || null,
+      metrics: productMetrics,
     };
 
     renderStepForm({
@@ -2173,12 +2209,7 @@
                 <button type="button" class="btn btn-secondary btn-sm" id="add-document" style="margin-top:8px">Upload PDF</button>
                 <span class="form-msg" id="doc-upload-msg"></span>
               </div>
-              <div class="field">
-                <label>Investor &amp; Technical Metrics <span class="field-opt">Optional</span></label>
-                <span class="field-hint">Drives the charts shown on the product page</span>
-                <div id="metrics-list"></div>
-                <button type="button" class="btn btn-secondary btn-sm" id="add-metric" style="margin-top:8px">Add Metric</button>
-              </div>`;
+`;
 
             renderProductGallery();
             document.getElementById('add-gallery').addEventListener('click', () => {
@@ -2247,42 +2278,9 @@
               if (rm !== undefined) { productDocuments.splice(Number(rm), 1); renderProductDocuments(); }
             });
 
-            renderProductMetrics();
-            document.getElementById('add-metric').addEventListener('click', () => {
-              productMetrics.push({ name: '', value: 0, unit: '', chart_type: 'stat', points: [] });
-              renderProductMetrics();
-            });
-            document.getElementById('metrics-list').addEventListener('click', (e) => {
-              const rm = e.target.dataset.remove;
-              if (rm !== undefined) { productMetrics.splice(Number(rm), 1); renderProductMetrics(); }
-            });
-            document.getElementById('metrics-list').addEventListener('change', (e) => {
-              const idx = e.target.dataset.idx;
-              const field = e.target.dataset.field;
-              if (idx === undefined || !field) return;
-              if (field === 'chart_type') {
-                productMetrics[Number(idx)].chart_type = e.target.value;
-                renderProductMetrics();
-              }
-            });
-            document.getElementById('metrics-list').addEventListener('input', (e) => {
-              const idx = e.target.dataset.idx;
-              const field = e.target.dataset.field;
-              if (idx === undefined || !field || field === 'chart_type') return;
-              const m = productMetrics[Number(idx)];
-              if (field === 'points') {
-                m.points = e.target.value.split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
-                  const [date, value] = line.split(',').map((s) => s.trim());
-                  return { date, value: parseFloat(value) || 0 };
-                });
-              } else if (field === 'value') {
-                m.value = parseFloat(e.target.value) || 0;
-              } else {
-                m[field] = e.target.value;
-              }
-            });
           },
         },
+        dashboardStep('Countdowns, headline numbers, charts and milestones for this product. Everything here updates live on the product page.'),
         {
           review: true,
           fields: [],
@@ -2307,7 +2305,7 @@
               ['Gallery Images', productGallery.filter(Boolean).length],
               ['External Links', productLinks.filter((l) => l.label && l.url).length],
               ['Documents', productDocuments.length],
-              ['Metrics', productMetrics.filter((m) => m.name).length],
+              ['Dashboard', dashboardSummary(d.dashboard)],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
@@ -2348,6 +2346,7 @@
           external_links: productLinks.filter((l) => l.label && l.url),
           documents: productDocuments,
           metrics: productMetrics.filter((m) => m.name),
+          dashboard: d.dashboard || null,
           chat_enabled: d.chat_enabled,
           cover_image: d.cover_image || null,
         };
@@ -2504,6 +2503,7 @@
       diagrams: lp.diagrams || '',
       stage: lp.stage || 'concept',
       status: lp.status || 'active',
+      dashboard: lp.dashboard || null,
     };
 
     renderStepForm({
@@ -2674,6 +2674,7 @@
             });
           },
         },
+        dashboardStep('Countdowns, headline numbers, charts and milestones for this idea. Everything here updates live on the launchpad page.'),
         {
           review: true,
           fields: [],
@@ -2692,6 +2693,7 @@
               ['Funding Needed', d.funding_needed],
               ['Team Needed', d.team_needed],
               ['Tech Stack', d.tech_stack],
+              ['Dashboard', dashboardSummary(d.dashboard)],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
@@ -2744,6 +2746,7 @@
           diagrams: diagramStr || null,
           stage: d.stage,
           status: d.status,
+          dashboard: d.dashboard || null,
         };
       },
       onBack: loadLaunchpad,

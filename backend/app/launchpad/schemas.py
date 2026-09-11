@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 
 class LaunchpadCreate(BaseModel):
@@ -17,6 +17,7 @@ class LaunchpadCreate(BaseModel):
     diagrams: Optional[str] = None
     stage: Optional[str] = "concept"
     status: Optional[str] = "active"
+    dashboard: Optional[Any] = None
 
 
 class LaunchpadUpdate(BaseModel):
@@ -33,6 +34,7 @@ class LaunchpadUpdate(BaseModel):
     diagrams: Optional[str] = None
     stage: Optional[str] = None
     status: Optional[str] = None
+    dashboard: Optional[Any] = None
 
 
 class LaunchpadResponse(BaseModel):
@@ -50,6 +52,7 @@ class LaunchpadResponse(BaseModel):
     diagrams: Optional[str] = None
     stage: str
     status: str
+    dashboard: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
     last_edited_by: Optional[str] = None
