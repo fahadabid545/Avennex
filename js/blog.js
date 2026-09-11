@@ -17,6 +17,10 @@
     for (var i = 0; i < posts.length; i++) {
       var post = posts[i];
       html += '<a href="blog-post.html?slug=' + encodeURIComponent(post.slug) + '" class="blog-card" data-animate="fade-up">';
+      var cover = API.assetUrl(post.cover_image);
+      if (cover) {
+        html += '<div class="blog-card-media"><img src="' + API.escHtml(cover) + '" alt="' + API.escHtml(post.title) + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>';
+      }
       html += '<div class="blog-card-body">';
       if (post.published_at) {
         html += '<span class="blog-card-date">' + API.formatDate(post.published_at) + '</span>';

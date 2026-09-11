@@ -18,6 +18,12 @@
       var e = entries[i];
 
       html += '<div class="lp-card" data-animate="fade-up">';
+
+      var lpCover = API.assetUrl((e.diagrams || '').split('\n')[0].trim());
+      if (lpCover) {
+        html += '<div class="lp-card-media"><img src="' + API.escHtml(lpCover) + '" alt="' + API.escHtml(e.title) + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>';
+      }
+
       html += '<div class="lp-card-top">';
       html += '<h3 class="lp-card-title">' + API.escHtml(e.title) + '</h3>';
       html += stageBadge(e.stage);

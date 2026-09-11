@@ -203,6 +203,72 @@
     img.replaceWith(note);
   }, true);
 
+  // cover field: paste a URL or upload, with a live preview either way
+  function mountCoverField(inputId, context) {
+    const input = document.getElementById(inputId);
+    if (!input || input.dataset.coverMounted) return;
+    input.dataset.coverMounted = '1';
+
+    const holder = document.createElement('div');
+    holder.className = 'cover-field-tools';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary btn-sm';
+    btn.textContent = 'Upload image';
+
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'btn btn-secondary btn-sm';
+    clear.textContent = 'Remove';
+
+    const preview = document.createElement('img');
+    preview.className = 'cover-field-preview';
+    preview.alt = 'Cover preview';
+    preview.onerror = () => {
+      preview.classList.add('is-broken');
+      preview.alt = 'Cover image failed to load';
+    };
+
+    function paint() {
+      const v = input.value.trim();
+      if (v) {
+        preview.classList.remove('is-broken');
+        preview.src = assetUrl(v);
+        preview.hidden = false;
+        clear.hidden = false;
+      } else {
+        preview.removeAttribute('src');
+        preview.hidden = true;
+        clear.hidden = true;
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      btn.disabled = true;
+      btn.textContent = 'Uploading...';
+      pickAndUploadImage(context, (url) => {
+        input.value = url;
+        paint();
+      }, () => {
+        btn.disabled = false;
+        btn.textContent = 'Upload image';
+      });
+    });
+
+    clear.addEventListener('click', () => {
+      input.value = '';
+      paint();
+    });
+
+    input.addEventListener('input', paint);
+    holder.appendChild(btn);
+    holder.appendChild(clear);
+    input.parentNode.appendChild(holder);
+    input.parentNode.appendChild(preview);
+    paint();
+  }
+
   function mountSplitPreview(textarea, preview) {
     if (!textarea || !preview) return;
     const editorField = textarea.closest('.field');
@@ -691,13 +757,15 @@
     }
   }
 
-  function pickAndUploadImage(context, onSuccess) {
+  function pickAndUploadImage(context, onSuccess, onSettled) {
+    const done = () => { if (onSettled) onSettled(); };
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.addEventListener('cancel', done);
     input.addEventListener('change', async () => {
       const file = input.files[0];
-      if (!file) return;
+      if (!file) { done(); return; }
       try {
         const formData = new FormData();
         formData.append('file', file);
@@ -719,6 +787,7 @@
       } catch (err) {
         alert(err.message);
       }
+      done();
     });
     input.click();
   }
@@ -731,6 +800,7 @@
       author: b.author || '',
       excerpt: b.excerpt || '',
       meta_description: b.meta_description || '',
+      cover_image: b.cover_image || '',
       content: b.content || '',
       status: b.status || 'draft',
     };
@@ -760,8 +830,10 @@
             { name: 'author', id: 'f-author', label: 'Author', required: true },
             { name: 'excerpt', id: 'f-excerpt', label: 'Excerpt / Short Description', required: true },
             { name: 'meta_description', id: 'f-meta', label: 'Meta Description', hint: 'For SEO, max 160 characters' },
+            { name: 'cover_image', id: 'f-blog-cover', label: 'Cover Image', placeholder: 'https://... or upload', hint: 'Shown on the blog list and at the top of the post. 1200x630px works best.' },
           ],
           onMount: (config) => {
+            mountCoverField('f-blog-cover', 'blog');
             const titleInput = document.getElementById('f-title');
             const slugInput = document.getElementById('f-slug');
             const excerptInput = document.getElementById('f-excerpt');
@@ -898,6 +970,7 @@
           excerpt: d.excerpt || null,
           meta_description: d.meta_description || null,
           content: d.content || null,
+          cover_image: d.cover_image || null,
           status: d.status,
         };
       },
@@ -1816,7 +1889,7 @@
             ]},
             { name: 'progress', id: 'f-progress', label: 'Progress', type: 'range' },
             { name: 'display_order', id: 'f-order', label: 'Display Order', type: 'number', hint: 'Lower numbers appear first' },
-            { name: 'cover_image', id: 'f-cover', label: 'Cover Image URL', placeholder: 'https://...' },
+            { name: 'cover_image', id: 'f-cover', label: 'Cover Image', placeholder: 'https://... or upload' },
           ],
           onMount: (config) => {
             const nameInput = document.getElementById('f-name');
@@ -1865,34 +1938,7 @@
               });
             }
 
-            const coverInput = document.getElementById('f-cover');
-            if (coverInput && coverInput.value) {
-              const preview = document.createElement('img');
-              preview.src = assetUrl(coverInput.value);
-              preview.alt = 'Cover preview';
-              preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
-              preview.id = 'cover-preview';
-              preview.onerror = () => { preview.alt = 'Cover image failed to load'; preview.style.minHeight = '40px'; };
-              coverInput.parentNode.appendChild(preview);
-            }
-            if (coverInput) {
-              coverInput.addEventListener('input', () => {
-                let preview = document.getElementById('cover-preview');
-                if (coverInput.value) {
-                  if (!preview) {
-                    preview = document.createElement('img');
-                    preview.id = 'cover-preview';
-                    preview.alt = 'Cover preview';
-                    preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
-                    preview.onerror = () => { preview.alt = 'Cover image failed to load'; preview.style.minHeight = '40px'; };
-                    coverInput.parentNode.appendChild(preview);
-                  }
-                  preview.src = assetUrl(coverInput.value);
-                } else if (preview) {
-                  preview.remove();
-                }
-              });
-            }
+            mountCoverField('f-cover', 'product');
           },
         },
         {

@@ -1537,3 +1537,33 @@ body.is-splitting {
   font-size: 0.8rem;
   word-break: break-all;
 }
+
+/* Cover image field */
+
+.cover-field-tools {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cover-field-preview {
+  display: block;
+  max-width: 260px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.cover-field-preview[hidden] {
+  display: none;
+}
+
+.cover-field-preview.is-broken {
+  min-height: 44px;
+  min-width: 200px;
+  padding: 12px;
+  border-style: dashed;
+  border-color: var(--danger, #ef4444);
+  color: var(--danger, #ef4444);
+  font-size: 0.8rem;
+}

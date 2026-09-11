@@ -38,6 +38,11 @@
 
     html += '<h1 class="blog-article-title">' + API.escHtml(post.title) + '</h1>';
 
+    var cover = API.assetUrl(post.cover_image);
+    if (cover) {
+      html += '<figure class="blog-article-cover"><img src="' + API.escHtml(cover) + '" alt="' + API.escHtml(post.title) + '" onerror="this.parentElement.style.display=\'none\'"></figure>';
+    }
+
     if (post.content) {
       html += '<div class="blog-article-body">' + API.renderRichText(post.content) + '</div>';
     }
