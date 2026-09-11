@@ -55,15 +55,57 @@ var API = (function () {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // uploads are served by the API host, so a stored path like /uploads/x.jpg
-  // has to be resolved against it rather than against this site
+  var API_ORIGIN = BASE.replace(/\/api$/, '');
+
+  // an upload may be served by the API host or by the web host, and a stored
+  // path does not say which, so both are tried before an image is given up on
+  function uploadHosts() {
+    var list = [API_ORIGIN];
+    var here = window.location && window.location.origin;
+    if (here && /^https?:/i.test(here) && list.indexOf(here) === -1) list.push(here);
+    return list;
+  }
+
   function assetUrl(path) {
     if (!path) return '';
     var str = String(path).trim();
     // a bad insert can store the literal text of a missing value
     if (!str || str === 'undefined' || str === 'null' || str === '#') return '';
-    if (/^(https?:|data:|blob:)/i.test(str)) return str;
-    return BASE.replace(/\/api$/, '') + (str.charAt(0) === '/' ? str : '/' + str);
+    if (/^(data:|blob:)/i.test(str)) return str;
+    if (/^https?:/i.test(str)) return str;
+    if (str.indexOf('//') === 0) return (window.location.protocol || 'https:') + str;
+    return API_ORIGIN + (str.charAt(0) === '/' ? str : '/' + str);
+  }
+
+  // the path an image was asked for, whatever host it was aimed at
+  function assetPath(url) {
+    try {
+      return new URL(url, window.location.href).pathname;
+    } catch (err) {
+      return '';
+    }
+  }
+
+  // the next host worth trying for an image that just failed to load
+  function nextHost(img) {
+    var path = assetPath(img.getAttribute('src') || img.src);
+    if (!path || path === '/') return '';
+    var tried = img.dataset.triedHosts ? img.dataset.triedHosts.split('|') : [];
+    var current = '';
+    try {
+      current = new URL(img.src, window.location.href).origin;
+    } catch (err) { current = ''; }
+    if (current && tried.indexOf(current) === -1) tried.push(current);
+
+    var hosts = uploadHosts();
+    for (var i = 0; i < hosts.length; i++) {
+      if (tried.indexOf(hosts[i]) !== -1) continue;
+      tried.push(hosts[i]);
+      img.dataset.triedHosts = tried.join('|');
+      return hosts[i] + path;
+    }
+    img.dataset.triedHosts = tried.join('|');
+    return '';
   }
 
   function absolutise(html) {
@@ -120,12 +162,26 @@ var API = (function () {
     return absolutise(html);
   }
 
+  var CONTENT_IMG = '.blog-article-body, .product-article-body, .product-article-section,'
+    + ' .job-body, .faq-answer-content, .blog-article-cover, .blog-card-media,'
+    + ' .lp-card-media, .legal-content, .product-gallery, .lp-body,'
+    + ' .product-visual, .product-article-cover, .academy-card, .academy-video-item,'
+    + ' .academy-playlist-header, main';
+
   // a URL that looks fine but 404s only fails at load time, so catch it in the
-  // capture phase and hide the image instead of showing the broken icon
+  // capture phase, try the other upload host, and hide the image only when
+  // every host has been ruled out
   document.addEventListener('error', function (e) {
     var img = e.target;
     if (!img || img.tagName !== 'IMG' || img.dataset.failedOnce) return;
-    if (!img.closest('.blog-article-body, .product-article-body, .product-article-section, .job-body, .faq-answer-content, .blog-article-cover, .blog-card-media, .lp-card-media, .legal-content')) return;
+    if (!img.closest(CONTENT_IMG)) return;
+
+    var retry = nextHost(img);
+    if (retry) {
+      img.src = retry;
+      return;
+    }
+
     img.dataset.failedOnce = '1';
     imgFallback(img);
   }, true);
@@ -133,7 +189,8 @@ var API = (function () {
   function imgFallback(img) {
     img.style.display = 'none';
     // a figure or media wrapper left behind would show as an empty frame
-    var wrap = img.closest('.blog-article-cover, .blog-card-media, .lp-card-media, figure');
+    var wrap = img.closest('.blog-article-cover, .blog-card-media, .lp-card-media,'
+      + ' .product-article-cover, .product-visual a, figure');
     if (wrap && !wrap.querySelector('img:not([style*="display: none"])')) {
       wrap.style.display = 'none';
     }

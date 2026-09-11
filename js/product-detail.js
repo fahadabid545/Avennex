@@ -57,7 +57,7 @@
     html += '</div>';
 
     if (product.cover_image) {
-      html += '<div class="product-article-cover"><img src="' + API.escHtml(API.assetUrl(product.cover_image)) + '" alt="' + API.escHtml(product.name) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
+      html += '<div class="product-article-cover"><img src="' + API.escHtml(API.assetUrl(product.cover_image)) + '" alt="' + API.escHtml(product.name) + '"></div>';
     }
 
     var videoId = product.video_url ? extractYouTubeId(product.video_url) : '';
@@ -72,7 +72,7 @@
       html += '<h2>Gallery</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < product.gallery.length; g++) {
-        html += '<img class="product-gallery-item" src="' + API.escHtml(API.assetUrl(product.gallery[g])) + '" alt="' + API.escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="API.imgFallback(this)">';
+        html += '<img class="product-gallery-item" src="' + API.escHtml(API.assetUrl(product.gallery[g])) + '" alt="' + API.escHtml(product.name) + ' screenshot ' + (g + 1) + '">';
       }
       html += '</div></div>';
     }

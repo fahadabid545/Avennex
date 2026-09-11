@@ -144,12 +144,49 @@
 
   // uploads live on the API host, so a stored path has to resolve against it
   // rather than against the admin panel's own origin
+  // an upload may sit on the API host or on the web host, so both are tried
+  // before the preview calls an image broken
+  function uploadHosts() {
+    const list = [AdminAPI.BASE];
+    const here = window.location && window.location.origin;
+    if (here && /^https?:/i.test(here) && list.indexOf(here) === -1) list.push(here);
+    return list;
+  }
+
   function assetUrl(path) {
     if (!path) return '';
     const str = String(path).trim();
     if (!str || str === 'undefined' || str === 'null' || str === '#') return '';
-    if (/^(https?:|data:|blob:)/i.test(str)) return str;
+    if (/^(data:|blob:)/i.test(str)) return str;
+    if (/^https?:/i.test(str)) return str;
+    if (str.indexOf('//') === 0) return (window.location.protocol || 'https:') + str;
     return AdminAPI.BASE + (str.charAt(0) === '/' ? str : '/' + str);
+  }
+
+  function nextHost(img) {
+    let path = '';
+    let current = '';
+    try {
+      const u = new URL(img.getAttribute('src') || img.src, window.location.href);
+      path = u.pathname;
+      current = u.origin;
+    } catch (err) {
+      return '';
+    }
+    if (!path || path === '/') return '';
+
+    const tried = img.dataset.triedHosts ? img.dataset.triedHosts.split('|') : [];
+    if (current && tried.indexOf(current) === -1) tried.push(current);
+
+    const hosts = uploadHosts();
+    for (let i = 0; i < hosts.length; i++) {
+      if (tried.indexOf(hosts[i]) !== -1) continue;
+      tried.push(hosts[i]);
+      img.dataset.triedHosts = tried.join('|');
+      return hosts[i] + path;
+    }
+    img.dataset.triedHosts = tried.join('|');
+    return '';
   }
 
   function absolutise(html) {
@@ -200,12 +237,25 @@
   document.addEventListener('error', (e) => {
     const img = e.target;
     if (!img || img.tagName !== 'IMG') return;
-    if (!img.closest('.blog-preview')) return;
+    if (!img.closest('.blog-preview, .cover-preview') && !img.classList.contains('cover-field-preview')) return;
     if (img.dataset.failed) return;
+
+    const retry = nextHost(img);
+    if (retry) {
+      img.src = retry;
+      return;
+    }
+
     img.dataset.failed = '1';
+    if (img.classList.contains('cover-field-preview')) {
+      img.classList.add('is-broken');
+      img.alt = 'Cover image failed to load';
+      return;
+    }
     const note = document.createElement('span');
     note.className = 'preview-img-error';
-    note.textContent = 'Image failed to load: ' + (img.getAttribute('src') || '(no src)');
+    note.textContent = 'Image failed to load from any upload host: '
+      + (img.dataset.triedHosts || '').split('|').join(', ');
     img.replaceWith(note);
   }, true);
 
@@ -232,14 +282,20 @@
     preview.className = 'cover-field-preview';
     preview.alt = 'Cover preview';
     preview.onerror = () => {
-      preview.classList.add('is-broken');
-      preview.alt = 'Cover image failed to load';
+      // the shared handler retries the other upload host first, so only mark
+      // it broken once every host has been ruled out
+      if (preview.dataset.failed) {
+        preview.classList.add('is-broken');
+        preview.alt = 'Cover image failed to load';
+      }
     };
 
     function paint() {
       const v = input.value.trim();
       if (v) {
         preview.classList.remove('is-broken');
+        delete preview.dataset.failed;
+        delete preview.dataset.triedHosts;
         preview.src = assetUrl(v);
         preview.hidden = false;
         clear.hidden = false;

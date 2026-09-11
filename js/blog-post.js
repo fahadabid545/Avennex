@@ -45,7 +45,7 @@
 
     var cover = API.assetUrl(post.cover_image);
     if (cover) {
-      html += '<figure class="blog-article-cover"><img src="' + API.escHtml(cover) + '" alt="' + API.escHtml(post.title) + '" onerror="this.parentElement.style.display=\'none\'"></figure>';
+      html += '<figure class="blog-article-cover"><img src="' + API.escHtml(cover) + '" alt="' + API.escHtml(post.title) + '"></figure>';
     }
 
     if (post.content) {

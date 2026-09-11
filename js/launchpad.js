@@ -21,7 +21,7 @@
 
       var lpCover = API.assetUrl((e.diagrams || '').split('\n')[0].trim());
       if (lpCover) {
-        html += '<div class="lp-card-media"><img src="' + API.escHtml(lpCover) + '" alt="' + API.escHtml(e.title) + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>';
+        html += '<div class="lp-card-media"><img src="' + API.escHtml(lpCover) + '" alt="' + API.escHtml(e.title) + '" loading="lazy"></div>';
       }
 
       html += '<div class="lp-card-top">';

@@ -2014,3 +2014,47 @@ select:focus-visible,
 .product-article > .badge {
   margin-bottom: var(--space-md);
 }
+
+/* ==========================================================
+   Hero game
+   ========================================================== */
+
+.game-play-tab {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  padding: 12px 22px 12px 18px;
+  font-size: 0.85rem;
+}
+
+/* the only way out used to be a scroll nobody was told about */
+.game-exit {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  z-index: 62;
+  display: none;
+  align-items: center;
+  padding: 9px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-md);
+  color: #FFFFFF;
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.game-exit:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.hero.game-active .game-exit {
+  display: inline-flex;
+}
+
+.game-scroll-hint {
+  color: var(--text-secondary);
+}

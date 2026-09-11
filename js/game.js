@@ -22,6 +22,7 @@
   var spawnInterval = 1800;
   var runPhase = 0;
   var HUD_TOP = 96;
+  var takeoverAt = 0;
   var JUMP_V = 11.5;
   var JUMP_V_DEMO = 9.6;
   var GRAVITY = 0.72;
@@ -38,13 +39,13 @@
   ];
 
   function metrics(rect) {
-    // the play surface is much taller in full view than in the hero strip, so
-    // the runner and the ground line scale with it instead of hugging the floor
-    scale = Math.max(1, Math.min(2.1, rect.height / 360));
     // the ambient run sits in the empty band under the hero copy, so it stays
-    // small and low instead of drawing over the headline links
-    if (demo) scale = Math.min(scale, 1.15);
-    groundY = demo ? rect.height - 56 : rect.height * 0.74;
+    // small and low instead of drawing over the headline links. the full panel
+    // is a different surface and gets a scene drawn to fit it
+    scale = demo
+      ? Math.max(1, Math.min(1.15, rect.height / 360))
+      : Math.max(1.4, Math.min(3, rect.height / 300));
+    groundY = demo ? rect.height - 56 : rect.height * 0.8;
   }
 
   function resize() {
@@ -66,7 +67,7 @@
     gameOver = false;
     jumpHeld = false;
     spawnTimer = 0;
-    spawnInterval = 1800;
+    spawnInterval = demo ? 1800 : 2600;
     runPhase = 0;
     lastTime = 0;
   }
@@ -122,7 +123,11 @@
   function takeOver() {
     if (!demo) return;
     demo = false;
+    takeoverAt = Date.now();
     palette = INK_LIGHT;
+    // the panel is fixed to the top of the window, so the page goes with it,
+    // otherwise the first scroll reading already looks like an exit
+    window.scrollTo(0, 0);
     document.body.classList.add('game-fullscreen');
     hero.classList.add('game-active');
     overlay.classList.add('active');
@@ -142,6 +147,10 @@
 
   // the ambient run clears a cactus with room to spare and nothing more, so it
   // never arcs up into the hero copy
+  function touchOnly() {
+    return window.matchMedia && window.matchMedia('(hover: none)').matches;
+  }
+
   function jumpV() {
     return demo ? JUMP_V_DEMO : JUMP_V;
   }
@@ -347,25 +356,46 @@
     }
 
     if (!demo) {
+      // the exit control sits at the top right of the panel, so the score
+      // takes the other corner
       ctx.fillStyle = palette.ink;
-      ctx.font = '500 14px JetBrains Mono, monospace';
-      ctx.textAlign = 'right';
+      ctx.font = '500 15px JetBrains Mono, monospace';
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(Math.floor(score), w - 24, HUD_TOP);
+      ctx.fillText(String(Math.floor(score)).padStart(4, '0'), 32, HUD_TOP);
 
       if (highScore > 0) {
         ctx.fillStyle = palette.muted;
         ctx.font = '400 11px JetBrains Mono, monospace';
-        ctx.fillText('HI ' + highScore, w - 24, HUD_TOP + 20);
+        ctx.fillText('HI ' + String(highScore).padStart(4, '0'), 32, HUD_TOP + 22);
       }
     }
 
     if (gameOver) {
-      ctx.fillStyle = palette.ink;
-      ctx.font = '600 20px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('tap to restart', w / 2, h / 2);
+      ctx.fillStyle = palette.ink;
+      ctx.font = '600 22px Inter, sans-serif';
+      ctx.fillText('You hit a cactus', w / 2, groundY - 132);
+      ctx.fillStyle = palette.muted;
+      ctx.font = '400 14px Inter, sans-serif';
+      ctx.fillText(touchOnly() ? 'Tap to run again' : 'Press space or click to run again', w / 2, groundY - 104);
+      return;
+    }
+
+    // the run starts the moment the panel opens, so say how to jump while the
+    // first cactus is still on its way in
+    if (!demo && takeoverAt) {
+      var age = Date.now() - takeoverAt;
+      if (age < 3200) {
+        ctx.globalAlpha = age > 2400 ? (3200 - age) / 800 : 1;
+        ctx.fillStyle = palette.muted;
+        ctx.font = '500 15px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(touchOnly() ? 'Tap to jump' : 'Press space or click to jump', w / 2, groundY - 120);
+        ctx.globalAlpha = 1;
+      }
     }
   }
 
@@ -385,6 +415,7 @@
   function exitGame() {
     if (demo) return;
     demo = true;
+    takeoverAt = 0;
     palette = INK_DARK;
     document.body.classList.remove('game-fullscreen');
     hero.classList.remove('game-active');
@@ -444,7 +475,9 @@
   if (exitBtn) exitBtn.addEventListener('click', exitGame);
 
   window.addEventListener('scroll', function () {
-    if (!demo && window.scrollY > 240) exitGame();
+    if (demo) return;
+    if (Date.now() - takeoverAt < 1200) return;
+    if (window.scrollY > 240) exitGame();
   }, { passive: true });
 
   if ('IntersectionObserver' in window) {
