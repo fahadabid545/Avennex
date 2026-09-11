@@ -48,7 +48,7 @@
         html += '<span>' + API.escHtml(f.question) + '</span>';
         html += '<i data-lucide="chevron-down" width="18" height="18" class="faq-icon"></i>';
         html += '</button>';
-        html += '<div class="faq-answer"><div class="faq-answer-content">' + (f.answer || '') + '</div></div>';
+        html += '<div class="faq-answer"><div class="faq-answer-content">' + API.renderRichText(f.answer) + '</div></div>';
         html += '</div>';
       }
       faqList.innerHTML = html;

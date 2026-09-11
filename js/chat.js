@@ -23,18 +23,18 @@
         var m = messages[i];
         html += '<div class="chat-msg">';
         html += '<div class="chat-msg-header">';
-        html += '<span class="chat-msg-author">' + escHtml(m.author_name) + '</span>';
+        html += '<span class="chat-msg-author">' + API.escHtml(m.author_name) + '</span>';
         if (showDetails) {
           var details = [];
-          if (m.author_profession) details.push(escHtml(m.author_profession));
-          if (m.author_company) details.push(escHtml(m.author_company));
+          if (m.author_profession) details.push(API.escHtml(m.author_profession));
+          if (m.author_company) details.push(API.escHtml(m.author_company));
           if (details.length) {
             html += '<span class="chat-msg-details">' + details.join(' at ') + '</span>';
           }
         }
         html += '<span class="chat-msg-time">' + API.formatDate(m.created_at) + '</span>';
         html += '</div>';
-        html += '<p class="chat-msg-text">' + escHtml(m.message) + '</p>';
+        html += '<p class="chat-msg-text">' + API.escHtml(m.message) + '</p>';
 
         if (m.replies && m.replies.length) {
           for (var j = 0; j < m.replies.length; j++) {
@@ -44,7 +44,7 @@
             html += '<span class="chat-msg-author chat-admin-badge">Avennex</span>';
             html += '<span class="chat-msg-time">' + API.formatDate(r.created_at) + '</span>';
             html += '</div>';
-            html += '<p class="chat-msg-text">' + escHtml(r.message) + '</p>';
+            html += '<p class="chat-msg-text">' + API.escHtml(r.message) + '</p>';
             html += '</div>';
           }
         }
@@ -126,8 +126,4 @@
     }
   }
 
-  function escHtml(s) {
-    if (!s) return '';
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
 })();

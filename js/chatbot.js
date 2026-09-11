@@ -10,11 +10,6 @@
   var sending = false;
   var greeting = null;
 
-  function escHtml(s) {
-    if (!s) return '';
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
   function init() {
     fetch(BASE + '/settings/chatbot_visible')
       .then(function (r) { return r.ok ? r.json() : null; })

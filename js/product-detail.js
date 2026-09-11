@@ -50,14 +50,14 @@
 
     html += '<div class="product-article-header">';
     html += '<span class="badge ' + statusBadgeClass(product.status) + '"><span class="badge-dot ' + statusDotClass(product.status) + '"></span> ' + statusLabel(product.status) + '</span>';
-    html += '<h1 class="product-article-title">' + escHtml(product.name) + '</h1>';
+    html += '<h1 class="product-article-title">' + API.escHtml(product.name) + '</h1>';
     if (product.tagline) {
-      html += '<p class="product-article-tagline">' + escHtml(product.tagline) + '</p>';
+      html += '<p class="product-article-tagline">' + API.escHtml(product.tagline) + '</p>';
     }
     html += '</div>';
 
     if (product.cover_image) {
-      html += '<div class="product-article-cover"><img src="' + escHtml(product.cover_image) + '" alt="' + escHtml(product.name) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
+      html += '<div class="product-article-cover"><img src="' + API.escHtml(product.cover_image) + '" alt="' + API.escHtml(product.name) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
     }
 
     var videoId = product.video_url ? extractYouTubeId(product.video_url) : '';
@@ -72,7 +72,7 @@
       html += '<h2>Gallery</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < product.gallery.length; g++) {
-        html += '<img class="product-gallery-item" src="' + escHtml(product.gallery[g]) + '" alt="' + escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="API.imgFallback(this)">';
+        html += '<img class="product-gallery-item" src="' + API.escHtml(product.gallery[g]) + '" alt="' + API.escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="API.imgFallback(this)">';
       }
       html += '</div></div>';
     }
@@ -100,8 +100,8 @@
       for (var k = 0; k < product.features.length; k++) {
         var f = product.features[k];
         html += '<div class="feature-item">';
-        html += '<i data-lucide="' + escHtml(f.icon || 'check') + '" width="20" height="20"></i>';
-        html += '<span>' + escHtml(f.text) + '</span>';
+        html += '<i data-lucide="' + API.escHtml(f.icon || 'check') + '" width="20" height="20"></i>';
+        html += '<span>' + API.escHtml(f.text) + '</span>';
         html += '</div>';
       }
       html += '</div>';
@@ -130,7 +130,7 @@
       var techs = product.tech_stack.split(/[,\n]+/).map(function (t) { return t.trim(); }).filter(Boolean);
       html += '<div class="product-tech-list">';
       for (var t = 0; t < techs.length; t++) {
-        html += '<span class="product-tech-tag">' + escHtml(techs[t]) + '</span>';
+        html += '<span class="product-tech-tag">' + API.escHtml(techs[t]) + '</span>';
       }
       html += '</div>';
       html += '</div>';
@@ -157,7 +157,7 @@
     for (var m = 0; m < lines.length; m++) {
       html += '<div class="product-timeline-item">';
       html += '<div class="product-timeline-dot"></div>';
-      html += '<span>' + escHtml(lines[m].trim()) + '</span>';
+      html += '<span>' + API.escHtml(lines[m].trim()) + '</span>';
       html += '</div>';
     }
     html += '</div></div>';
@@ -177,8 +177,8 @@
       html += '<div class="metrics-stat-row">';
       for (var i = 0; i < stats.length; i++) {
         html += '<div class="metrics-stat-card">';
-        html += '<div class="metrics-stat-value">' + escHtml(String(stats[i].value)) + (stats[i].unit ? ' <span class="metrics-stat-unit">' + escHtml(stats[i].unit) + '</span>' : '') + '</div>';
-        html += '<div class="metrics-stat-label">' + escHtml(stats[i].name) + '</div>';
+        html += '<div class="metrics-stat-value">' + API.escHtml(String(stats[i].value)) + (stats[i].unit ? ' <span class="metrics-stat-unit">' + API.escHtml(stats[i].unit) + '</span>' : '') + '</div>';
+        html += '<div class="metrics-stat-label">' + API.escHtml(stats[i].name) + '</div>';
         html += '</div>';
       }
       html += '</div>';
@@ -187,10 +187,10 @@
     if (lines.length || bars.length || donuts.length) {
       html += '<div class="metrics-chart-grid">';
       for (var j = 0; j < lines.length; j++) {
-        html += '<div class="metrics-chart-card"><h3>' + escHtml(lines[j].name) + '</h3><canvas id="metric-line-' + j + '"></canvas></div>';
+        html += '<div class="metrics-chart-card"><h3>' + API.escHtml(lines[j].name) + '</h3><canvas id="metric-line-' + j + '"></canvas></div>';
       }
       for (var k = 0; k < donuts.length; k++) {
-        html += '<div class="metrics-chart-card metrics-chart-card-donut"><h3>' + escHtml(donuts[k].name) + '</h3><canvas id="metric-donut-' + k + '"></canvas></div>';
+        html += '<div class="metrics-chart-card metrics-chart-card-donut"><h3>' + API.escHtml(donuts[k].name) + '</h3><canvas id="metric-donut-' + k + '"></canvas></div>';
       }
       if (bars.length) {
         html += '<div class="metrics-chart-card"><h3>Comparison</h3><canvas id="metric-bar"></canvas></div>';
@@ -273,7 +273,7 @@
     if (documents.length > 1) {
       html += '<div class="pdf-doc-tabs">';
       for (var i = 0; i < documents.length; i++) {
-        html += '<button type="button" class="pdf-doc-tab' + (i === 0 ? ' is-active' : '') + '" data-doc-idx="' + i + '">' + escHtml(documents[i].name) + '</button>';
+        html += '<button type="button" class="pdf-doc-tab' + (i === 0 ? ' is-active' : '') + '" data-doc-idx="' + i + '">' + API.escHtml(documents[i].name) + '</button>';
       }
       html += '</div>';
     }
@@ -352,7 +352,7 @@
     html += '<h2>Links</h2>';
     html += '<div class="product-links-list">';
     for (var i = 0; i < links.length; i++) {
-      html += '<a class="product-link-btn" href="' + escHtml(links[i].url) + '" target="_blank" rel="noopener">' + escHtml(links[i].label) + ' <span class="text-link-arrow">&rarr;</span></a>';
+      html += '<a class="product-link-btn" href="' + API.escHtml(links[i].url) + '" target="_blank" rel="noopener">' + API.escHtml(links[i].label) + ' <span class="text-link-arrow">&rarr;</span></a>';
     }
     html += '</div></div>';
     return html;
@@ -465,10 +465,10 @@
         var m = messages[i];
         html += '<div class="chat-msg">';
         html += '<div class="chat-msg-header">';
-        html += '<span class="chat-msg-author">' + escHtml(m.author_name) + '</span>';
+        html += '<span class="chat-msg-author">' + API.escHtml(m.author_name) + '</span>';
         html += '<span class="chat-msg-time">' + API.formatDate(m.created_at) + '</span>';
         html += '</div>';
-        html += '<p class="chat-msg-text">' + escHtml(m.message) + '</p>';
+        html += '<p class="chat-msg-text">' + API.escHtml(m.message) + '</p>';
 
         if (m.replies && m.replies.length) {
           for (var j = 0; j < m.replies.length; j++) {
@@ -478,7 +478,7 @@
             html += '<span class="chat-msg-author chat-admin-badge">Avennex</span>';
             html += '<span class="chat-msg-time">' + API.formatDate(r.created_at) + '</span>';
             html += '</div>';
-            html += '<p class="chat-msg-text">' + escHtml(r.message) + '</p>';
+            html += '<p class="chat-msg-text">' + API.escHtml(r.message) + '</p>';
             html += '</div>';
           }
         }
@@ -510,8 +510,4 @@
     return status.charAt(0).toUpperCase() + status.slice(1);
   }
 
-  function escHtml(s) {
-    if (!s) return '';
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
 })();

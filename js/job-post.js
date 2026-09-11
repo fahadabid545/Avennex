@@ -99,8 +99,8 @@
           var qHtml = '';
           for (var q = 0; q < job.custom_questions.length; q++) {
             qHtml += '<div class="job-custom-question">';
-            qHtml += '<label for="cq-' + q + '">' + escHtml(job.custom_questions[q]) + '</label>';
-            qHtml += '<textarea id="cq-' + q + '" data-question="' + escHtml(job.custom_questions[q]) + '" rows="3"></textarea>';
+            qHtml += '<label for="cq-' + q + '">' + API.escHtml(job.custom_questions[q]) + '</label>';
+            qHtml += '<textarea id="cq-' + q + '" data-question="' + API.escHtml(job.custom_questions[q]) + '" rows="3"></textarea>';
             qHtml += '</div>';
           }
           qWrap.innerHTML = qHtml;
@@ -127,7 +127,9 @@
       var file = fileInput && fileInput.files[0];
 
       if (file) {
-        if (file.type !== 'application/pdf') {
+        var isPdf = file.type === 'application/pdf'
+          || (!file.type && /\.pdf$/i.test(file.name));
+        if (!isPdf) {
           msg.className = 'form-msg form-msg-error';
           msg.textContent = 'Only PDF files are accepted.';
           btn.disabled = false;
@@ -194,8 +196,4 @@
   }
 
 
-  function escHtml(s) {
-    if (!s) return '';
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
 })();

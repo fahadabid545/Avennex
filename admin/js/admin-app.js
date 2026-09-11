@@ -142,6 +142,127 @@
     return String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  function resolveUploadUrl(result) {
+    const raw = result && (result.url || result.file_url || result.path || result.location
+      || (result.data && (result.data.url || result.data.path)));
+    if (!raw || typeof raw !== 'string') return '';
+    if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+    return AdminAPI.BASE + (raw.charAt(0) === '/' ? raw : '/' + raw);
+  }
+
+  function richText(text) {
+    if (!text) return '';
+    const blockTagRe = /<(h[1-6]|ul|ol|li|blockquote|pre|img|div|table|p)[\s>/]/i;
+    const paragraphs = String(text).split(/\n\n+/);
+    let html = '';
+    for (const block of paragraphs) {
+      const para = block.trim();
+      if (!para) continue;
+      if (blockTagRe.test(para)) {
+        html += para;
+      } else if (para.startsWith('## ')) {
+        html += '<h2>' + para.substring(3) + '</h2>';
+      } else if (para.startsWith('### ')) {
+        html += '<h3>' + para.substring(4) + '</h3>';
+      } else if (para.startsWith('- ') || para.includes('\n- ')) {
+        html += '<ul>';
+        for (const line of para.split('\n')) {
+          const item = line.replace(/^-\s*/, '').trim();
+          if (item) html += '<li>' + item + '</li>';
+        }
+        html += '</ul>';
+      } else {
+        html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+      }
+    }
+    return html;
+  }
+
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== 'IMG') return;
+    if (!img.closest('.blog-preview')) return;
+    if (img.dataset.failed) return;
+    img.dataset.failed = '1';
+    const note = document.createElement('span');
+    note.className = 'preview-img-error';
+    note.textContent = 'Image failed to load: ' + (img.getAttribute('src') || '(no src)');
+    img.replaceWith(note);
+  }, true);
+
+  function mountSplitPreview(textarea, preview) {
+    if (!textarea || !preview) return;
+    const editorField = textarea.closest('.field');
+    const previewField = preview.closest('.field');
+    if (!editorField || !previewField || editorField === previewField) return;
+    if (editorField.parentNode.classList.contains('editor-split')) return;
+
+    const split = document.createElement('div');
+    split.className = 'editor-split';
+    editorField.parentNode.insertBefore(split, editorField);
+
+    const handle = document.createElement('div');
+    handle.className = 'editor-split-handle';
+    handle.setAttribute('role', 'separator');
+    handle.setAttribute('aria-orientation', 'vertical');
+    handle.setAttribute('aria-label', 'Resize preview');
+    handle.tabIndex = 0;
+
+    split.appendChild(editorField);
+    split.appendChild(handle);
+    split.appendChild(previewField);
+
+    const STORE = 'admin_split_ratio';
+    let ratio = parseFloat(localStorage.getItem(STORE));
+    if (!(ratio > 0.2 && ratio < 0.8)) ratio = 0.5;
+
+    function apply() {
+      split.style.setProperty('--editor-ratio', ratio);
+      try { localStorage.setItem(STORE, String(ratio)); } catch {}
+    }
+    apply();
+
+    function ratioFromX(clientX) {
+      const rect = split.getBoundingClientRect();
+      if (!rect.width) return ratio;
+      return Math.min(0.8, Math.max(0.2, (clientX - rect.left) / rect.width));
+    }
+
+    function onMove(e) {
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      ratio = ratioFromX(x);
+      apply();
+      e.preventDefault();
+    }
+
+    function stop() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', stop);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', stop);
+      document.body.classList.remove('is-splitting');
+    }
+
+    function start(e) {
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', stop);
+      document.body.classList.add('is-splitting');
+      e.preventDefault();
+    }
+
+    handle.addEventListener('mousedown', start);
+    handle.addEventListener('touchstart', start, { passive: false });
+    handle.addEventListener('dblclick', () => { ratio = 0.5; apply(); });
+    handle.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      ratio = Math.min(0.8, Math.max(0.2, ratio + (e.key === 'ArrowLeft' ? -0.02 : 0.02)));
+      apply();
+      e.preventDefault();
+    });
+  }
+
   function val(id) {
     const el = document.getElementById(id);
     return el ? el.value.trim() : '';
@@ -525,8 +646,10 @@
           throw new Error(err.detail || 'Upload failed');
         }
         const result = await res.json();
+        const url = resolveUploadUrl(result);
+        if (!url) throw new Error('Upload succeeded but the server returned no image URL.');
         const alt = prompt('Alt text:', '') || '';
-        const imgTag = `<img src="${result.url}" alt="${esc(alt)}">`;
+        const imgTag = `<img src="${esc(url)}" alt="${esc(alt)}">`;
         const idx = textarea.value.indexOf(placeholder);
         if (idx !== -1) {
           textarea.value = textarea.value.substring(0, idx) + imgTag + textarea.value.substring(idx + placeholder.length);
@@ -577,7 +700,9 @@
           throw new Error(err.detail || 'Upload failed');
         }
         const result = await res.json();
-        onSuccess(result.url);
+        const url = resolveUploadUrl(result);
+        if (!url) throw new Error('Upload succeeded but the server returned no image URL.');
+        onSuccess(url);
       } catch (err) {
         alert(err.message);
       }
@@ -694,8 +819,9 @@
             const preview = document.getElementById('blog-preview');
 
             function updatePreview() {
-              preview.innerHTML = textarea.value || '<span class="text-muted">Nothing to preview</span>';
+              preview.innerHTML = richText(textarea.value) || '<span class="text-muted">Nothing to preview</span>';
             }
+            mountSplitPreview(textarea, preview);
             textarea.addEventListener('input', updatePreview);
             updatePreview();
 
@@ -722,7 +848,7 @@
               reviewHtml += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${val ? esc(val) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
             reviewHtml += '</div>';
-            reviewHtml += '<div class="field" style="margin-top:20px"><label>Content Preview</label><div class="blog-preview">' + (d.content || '<span class="text-muted">No content</span>') + '</div></div>';
+            reviewHtml += '<div class="field" style="margin-top:20px"><label>Content Preview</label><div class="blog-preview">' + (richText(d.content) || '<span class="text-muted">No content</span>') + '</div></div>';
             reviewHtml += `
               <div class="field" style="margin-top:20px">
                 <label for="f-status">Status</label>
@@ -1016,9 +1142,9 @@
         <h1>${esc(job ? job.title : 'Job Application')}</h1>
         <div class="meta">Applicant: ${esc(app.name)} &middot; ${esc(app.email)} &middot; ${formatDate(app.created_at)}</div>
         ${job ? `
-          <h2>Job Description</h2><div>${job.description || ''}</div>
-          ${job.requirements ? `<h2>Requirements</h2><div>${job.requirements}</div>` : ''}
-          ${job.good_to_have ? `<h2>Good to Have</h2><div>${job.good_to_have}</div>` : ''}
+          <h2>Job Description</h2><div>${richText(job.description)}</div>
+          ${job.requirements ? `<h2>Requirements</h2><div>${richText(job.requirements)}</div>` : ''}
+          ${job.good_to_have ? `<h2>Good to Have</h2><div>${richText(job.good_to_have)}</div>` : ''}
         ` : ''}
         <h2>Applicant</h2>
         <div class="qa"><div class="q">Name</div><div class="a">${esc(app.name)}</div></div>
@@ -1105,10 +1231,12 @@
       fetchResumeBlob(app.id).then((blob) => {
         const url = URL.createObjectURL(blob);
         if (typeof pdfjsLib === 'undefined') {
+          URL.revokeObjectURL(url);
           track.innerHTML = '<p class="text-muted">PDF preview unavailable.</p>';
           return;
         }
         pdfjsLib.getDocument(url).promise.then((pdf) => {
+          URL.revokeObjectURL(url);
           track.innerHTML = '';
           let chain = Promise.resolve();
           const renderPage = (n) => {
@@ -1291,8 +1419,9 @@
             const descTextarea = document.getElementById('f-description');
             const descPreview = document.getElementById('desc-preview');
             function updateDescPreview() {
-              descPreview.innerHTML = descTextarea.value || '<span class="text-muted">Nothing to preview</span>';
+              descPreview.innerHTML = richText(descTextarea.value) || '<span class="text-muted">Nothing to preview</span>';
             }
+            mountSplitPreview(descTextarea, descPreview);
             descTextarea.addEventListener('input', updateDescPreview);
             updateDescPreview();
 
@@ -1348,7 +1477,7 @@
             });
             html += '</div>';
             if (d.description) {
-              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + d.description + '</div></div>';
+              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + richText(d.description) + '</div></div>';
             }
             wrap.innerHTML = html;
           },
@@ -1727,8 +1856,10 @@
             if (coverInput && coverInput.value) {
               const preview = document.createElement('img');
               preview.src = coverInput.value;
+              preview.alt = 'Cover preview';
               preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
               preview.id = 'cover-preview';
+              preview.onerror = () => { preview.alt = 'Cover image failed to load'; preview.style.minHeight = '40px'; };
               coverInput.parentNode.appendChild(preview);
             }
             if (coverInput) {
@@ -1738,7 +1869,9 @@
                   if (!preview) {
                     preview = document.createElement('img');
                     preview.id = 'cover-preview';
+                    preview.alt = 'Cover preview';
                     preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
+                    preview.onerror = () => { preview.alt = 'Cover image failed to load'; preview.style.minHeight = '40px'; };
                     coverInput.parentNode.appendChild(preview);
                   }
                   preview.src = coverInput.value;
@@ -1804,8 +1937,9 @@
             const contentTextarea = document.getElementById('f-content');
             const contentPreview = document.getElementById('content-preview');
             function updatePreview() {
-              contentPreview.innerHTML = contentTextarea.value || '<span class="text-muted">Nothing to preview</span>';
+              contentPreview.innerHTML = richText(contentTextarea.value) || '<span class="text-muted">Nothing to preview</span>';
             }
+            mountSplitPreview(contentTextarea, contentPreview);
             contentTextarea.addEventListener('input', updatePreview);
             updatePreview();
 
@@ -1924,7 +2058,7 @@
                   throw new Error(err.detail || 'Upload failed');
                 }
                 const result = await res.json();
-                productDocuments.push({ name: result.name, url: result.url });
+                productDocuments.push({ name: result.name, url: resolveUploadUrl(result) });
                 renderProductDocuments();
                 msg.textContent = 'Uploaded.';
                 msg.classList.add('form-msg-success');
@@ -2005,7 +2139,7 @@
             });
             html += '</div>';
             if (d.content) {
-              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + d.content + '</div></div>';
+              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + richText(d.content) + '</div></div>';
             }
             wrap.innerHTML = html;
           },
@@ -2335,8 +2469,9 @@
             const contentTextarea = document.getElementById('f-lp-content');
             const contentPreview = document.getElementById('lp-content-preview');
             function updatePreview() {
-              contentPreview.innerHTML = contentTextarea.value || '<span class="text-muted">Nothing to preview</span>';
+              contentPreview.innerHTML = richText(contentTextarea.value) || '<span class="text-muted">Nothing to preview</span>';
             }
+            mountSplitPreview(contentTextarea, contentPreview);
             contentTextarea.addEventListener('input', updatePreview);
             updatePreview();
 
@@ -2388,10 +2523,10 @@
             });
             html += '</div>';
             if (d.content) {
-              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + d.content + '</div></div>';
+              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + richText(d.content) + '</div></div>';
             }
             if (d.collaboration_details) {
-              html += '<div class="field" style="margin-top:20px"><label>Collaboration Details Preview</label><div class="blog-preview">' + d.collaboration_details + '</div></div>';
+              html += '<div class="field" style="margin-top:20px"><label>Collaboration Details Preview</label><div class="blog-preview">' + richText(d.collaboration_details) + '</div></div>';
             }
             const diagramUrls = launchpadDiagrams.filter(Boolean);
             if (diagramUrls.length) {
@@ -2997,8 +3132,9 @@
             const ta = document.getElementById('f-faq-answer');
             const preview = document.getElementById('faq-answer-preview');
             function updatePreview() {
-              preview.innerHTML = ta.value || '<span class="text-muted">Nothing to preview</span>';
+              preview.innerHTML = richText(ta.value) || '<span class="text-muted">Nothing to preview</span>';
             }
+            mountSplitPreview(ta, preview);
             ta.addEventListener('input', updatePreview);
             updatePreview();
 
@@ -3024,7 +3160,7 @@
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
             html += '</div>';
-            html += '<div class="field" style="margin-top:20px"><label>Answer Preview</label><div class="blog-preview">' + (d.answer || '<span class="text-muted">No answer</span>') + '</div></div>';
+            html += '<div class="field" style="margin-top:20px"><label>Answer Preview</label><div class="blog-preview">' + (richText(d.answer) || '<span class="text-muted">No answer</span>') + '</div></div>';
             wrap.innerHTML = html;
           },
         },
