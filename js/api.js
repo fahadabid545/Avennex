@@ -60,15 +60,21 @@ var API = (function () {
   function assetUrl(path) {
     if (!path) return '';
     var str = String(path).trim();
-    if (!str || /^(https?:|data:|blob:)/i.test(str)) return str;
+    // a bad insert can store the literal text of a missing value
+    if (!str || str === 'undefined' || str === 'null' || str === '#') return '';
+    if (/^(https?:|data:|blob:)/i.test(str)) return str;
     return BASE.replace(/\/api$/, '') + (str.charAt(0) === '/' ? str : '/' + str);
   }
 
   function absolutise(html) {
-    return String(html).replace(/(<img\b[^>]*?\bsrc=)(["'])([^"']*)\2/gi,
-      function (all, head, quote, path) {
-        if (!path) return all;
-        return head + quote + assetUrl(path) + quote;
+    // drop an image tag whose src cannot resolve, rather than leaving a
+    // broken-image icon sitting in the middle of the copy
+    return String(html)
+      .replace(/<img\b[^>]*>/gi, function (tag) {
+        var m = tag.match(/\bsrc=(["'])([^"']*)\1/i);
+        var url = m ? assetUrl(m[2]) : '';
+        if (!url) return '';
+        return tag.replace(/\bsrc=(["'])([^"']*)\1/i, 'src="' + url + '"');
       });
   }
 
@@ -114,8 +120,23 @@ var API = (function () {
     return absolutise(html);
   }
 
+  // a URL that looks fine but 404s only fails at load time, so catch it in the
+  // capture phase and hide the image instead of showing the broken icon
+  document.addEventListener('error', function (e) {
+    var img = e.target;
+    if (!img || img.tagName !== 'IMG' || img.dataset.failedOnce) return;
+    if (!img.closest('.blog-article-body, .product-article-body, .product-article-section, .job-body, .faq-answer-content, .blog-article-cover, .blog-card-media, .lp-card-media, .legal-content')) return;
+    img.dataset.failedOnce = '1';
+    imgFallback(img);
+  }, true);
+
   function imgFallback(img) {
     img.style.display = 'none';
+    // a figure or media wrapper left behind would show as an empty frame
+    var wrap = img.closest('.blog-article-cover, .blog-card-media, .lp-card-media, figure');
+    if (wrap && !wrap.querySelector('img:not([style*="display: none"])')) {
+      wrap.style.display = 'none';
+    }
     var section = img.closest('.product-article-section');
     if (!section) return;
     var alive = section.querySelectorAll('img:not([style*="display: none"])');

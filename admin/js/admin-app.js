@@ -147,13 +147,19 @@
   function assetUrl(path) {
     if (!path) return '';
     const str = String(path).trim();
-    if (!str || /^(https?:|data:|blob:)/i.test(str)) return str;
+    if (!str || str === 'undefined' || str === 'null' || str === '#') return '';
+    if (/^(https?:|data:|blob:)/i.test(str)) return str;
     return AdminAPI.BASE + (str.charAt(0) === '/' ? str : '/' + str);
   }
 
   function absolutise(html) {
-    return String(html).replace(/(<img\b[^>]*?\bsrc=)(["'])([^"']*)\2/gi,
-      (all, head, quote, path) => (path ? head + quote + assetUrl(path) + quote : all));
+    return String(html).replace(/<img\b[^>]*>/gi, (tag) => {
+      const m = tag.match(/\bsrc=(["'])([^"']*)\1/i);
+      const url = m ? assetUrl(m[2]) : '';
+      // keep the tag so the preview reports what is wrong, unlike the live page
+      if (!url) return `<span class="preview-img-error">Image has no usable source: ${esc(m ? m[2] : '(no src attribute)')}</span>`;
+      return tag.replace(/\bsrc=(["'])([^"']*)\1/i, `src="${url}"`);
+    });
   }
 
   function resolveUploadUrl(result) {
