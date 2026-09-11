@@ -532,11 +532,13 @@
   function dashboardSummary(cfg) {
     if (!cfg || cfg.enabled === false) return 'Hidden';
     const bits = [];
-    const counts = [['countdowns', 'countdown'], ['kpis', 'card'], ['charts', 'chart'], ['health', 'target'], ['milestones', 'milestone']];
+    const counts = [['countdowns', 'countdown'], ['kpis', 'card'], ['charts', 'chart'],
+      ['cohorts', 'retention grid'], ['tables', 'breakdown'], ['health', 'target'], ['milestones', 'milestone']];
     counts.forEach(([key, label]) => {
       const n = Array.isArray(cfg[key]) ? cfg[key].length : 0;
       if (n) bits.push(`${n} ${label}${n > 1 ? 's' : ''}`);
     });
+    if (cfg.reliability) bits.push('service health');
     return bits.length ? bits.join(', ') : 'Empty';
   }
 
@@ -2280,7 +2282,7 @@
 
           },
         },
-        dashboardStep('Countdowns, headline numbers, charts and milestones for this product. Everything here updates live on the product page.'),
+        dashboardStep('Adoption, reliability, retention and roadmap for this product. Readers get tabs, a time range filter and their own chart controls, and every date keeps counting on its own.'),
         {
           review: true,
           fields: [],
@@ -2674,7 +2676,7 @@
             });
           },
         },
-        dashboardStep('Countdowns, headline numbers, charts and milestones for this idea. Everything here updates live on the launchpad page.'),
+        dashboardStep('Countdowns, headline numbers, charts and milestones for this idea. Readers get tabs and chart controls, and every date keeps counting on its own.'),
         {
           review: true,
           fields: [],

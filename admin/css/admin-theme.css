@@ -1207,7 +1207,7 @@ body.is-splitting .editor-split-handle::before {
   gap: 10px 12px;
 }
 
-.dashb-field {
+.dashb .dashb-field {
   display: grid;
   gap: 4px;
   font-size: 0.78rem;
@@ -1215,22 +1215,22 @@ body.is-splitting .editor-split-handle::before {
   margin: 0;
 }
 
-.dashb-field > span {
+.dashb .dashb-field > span {
   font-weight: 500;
 }
 
-.dashb-field em {
+.dashb .dashb-field em {
   font-style: normal;
   font-size: 0.72rem;
   color: var(--text-muted);
 }
 
-.dashb-field input,
-.dashb-field select,
-.dashb-field textarea,
-.dashb-sub textarea,
-.dashb-sub input,
-.dashb-slice input {
+.dashb .dashb-field input,
+.dashb .dashb-field select,
+.dashb .dashb-field textarea,
+.dashb .dashb-sub textarea,
+.dashb .dashb-sub input,
+.dashb .dashb-slice input {
   width: 100%;
   padding: 7px 9px;
   border: 1px solid var(--border);
@@ -1241,10 +1241,16 @@ body.is-splitting .editor-split-handle::before {
   font-family: inherit;
 }
 
-.dashb-field textarea,
-.dashb-sub textarea {
+.dashb .dashb-field textarea,
+.dashb .dashb-sub textarea {
   resize: vertical;
   line-height: 1.5;
+}
+
+.dashb .dashb-field input[type="number"],
+.dashb .dashb-field input[type="date"],
+.dashb .dashb-field select {
+  max-width: none;
 }
 
 .dashb input[type='color'],
@@ -1270,8 +1276,8 @@ body.is-splitting .editor-split-handle::before {
   gap: 8px;
 }
 
-.dashb-sub-head,
-.dashb-slice {
+.dashb .dashb-sub-head,
+.dashb .dashb-slice {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1285,7 +1291,7 @@ body.is-splitting .editor-split-handle::before {
   flex-wrap: wrap;
 }
 
-.dashb-slice input[type='number'] {
+.dashb .dashb-slice input[type='number'] {
   max-width: 120px;
 }
 
@@ -1340,6 +1346,10 @@ body.is-splitting .editor-split-handle::before {
   --dash-grid: rgba(125, 135, 155, 0.22);
   --dash-accent: var(--accent);
   --dash-ok: var(--success);
+  --dash-warn: var(--warning, #b45309);
+  margin-bottom: 0;
+  width: auto;
+  margin-inline: 0;
 }
 
 .dashb-preview-stage {

@@ -79,7 +79,7 @@
     }
 
     if (typeof product.progress === 'number') {
-      html += '<div class="product-progress product-progress-detail">';
+      html += '<div class="product-progress product-progress-detail product-wide-band">';
       html += '<div class="product-progress-header">';
       html += '<span class="product-progress-label">Development Progress</span>';
       html += '<span class="product-progress-pct">' + product.progress + '%</span>';
