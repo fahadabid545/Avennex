@@ -55,14 +55,20 @@ var API = (function () {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // content saved before uploads returned absolute URLs still carries paths like
-  // /uploads/x.jpg, which resolve against this site rather than the API host
+  // uploads are served by the API host, so a stored path like /uploads/x.jpg
+  // has to be resolved against it rather than against this site
+  function assetUrl(path) {
+    if (!path) return '';
+    var str = String(path).trim();
+    if (!str || /^(https?:|data:|blob:)/i.test(str)) return str;
+    return BASE.replace(/\/api$/, '') + (str.charAt(0) === '/' ? str : '/' + str);
+  }
+
   function absolutise(html) {
-    return String(html).replace(/(<img\b[^>]*?\bsrc=)(["'])(?!https?:|data:|blob:)([^"']*)\2/gi,
+    return String(html).replace(/(<img\b[^>]*?\bsrc=)(["'])([^"']*)\2/gi,
       function (all, head, quote, path) {
         if (!path) return all;
-        var abs = BASE.replace(/\/api$/, '') + (path.charAt(0) === '/' ? path : '/' + path);
-        return head + quote + abs + quote;
+        return head + quote + assetUrl(path) + quote;
       });
   }
 
@@ -127,6 +133,7 @@ var API = (function () {
     escHtml: escHtml,
     renderRichText: renderRichText,
     absolutise: absolutise,
+    assetUrl: assetUrl,
     imgFallback: imgFallback,
     BASE_URL: BASE
   };

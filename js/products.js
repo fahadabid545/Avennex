@@ -61,7 +61,7 @@
 
       html += '<div class="product-visual">';
       if (p.cover_image) {
-        html += '<a href="product-detail.html?slug=' + encodeURIComponent(p.slug) + '"><img src="' + API.escHtml(p.cover_image) + '" alt="' + API.escHtml(p.name) + '" class="product-cover-img" onerror="this.parentElement.style.display=\'none\'"></a>';
+        html += '<a href="product-detail.html?slug=' + encodeURIComponent(p.slug) + '"><img src="' + API.escHtml(API.assetUrl(p.cover_image)) + '" alt="' + API.escHtml(p.name) + '" class="product-cover-img" onerror="this.parentElement.style.display=\'none\'"></a>';
       } else {
         html += '<div class="product-placeholder">--product screenshot or mockup--</div>';
       }

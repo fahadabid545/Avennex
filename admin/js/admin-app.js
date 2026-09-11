@@ -142,12 +142,25 @@
     return String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // uploads live on the API host, so a stored path has to resolve against it
+  // rather than against the admin panel's own origin
+  function assetUrl(path) {
+    if (!path) return '';
+    const str = String(path).trim();
+    if (!str || /^(https?:|data:|blob:)/i.test(str)) return str;
+    return AdminAPI.BASE + (str.charAt(0) === '/' ? str : '/' + str);
+  }
+
+  function absolutise(html) {
+    return String(html).replace(/(<img\b[^>]*?\bsrc=)(["'])([^"']*)\2/gi,
+      (all, head, quote, path) => (path ? head + quote + assetUrl(path) + quote : all));
+  }
+
   function resolveUploadUrl(result) {
     const raw = result && (result.url || result.file_url || result.path || result.location
       || (result.data && (result.data.url || result.data.path)));
     if (!raw || typeof raw !== 'string') return '';
-    if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
-    return AdminAPI.BASE + (raw.charAt(0) === '/' ? raw : '/' + raw);
+    return assetUrl(raw);
   }
 
   function richText(text) {
@@ -175,7 +188,7 @@
         html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
       }
     }
-    return html;
+    return absolutise(html);
   }
 
   document.addEventListener('error', (e) => {
@@ -1702,7 +1715,7 @@
     if (!list) return;
     list.innerHTML = productGallery.map((url, i) => `
       <div class="feature-row">
-        <img src="${esc(url)}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <img src="${esc(assetUrl(url))}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-secondary)">${esc(url)}</span>
         <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
       </div>`).join('');
@@ -1855,7 +1868,7 @@
             const coverInput = document.getElementById('f-cover');
             if (coverInput && coverInput.value) {
               const preview = document.createElement('img');
-              preview.src = coverInput.value;
+              preview.src = assetUrl(coverInput.value);
               preview.alt = 'Cover preview';
               preview.style.cssText = 'max-width:200px;margin-top:8px;border-radius:8px;display:block';
               preview.id = 'cover-preview';
@@ -1874,7 +1887,7 @@
                     preview.onerror = () => { preview.alt = 'Cover image failed to load'; preview.style.minHeight = '40px'; };
                     coverInput.parentNode.appendChild(preview);
                   }
-                  preview.src = coverInput.value;
+                  preview.src = assetUrl(coverInput.value);
                 } else if (preview) {
                   preview.remove();
                 }
@@ -2306,7 +2319,7 @@
     if (!list) return;
     list.innerHTML = launchpadDiagrams.map((url, i) => `
       <div class="lp-diagram-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <img src="${esc(url)}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <img src="${esc(assetUrl(url))}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-secondary)">${esc(url)}</span>
         <button type="button" class="btn btn-danger btn-sm" data-remove="${i}">Remove</button>
       </div>`).join('');
@@ -2532,7 +2545,7 @@
             if (diagramUrls.length) {
               html += '<div class="field" style="margin-top:20px"><label>Diagrams</label>';
               diagramUrls.forEach((url) => {
-                html += `<img src="${esc(url)}" style="max-width:400px;border-radius:8px;margin-bottom:12px;display:block" onerror="this.style.display='none'">`;
+                html += `<img src="${esc(assetUrl(url))}" style="max-width:400px;border-radius:8px;margin-bottom:12px;display:block" onerror="this.style.display='none'">`;
               });
               html += '</div>';
             }

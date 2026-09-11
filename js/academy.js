@@ -31,7 +31,7 @@
       var html = '<div class="academy-grid">';
       for (var i = 0; i < playlists.length; i++) {
         var p = playlists[i];
-        var thumb = p.thumbnail || '';
+        var thumb = API.assetUrl(p.thumbnail);
         html += '<div class="academy-card" data-slug="' + p.slug + '">';
         if (thumb) {
           html += '<img class="academy-thumb" src="' + thumb + '" alt="' + API.escHtml(p.title) + '" onerror="this.style.display=\'none\'">';
@@ -109,7 +109,7 @@
       } else if (videos.length === 1) {
         html += '<div class="academy-video-list">';
         var v = videos[0];
-        var thumbUrl = v.thumbnail_url || '';
+        var thumbUrl = API.assetUrl(v.thumbnail_url);
         html += '<div class="academy-video-item is-playing" data-url="' + API.escHtml(v.youtube_url) + '" data-idx="0">';
         if (thumbUrl) {
           html += '<img class="academy-video-thumb" src="' + thumbUrl + '" alt="' + API.escHtml(v.title) + '" onerror="this.style.display=\'none\'">';

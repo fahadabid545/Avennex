@@ -64,7 +64,7 @@
       html += '<h2>Diagrams</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < diagramUrls.length; g++) {
-        html += '<img class="product-gallery-item" src="' + API.escHtml(diagramUrls[g]) + '" alt="' + API.escHtml(entry.title) + ' diagram ' + (g + 1) + '" onerror="API.imgFallback(this)">';
+        html += '<img class="product-gallery-item" src="' + API.escHtml(API.assetUrl(diagramUrls[g])) + '" alt="' + API.escHtml(entry.title) + ' diagram ' + (g + 1) + '" onerror="API.imgFallback(this)">';
       }
       html += '</div></div>';
     }

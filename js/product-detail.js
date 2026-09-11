@@ -57,7 +57,7 @@
     html += '</div>';
 
     if (product.cover_image) {
-      html += '<div class="product-article-cover"><img src="' + API.escHtml(product.cover_image) + '" alt="' + API.escHtml(product.name) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
+      html += '<div class="product-article-cover"><img src="' + API.escHtml(API.assetUrl(product.cover_image)) + '" alt="' + API.escHtml(product.name) + '" onerror="this.parentElement.style.display=\'none\'"></div>';
     }
 
     var videoId = product.video_url ? extractYouTubeId(product.video_url) : '';
@@ -72,7 +72,7 @@
       html += '<h2>Gallery</h2>';
       html += '<div class="product-gallery">';
       for (var g = 0; g < product.gallery.length; g++) {
-        html += '<img class="product-gallery-item" src="' + API.escHtml(product.gallery[g]) + '" alt="' + API.escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="API.imgFallback(this)">';
+        html += '<img class="product-gallery-item" src="' + API.escHtml(API.assetUrl(product.gallery[g])) + '" alt="' + API.escHtml(product.name) + ' screenshot ' + (g + 1) + '" onerror="API.imgFallback(this)">';
       }
       html += '</div></div>';
     }
@@ -298,7 +298,7 @@
       var track = document.getElementById('pdf-track-' + idx);
       if (!track) return;
       track.innerHTML = '<p class="text-muted">Loading document...</p>';
-      pdfjsLib.getDocument(documents[idx].url).promise.then(function (pdf) {
+      pdfjsLib.getDocument(API.assetUrl(documents[idx].url)).promise.then(function (pdf) {
         track.innerHTML = '';
         var chain = Promise.resolve();
         var renderPage = function (n) {
