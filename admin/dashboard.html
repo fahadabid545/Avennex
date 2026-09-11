@@ -8,7 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/admin.css?v=202609111930">
+  <link rel="stylesheet" href="css/admin.css?v=202609112130">
+  <link rel="stylesheet" href="css/admin-theme.css?v=202609112130">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('admin_theme');
+        document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
 </head>
 <body class="dashboard-page">
   <aside class="sidebar">
@@ -34,15 +45,23 @@
   <div class="main-wrap">
     <header class="topbar">
       <span class="topbar-title">Avennex Admin Center</span>
-      <span class="topbar-email" id="admin-email"></span>
+      <div class="topbar-right">
+        <div class="theme-toggle" role="group" aria-label="Panel theme">
+          <button type="button" data-theme-set="dark">Dark</button>
+          <button type="button" data-theme-set="light">Light</button>
+        </div>
+        <span class="topbar-email" id="admin-email"></span>
+      </div>
     </header>
     <main class="content" id="content"></main>
   </div>
 
   <script src="https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-  <script src="js/admin-api.js?v=202609111930"></script>
-  <script src="js/admin-auth.js?v=202609111930"></script>
-  <script src="js/admin-app.js?v=202609111930"></script>
+  <script src="js/admin-api.js?v=202609112130"></script>
+  <script src="js/admin-auth.js?v=202609112130"></script>
+  <script src="js/admin-theme.js?v=202609112130"></script>
+  <script src="js/admin-security.js?v=202609112130"></script>
+  <script src="js/admin-app.js?v=202609112130"></script>
 </body>
 </html>

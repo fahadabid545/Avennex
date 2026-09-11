@@ -57,8 +57,10 @@
     content.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
   }
 
-  function showEmpty(msg) {
-    content.innerHTML = `<div class="admin-empty">${msg}</div>`;
+  // an empty or failed section still belongs to a module, so it keeps the
+  // heading rather than dropping the reader onto a bare message
+  function showEmpty(msg, title) {
+    content.innerHTML = (title ? listHeader(title) : '') + `<div class="admin-empty">${msg}</div>`;
   }
 
   function formatDate(d) {
@@ -290,6 +292,16 @@
       }
     };
 
+    const status = document.createElement('div');
+    status.className = 'cover-check';
+    status.hidden = true;
+
+    function say(kind, html) {
+      status.className = 'cover-check ' + (kind ? 'cover-check-' + kind : '');
+      status.innerHTML = html;
+      status.hidden = !html;
+    }
+
     function paint() {
       const v = input.value.trim();
       if (v) {
@@ -303,18 +315,42 @@
         preview.removeAttribute('src');
         preview.hidden = true;
         clear.hidden = true;
+        say('', '');
       }
+    }
+
+    // an upload that returns a URL is only half the job: the file has to
+    // actually be at that URL, and that is what silently fails
+    function verify(url) {
+      const full = assetUrl(url);
+      say('', 'Checking ' + esc(full) + ' ...');
+      const probe = new Image();
+      probe.onload = () => {
+        say('ok', 'Image is live at <a class="cover-open" href="' + esc(full)
+          + '" target="_blank" rel="noopener">' + esc(full) + '</a>');
+      };
+      probe.onerror = () => {
+        say('bad', 'The server saved the record but nothing loads from <a class="cover-open" href="'
+          + esc(full) + '" target="_blank" rel="noopener">' + esc(full) + '</a>. '
+          + 'The upload endpoint returned this path, so the file never reached the image host. '
+          + 'Open the link to confirm, then check the upload settings on the server.');
+      };
+      probe.src = full;
     }
 
     btn.addEventListener('click', () => {
       btn.disabled = true;
       btn.textContent = 'Uploading...';
+      say('', 'Uploading...');
       pickAndUploadImage(context, (url) => {
         input.value = url;
         paint();
-      }, () => {
+        verify(url);
+      }, (err) => {
         btn.disabled = false;
         btn.textContent = 'Upload image';
+        if (err) say('bad', 'Upload failed: ' + esc(err));
+        else if (!input.value.trim()) say('', '');
       });
     });
 
@@ -323,12 +359,20 @@
       paint();
     });
 
+    input.addEventListener('change', () => {
+      const v = input.value.trim();
+      if (v) verify(v);
+    });
     input.addEventListener('input', paint);
     holder.appendChild(btn);
     holder.appendChild(clear);
     input.parentNode.appendChild(holder);
     input.parentNode.appendChild(preview);
+    input.parentNode.appendChild(status);
     paint();
+    // a saved cover that no longer loads is the whole bug, so it is checked
+    // as soon as the form opens rather than only after an upload
+    if (input.value.trim()) verify(input.value.trim());
   }
 
   function mountSplitPreview(textarea, preview) {
@@ -341,6 +385,10 @@
     const split = document.createElement('div');
     split.className = 'editor-split';
     editorField.parentNode.insertBefore(split, editorField);
+
+    // the form is a reading-width card until a preview sits beside the editor
+    const card = split.closest('.form-card');
+    if (card) card.classList.add('has-split');
 
     const handle = document.createElement('div');
     handle.className = 'editor-split-handle';
@@ -710,7 +758,7 @@
       }
       bindListActions('blogs', blogForm);
     } catch (err) {
-      showEmpty('Failed to load blogs.');
+      showEmpty('Failed to load blogs.', 'Blog Posts');
     }
   }
 
@@ -820,11 +868,11 @@
   }
 
   function pickAndUploadImage(context, onSuccess, onSettled) {
-    const done = () => { if (onSettled) onSettled(); };
+    const done = (err) => { if (onSettled) onSettled(err); };
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.addEventListener('cancel', done);
+    input.addEventListener('cancel', () => done());
     input.addEventListener('change', async () => {
       const file = input.files[0];
       if (!file) { done(); return; }
@@ -844,12 +892,17 @@
         }
         const result = await res.json();
         const url = resolveUploadUrl(result);
-        if (!url) throw new Error('Upload succeeded but the server returned no image URL.');
+        if (!url) {
+          throw new Error('The server accepted the file but sent back no image URL. Response: '
+            + JSON.stringify(result).slice(0, 200));
+        }
         onSuccess(url);
+        done();
+        return;
       } catch (err) {
-        alert(err.message);
+        done(err.message);
+        return;
       }
-      done();
     });
     input.click();
   }
@@ -1208,7 +1261,7 @@
         }
       });
     } catch (err) {
-      showEmpty('Failed to load jobs.');
+      showEmpty('Failed to load jobs.', 'Job Listings');
     }
   }
 
@@ -1264,7 +1317,7 @@
         }
       });
     } catch {
-      showEmpty('Failed to load applications.');
+      showEmpty('Failed to load applications.', 'Applications');
     }
   }
 
@@ -1731,7 +1784,7 @@
         }
       });
     } catch (err) {
-      showEmpty('Failed to load products.');
+      showEmpty('Failed to load products.', 'Products');
     }
   }
 
@@ -1783,7 +1836,7 @@
         }
       });
     } catch {
-      showEmpty('Failed to load product chat.');
+      showEmpty('Failed to load product chat.', 'Product chat');
     }
   }
 
@@ -2418,7 +2471,7 @@
         }
       });
     } catch {
-      showEmpty('Failed to load comments.');
+      showEmpty('Failed to load comments.', 'Comments');
     }
   }
 
@@ -2979,7 +3032,7 @@
     try {
       const messages = await AdminAPI.request('/api/chat/admin/messages');
       cachedItems.chat = messages;
-      if (!messages || !messages.length) return showEmpty('No chat messages yet.');
+      if (!messages || !messages.length) return showEmpty('No messages yet. They show up here as visitors post on the homepage board.', 'Home Chat');
 
       content.innerHTML = listHeader('Home Chat') + `
         <div class="chat-admin-list">
@@ -3018,7 +3071,7 @@
         }
       });
     } catch {
-      showEmpty('Failed to load chat messages.');
+      showEmpty('Failed to load chat messages.', 'Home Chat');
     }
   }
 
@@ -3181,7 +3234,7 @@
         }
       });
     } catch {
-      showEmpty('Failed to load FAQs.');
+      showEmpty('Failed to load FAQs.', 'FAQs');
     }
   }
 
@@ -3938,7 +3991,7 @@
         }).catch(() => {});
       }
     } catch {
-      showEmpty('Failed to load dashboard.');
+      showEmpty('Failed to load dashboard.', 'Dashboard');
     }
   }
 
@@ -3948,7 +4001,7 @@
     showLoading();
     const keys = [
       'chatbot_visible', 'product_chat_enabled', 'chat_show_details', 'emails_enabled',
-      'space_bg_enabled', 'animations_enabled',
+      'animations_enabled',
       'game_enabled', 'ai_brain_enabled', 'pipeline_enabled', 'stats_enabled', 'home_chat_enabled', 'faq_enabled',
       'default_blog_status', 'default_job_expiry_days', 'team_size',
     ];
@@ -3964,68 +4017,101 @@
       return vals[key] === 'true';
     }
 
-    function toggleRow(id, label, key, fallback) {
+    function toggleRow(id, label, key, fallback, hint) {
       return `
         <div class="toggle-row">
-          <span class="toggle-label">${label}</span>
-          <label class="toggle-switch">
-            <input type="checkbox" class="settings-toggle" data-key="${key}" id="${id}" ${isOn(key, fallback) ? 'checked' : ''}>
-            <span class="toggle-slider"></span>
-          </label>
-          <span class="form-msg settings-msg" data-msg-for="${id}" style="margin-left:12px"></span>
+          <span class="toggle-label">${label}${hint ? `<span class="toggle-hint">${hint}</span>` : ''}</span>
+          <span class="toggle-end">
+            <span class="form-msg settings-msg" data-msg-for="${id}"></span>
+            <label class="toggle-switch">
+              <input type="checkbox" class="settings-toggle" data-key="${key}" id="${id}" ${isOn(key, fallback) ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </span>
         </div>`;
     }
+
+    const panelTheme = (window.AdminTheme && AdminTheme.get()) || 'dark';
 
     content.innerHTML = `
       <div class="content-header"><h1 class="content-title">Settings</h1></div>
 
-      <div class="chatbot-admin-section">
-        <h3>Website Controls</h3>
-        ${toggleRow('s-chatbot', 'Chatbot visible on website', 'chatbot_visible', 'false')}
-        ${toggleRow('s-product-chat', 'Product chat enabled globally', 'product_chat_enabled', 'false')}
-        ${toggleRow('s-chat-details', 'Show profession/company in home chat', 'chat_show_details', 'false')}
-        ${toggleRow('s-emails', 'Email notifications enabled', 'emails_enabled', 'false')}
+      <div class="settings-group">
+        <h3 class="settings-group-title">Website</h3>
+        <p class="settings-group-note">What visitors can see and use on the public site.</p>
+        ${toggleRow('s-chatbot', 'Chatbot', 'chatbot_visible', 'false', 'The assistant bubble in the bottom corner')}
+        ${toggleRow('s-product-chat', 'Product discussion boards', 'product_chat_enabled', 'false', 'The comment board under each product')}
+        ${toggleRow('s-chat-details', 'Profession and company on the message board', 'chat_show_details', 'false')}
+        ${toggleRow('s-emails', 'Email notifications', 'emails_enabled', 'false', 'Applications, contact messages and replies')}
+        ${toggleRow('s-animations', 'Scroll animations', 'animations_enabled', 'true', 'Sections fade in as they come into view')}
       </div>
 
-      <div class="chatbot-admin-section">
-        <h3>Appearance</h3>
-        ${toggleRow('s-space-bg', 'Show space background', 'space_bg_enabled', 'true')}
-        ${toggleRow('s-animations', 'Show scroll animations', 'animations_enabled', 'true')}
+      <div class="settings-group">
+        <h3 class="settings-group-title">Homepage sections</h3>
+        <p class="settings-group-note">Turn a section off and it disappears from the homepage.</p>
+        ${toggleRow('s-game', 'Hero runner game', 'game_enabled', 'true')}
+        ${toggleRow('s-ai-brain', 'AI network band', 'ai_brain_enabled', 'true', 'The section that darkens as you scroll')}
+        ${toggleRow('s-pipeline', 'Workflow dashboard band', 'pipeline_enabled', 'true')}
+        ${toggleRow('s-stats', 'Facts strip', 'stats_enabled', 'true', 'Products, team size, founded, launchpad')}
+        ${toggleRow('s-home-chat', 'Public message board', 'home_chat_enabled', 'true')}
+        ${toggleRow('s-faq', 'FAQ', 'faq_enabled', 'true')}
       </div>
 
-      <div class="chatbot-admin-section">
-        <h3>Homepage Controls</h3>
-        ${toggleRow('s-game', 'Show demo game in hero', 'game_enabled', 'true')}
-        ${toggleRow('s-ai-brain', 'Show node network section', 'ai_brain_enabled', 'true')}
-        ${toggleRow('s-pipeline', 'Show dashboard section', 'pipeline_enabled', 'true')}
-        ${toggleRow('s-stats', 'Show facts section', 'stats_enabled', 'true')}
-        ${toggleRow('s-home-chat', 'Show home chat section', 'home_chat_enabled', 'true')}
-        ${toggleRow('s-faq', 'Show FAQ section', 'faq_enabled', 'true')}
-      </div>
-
-      <div class="chatbot-admin-section">
-        <h3>Content Defaults</h3>
-        <div class="field" style="max-width:300px">
-          <label for="s-blog-status">Default blog status</label>
-          <select id="s-blog-status">
-            <option value="draft" ${(vals.default_blog_status || 'draft') === 'draft' ? 'selected' : ''}>Draft</option>
-            <option value="published" ${vals.default_blog_status === 'published' ? 'selected' : ''}>Published</option>
-          </select>
-          <span class="form-msg settings-msg" data-msg-for="s-blog-status" style="margin-top:4px"></span>
-        </div>
-        <div class="field" style="max-width:300px">
-          <label for="s-job-expiry">Default job expiry (days)</label>
-          <input type="number" id="s-job-expiry" min="1" max="365" value="${vals.default_job_expiry_days || '30'}">
-          <span class="form-msg settings-msg" data-msg-for="s-job-expiry" style="margin-top:4px"></span>
-        </div>
-        <div class="field" style="max-width:300px">
-          <label for="s-team-size">Team size shown on the homepage</label>
-          <input type="number" id="s-team-size" min="1" max="999" value="${vals.team_size || '7'}">
-          <span class="field-hint">Appears under "People on the team"</span>
-          <span class="form-msg settings-msg" data-msg-for="s-team-size" style="margin-top:4px"></span>
+      <div class="settings-group">
+        <h3 class="settings-group-title">Content defaults</h3>
+        <p class="settings-group-note">What a new item starts with, and the numbers the site quotes.</p>
+        <div class="settings-grid">
+          <div class="field">
+            <label for="s-blog-status">Default blog status</label>
+            <select id="s-blog-status">
+              <option value="draft" ${(vals.default_blog_status || 'draft') === 'draft' ? 'selected' : ''}>Draft</option>
+              <option value="published" ${vals.default_blog_status === 'published' ? 'selected' : ''}>Published</option>
+            </select>
+            <span class="form-msg settings-msg" data-msg-for="s-blog-status"></span>
+          </div>
+          <div class="field">
+            <label for="s-job-expiry">Default job expiry (days)</label>
+            <input type="number" id="s-job-expiry" min="1" max="365" value="${vals.default_job_expiry_days || '30'}">
+            <span class="form-msg settings-msg" data-msg-for="s-job-expiry"></span>
+          </div>
+          <div class="field">
+            <label for="s-team-size">Team size on the homepage</label>
+            <input type="number" id="s-team-size" min="1" max="999" value="${vals.team_size || '7'}">
+            <span class="field-hint">Shown under "People on the team"</span>
+            <span class="form-msg settings-msg" data-msg-for="s-team-size"></span>
+          </div>
         </div>
         <div class="form-actions">
-          <button class="btn btn-primary btn-sm" id="s-save-defaults">Save Defaults</button>
+          <button class="btn btn-primary btn-sm" id="s-save-defaults">Save defaults</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">Admin panel</h3>
+        <p class="settings-group-note">This applies to the panel on this browser only.</p>
+        <div class="toggle-row">
+          <span class="toggle-label">Theme<span class="toggle-hint">Dark or light, remembered on this device</span></span>
+          <span class="theme-toggle" role="group" aria-label="Panel theme">
+            <button type="button" data-theme-set="dark"${panelTheme === 'dark' ? ' class="is-active"' : ''}>Dark</button>
+            <button type="button" data-theme-set="light"${panelTheme === 'light' ? ' class="is-active"' : ''}>Light</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">Security</h3>
+        <p class="settings-group-note">Signed in as ${esc(localStorage.getItem('admin_email') || 'unknown')}.</p>
+        <div class="toggle-row">
+          <span class="toggle-label">Idle sign out<span class="toggle-hint">The panel signs you out after 30 minutes without activity, with a warning first</span></span>
+          <span class="text-muted">Always on</span>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Failed login lock<span class="toggle-hint">Five wrong passwords locks the login form for a minute</span></span>
+          <span class="text-muted">Always on</span>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Sign out<span class="toggle-hint">Ends this session and every other tab on this browser</span></span>
+          <button class="btn btn-danger btn-sm" id="s-signout-all">Sign out everywhere</button>
         </div>
       </div>`;
 
@@ -4052,6 +4138,16 @@
         cb.disabled = false;
       });
     });
+
+    const signOutAll = document.getElementById('s-signout-all');
+    if (signOutAll) {
+      signOutAll.addEventListener('click', async () => {
+        signOutAll.disabled = true;
+        try { localStorage.setItem('admin_signed_out', String(Date.now())); } catch (e) {}
+        try { await AdminAPI.logout(); } catch (e) {}
+        window.location.href = 'index.html';
+      });
+    }
 
     document.getElementById('s-save-defaults').addEventListener('click', async () => {
       const btn = document.getElementById('s-save-defaults');
@@ -4134,7 +4230,7 @@
         }
       });
     } catch {
-      showEmpty('Failed to load team.');
+      showEmpty('Failed to load team.', 'Team');
     }
   }
 
