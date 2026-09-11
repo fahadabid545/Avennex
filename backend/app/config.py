@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     ftp_user: str = ""
     ftp_password: str = ""
     ftp_port: int = 21
+    ftp_base_dir: str = ""
+    ftp_web_root: str = ""
 
     model_config = {"env_file": ".env"}
 

@@ -121,9 +121,10 @@ def get_application_resume(id: str, _user: dict = Depends(get_current_user)):
     if not application or not application.get("resume_url"):
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    content = ftp_service.download_file(application["resume_url"])
+    content, error = ftp_service.read_file(application["resume_url"])
     if content is None:
-        raise HTTPException(status_code=500, detail="Failed to retrieve resume")
+        logger.error("Resume fetch failed for application %s: %s", id, error)
+        raise HTTPException(status_code=502, detail=error or "Failed to retrieve resume")
 
     return Response(content=content, media_type="application/pdf")
 
@@ -175,6 +176,7 @@ async def apply_to_job(
 
     resume_url = None
     resume_uploaded = False
+    resume_error = None
     if resume:
         content = await resume.read()
         if not content[:5].startswith(b'%PDF-'):
@@ -190,13 +192,13 @@ async def apply_to_job(
         filename = f"{safe_email}_{timestamp}.pdf"
         remote_dir = f"private_uploads/resumes/{slug}"
 
-        remote_path = ftp_service.upload_file(content, remote_dir, filename)
+        remote_path, resume_error = ftp_service.store_file(content, remote_dir, filename)
         if remote_path:
             resume_url = remote_path
             resume_uploaded = True
             app_data["resume_url"] = resume_url
         else:
-            logger.warning("Resume upload to FTP failed for application by %s", email)
+            logger.error("Resume upload failed for application by %s: %s", email, resume_error)
 
     application = service.store_application(job["id"], app_data)
 
@@ -206,6 +208,8 @@ async def apply_to_job(
             service.update(job["id"], {"status": "closed"})
 
     warnings = []
+    if resume_error:
+        warnings.append("Resume file could not be stored: " + resume_error)
     email_status = "skipped"
 
     if not is_email_enabled():
@@ -216,6 +220,8 @@ async def apply_to_job(
         except Exception:
             pass
         response = {"success": True, "message": "Application submitted"}
+        if resume_error:
+            response["warnings"] = ["Resume file could not be stored: " + resume_error]
         return response
 
     settings = get_settings()

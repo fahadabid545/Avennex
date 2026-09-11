@@ -62,9 +62,10 @@ async def upload_image(
         raise HTTPException(status_code=400, detail="File is not a valid image")
 
     filename = _safe_filename(file.filename, ext)
-    remote_path = ftp_service.upload_file(content, remote_dir, filename)
+    remote_path, error = ftp_service.store_file(content, remote_dir, filename)
     if not remote_path:
-        raise HTTPException(status_code=500, detail="Failed to upload image")
+        logger.error("Image upload failed for context %s: %s", context, error)
+        raise HTTPException(status_code=502, detail=error or "Failed to upload image")
 
     return {"success": True, "url": ftp_service.public_url(remote_path)}
 
@@ -87,8 +88,44 @@ async def upload_document(
 
     filename = _safe_filename(file.filename, "pdf")
     remote_dir = f"public_html/docs/products/{product_id}"
-    remote_path = ftp_service.upload_file(content, remote_dir, filename)
+    remote_path, error = ftp_service.store_file(content, remote_dir, filename)
     if not remote_path:
-        raise HTTPException(status_code=500, detail="Failed to upload document")
+        logger.error("Document upload failed for product %s: %s", product_id, error)
+        raise HTTPException(status_code=502, detail=error or "Failed to upload document")
 
     return {"success": True, "name": file.filename or filename, "url": ftp_service.public_url(remote_path)}
+
+
+@router.get("/diagnostics")
+def storage_diagnostics(_user: dict = Depends(get_current_user)):
+    probe_dirs = list(IMAGE_CONTEXT_DIRS.values()) + [
+        "public_html/docs/products",
+        "private_uploads/resumes",
+        "private_uploads/chatbot_docs",
+    ]
+    report = ftp_service.diagnostics(probe_dirs)
+    return {"success": not report["errors"], "data": report, "warnings": report["errors"]}
+
+
+@router.post("/self-test")
+def storage_self_test(_user: dict = Depends(get_current_user)):
+    filename = f"upload-check-{uuid.uuid4().hex[:8]}.txt"
+    payload = f"upload check {int(time.time())}".encode()
+    remote_dir = IMAGE_CONTEXT_DIRS["blog"]
+
+    remote_path, error = ftp_service.store_file(payload, remote_dir, filename)
+    if not remote_path:
+        return {"success": False, "data": {"stage": "write"}, "warnings": [error or "Upload failed"]}
+
+    warnings = []
+    content, read_error = ftp_service.read_file(remote_path)
+    if content != payload:
+        warnings.append(read_error or "The file server returned different bytes than were written")
+    if not ftp_service.delete_file(remote_path):
+        warnings.append(f"Test file left behind at {remote_path}")
+
+    return {
+        "success": not warnings,
+        "data": {"remote_path": remote_path, "url": ftp_service.public_url(remote_path)},
+        "warnings": warnings,
+    }

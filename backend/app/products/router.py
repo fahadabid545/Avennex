@@ -108,9 +108,10 @@ async def upload_document(
     remote_filename = f"{uuid.uuid4().hex[:8]}-{int(time.time())}-{filename}"
     remote_dir = f"public_html/docs/products/{id}"
 
-    remote_path = ftp_service.upload_file(content, remote_dir, remote_filename)
+    remote_path, error = ftp_service.store_file(content, remote_dir, remote_filename)
     if not remote_path:
-        raise HTTPException(status_code=500, detail="Failed to upload document")
+        logger.error("Product document upload failed for %s: %s", id, error)
+        raise HTTPException(status_code=502, detail=error or "Failed to upload document")
 
     return {"success": True, "name": filename, "url": ftp_service.public_url(remote_path)}
 

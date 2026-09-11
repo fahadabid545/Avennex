@@ -119,10 +119,9 @@ async def upload_document(
         "status": "processing",
     }).execute()
 
-    try:
-        ftp_service.upload_file(content, "private_uploads/chatbot_docs", f"{doc_id}-{filename}")
-    except Exception as e:
-        logger.warning("Failed to store source file for %s on FTP: %s", filename, e)
+    _, archive_error = ftp_service.store_file(content, "private_uploads/chatbot_docs", f"{doc_id}-{filename}")
+    if archive_error:
+        logger.warning("Failed to store source file for %s: %s", filename, archive_error)
 
     try:
         logger.info("Extracting text from %s", filename)
