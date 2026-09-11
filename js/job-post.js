@@ -65,6 +65,9 @@
 
     html += '</div>';
 
+    html += '<div class="job-layout">';
+    html += '<div class="job-main">';
+
     if (job.description) {
       html += '<div class="job-section">';
       html += '<h2>About the role</h2>';
@@ -85,6 +88,25 @@
       html += '<div class="job-body">' + API.renderRichText(job.good_to_have) + '</div>';
       html += '</div>';
     }
+
+    html += '</div>';
+
+    // a role page is mostly prose, so the practical details get their own
+    // card that stays in view while someone reads
+    html += '<aside class="job-aside">';
+    html += '<div class="job-aside-card">';
+    html += '<p class="job-aside-label">At a glance</p>';
+    html += '<dl class="job-aside-list">';
+    if (job.type) html += '<dt>Type</dt><dd>' + API.escHtml(job.type) + '</dd>';
+    if (job.commitment) html += '<dt>Commitment</dt><dd>' + API.escHtml(job.commitment) + '</dd>';
+    if (job.location) html += '<dt>Location</dt><dd>' + API.escHtml(job.location) + '</dd>';
+    if (job.expires_at) html += '<dt>Closes</dt><dd>' + API.escHtml(API.formatDate(job.expires_at)) + '</dd>';
+    html += '</dl>';
+    html += '<a href="#apply-section" class="hero-btn-primary job-aside-cta">Apply for this role</a>';
+    html += '</div>';
+    html += '</aside>';
+
+    html += '</div>';
 
     html += '</div>';
     content.innerHTML = html;

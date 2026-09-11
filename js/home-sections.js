@@ -178,7 +178,11 @@
 
   if (team) {
     API.get('/settings/team_size').then(function (setting) {
-      if (setting && setting.value) set(team, setting.value);
+      // a setting that was never filled in comes back as whatever the store
+      // holds, and a headline is no place to print it
+      var raw = setting && setting.value;
+      var n = parseInt(String(raw == null ? '' : raw).replace(/[^0-9]/g, ''), 10);
+      if (n > 0) set(team, n);
     }).catch(function () {});
   }
 })();

@@ -32,9 +32,14 @@
     var html = '<article class="blog-article">';
     html += '<a href="blog.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All posts</a>';
 
+    var meta = '';
     if (post.published_at) {
-      html += '<time class="blog-article-date">' + API.formatDate(post.published_at) + '</time>';
+      meta += '<time class="blog-article-date">' + API.formatDate(post.published_at) + '</time>';
     }
+    if (post.author) {
+      meta += '<span class="blog-article-author">' + API.escHtml(post.author) + '</span>';
+    }
+    if (meta) html += '<p class="blog-article-meta">' + meta + '</p>';
 
     html += '<h1 class="blog-article-title">' + API.escHtml(post.title) + '</h1>';
 
@@ -47,6 +52,9 @@
       html += '<div class="blog-article-body">' + API.renderRichText(post.content) + '</div>';
     }
 
+    html += '<footer class="blog-article-foot">';
+    html += '<a href="blog.html" class="text-link">All posts <span class="text-link-arrow">&rarr;</span></a>';
+    html += '</footer>';
     html += '</article>';
     content.innerHTML = html;
 
