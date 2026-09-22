@@ -109,7 +109,8 @@
     mountDashboard(entry);
     showComments(entry);
   }).catch(function (err) {
-    API.showError(content, err.message || 'Could not load this entry.');
+    if (window.console) console.error('launchpad entry load failed:', err);
+    API.showError(content, 'Could not load this entry. Try refreshing.');
   });
 
   function mountDashboard(entry) {

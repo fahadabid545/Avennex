@@ -1,7 +1,9 @@
 (function (global) {
   'use strict';
 
-  var PALETTE = ['#2B4ACB', '#0E9F6E', '#7C3AED', '#B45309', '#0891B2', '#DB2777'];
+  // a categorical set drawn from the page's own palette: low chroma, all
+  // legible on the ledger-grey paper, all distinguishable from one another
+  var PALETTE = ['#8C6E1C', '#2F6B46', '#3E5C7E', '#8C3A2C', '#6B5B7B', '#5C6B2E'];
   var reduceMotion = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var RANGES = [
@@ -554,7 +556,7 @@
           data: points.map(function (p) { return p.y; }),
           borderColor: color,
           borderWidth: bar ? 0 : 2.2,
-          borderRadius: bar ? 6 : 0,
+          borderRadius: 0,
           maxBarThickness: 44,
           tension: 0.38,
           pointRadius: 0,
@@ -578,7 +580,7 @@
           tooltip: {
             backgroundColor: theme.ink,
             padding: 11,
-            cornerRadius: 9,
+            cornerRadius: 0,
             displayColors: false,
             titleFont: { size: 11, weight: '600' },
             bodyFont: { size: 12 },
@@ -633,7 +635,7 @@
             labels: { color: theme.text, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } },
           },
           tooltip: {
-            backgroundColor: theme.ink, padding: 11, cornerRadius: 9,
+            backgroundColor: theme.ink, padding: 11, cornerRadius: 0,
             callbacks: {
               label: function (item) {
                 return ' ' + item.label + ': ' + formatNumber(item.parsed) + (spec.unit ? ' ' + spec.unit : '');

@@ -142,7 +142,9 @@
 
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }).catch(function (err) {
-      API.showError(container, err.message);
+      // the real reason goes to the console, not to the visitor
+      if (window.console) console.error('academy load failed:', err);
+      API.showError(container, 'Could not load this playlist. Try refreshing.');
     });
   }
 

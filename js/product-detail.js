@@ -3,7 +3,7 @@
   if (!content) return;
 
   if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
   }
 
   var params = new URLSearchParams(window.location.search);
@@ -145,7 +145,8 @@
 
     initChat(product);
   }).catch(function (err) {
-    API.showError(content, err.message || 'Could not load this product.');
+    if (window.console) console.error('product load failed:', err);
+    API.showError(content, 'Could not load this product. Try refreshing.');
   });
 
   function buildTimelineSection(timelineText) {
