@@ -10,7 +10,7 @@
   }
 
   const MODULES = ['dashboard', 'blogs', 'jobs', 'products', 'launchpad', 'academy',
-                   'chat', 'faqs', 'chatbot', 'settings', 'team'];
+                   'moderation', 'chat', 'faqs', 'chatbot', 'settings', 'team'];
 
   navLinks.forEach((link) => {
     link.addEventListener('click', async () => {
@@ -36,6 +36,7 @@
       launchpad: loadLaunchpad,
       academy: loadAcademy,
       chat: loadChat,
+      moderation: loadModeration,
       faqs: loadFaqs,
       chatbot: loadChatbot,
       dashboard: loadDashboard,
@@ -866,6 +867,25 @@
         formFn({ id: editId });
       }
 
+      const duplicateId = e.target.dataset.duplicate;
+      if (duplicateId) {
+        const source = (cachedItems[module] || []).find((i) => i.id === duplicateId);
+        if (source) {
+          // a copy opens as a new draft: no id, no slug, and clearly marked
+          const copy = Object.assign({}, source);
+          delete copy.id;
+          delete copy.slug;
+          delete copy.created_at;
+          delete copy.last_edited_by;
+          delete copy.last_edited_at;
+          if (copy.title) copy.title = copy.title + ' (copy)';
+          if (copy.name) copy.name = copy.name + ' (copy)';
+          copy.status = 'draft';
+          AdminUI.toast('Opened as a new draft. Nothing is saved until you publish it.', 'info');
+          return formFn(copy);
+        }
+      }
+
       if (deleteId) {
         const list = cachedItems[module] || [];
         const target = list.find((i) => i.id === deleteId) || {};
@@ -918,6 +938,147 @@
     home_chat_enabled: 'Public board',
     faq_enabled: 'FAQs',
   });
+
+
+  // ── Moderation ──
+  // Every public message used to live in a different module: the home board
+  // had its own section, product discussion sat inside Products and launchpad
+  // comments inside Launchpad. Nothing showed what had arrived anywhere.
+
+  let modFilter = 'all';
+  let actPage = 1;
+  let actWho = '';
+  let actKind = '';
+
+  async function loadModeration() {
+    showLoading();
+    const key = 'moderation';
+
+    const [board, products, entries] = await Promise.all([
+      AdminAPI.request('/api/chat/admin/messages').catch(() => []),
+      AdminAPI.request('/api/products/admin/all?page=1&limit=50').catch(() => []),
+      AdminAPI.request('/api/launchpad/admin/all?page=1&limit=50').catch(() => []),
+    ]);
+
+    const items = [];
+
+    (board || []).forEach((m) => items.push({
+      source: 'board',
+      sourceLabel: 'Public board',
+      id: m.id,
+      author: m.author_name,
+      email: m.author_email,
+      text: m.message,
+      at: m.created_at,
+      replies: (m.replies || []).length,
+      where: 'Home page',
+      link: `${SITE_URL}/#chat-section`,
+    }));
+
+    // only products that actually have discussion switched on are asked
+    const chatty = (products || []).filter((p) => p.chat_enabled && p.slug);
+    const productChats = await Promise.all(chatty.map((p) =>
+      AdminAPI.request(`/api/products/${p.slug}/chat/admin/messages`)
+        .then((ms) => ({ p, ms: ms || [] }))
+        .catch(() => ({ p, ms: [] }))
+    ));
+    productChats.forEach(({ p, ms }) => ms.forEach((m) => items.push({
+      source: 'product',
+      sourceLabel: 'Product',
+      id: m.id,
+      slug: p.slug,
+      author: m.author_name,
+      email: m.author_email,
+      text: m.message,
+      at: m.created_at,
+      replies: (m.replies || []).length,
+      where: p.name,
+      link: `${SITE_URL}/product-detail.html?slug=${encodeURIComponent(p.slug)}`,
+    })));
+
+    const lpComments = await Promise.all((entries || []).map((e) =>
+      AdminAPI.request(`/api/launchpad/${e.id}/comments`)
+        .then((cs) => ({ e, cs: cs || [] }))
+        .catch(() => ({ e, cs: [] }))
+    ));
+    lpComments.forEach(({ e, cs }) => cs.forEach((c) => items.push({
+      source: 'launchpad',
+      sourceLabel: 'Launchpad',
+      id: c.id,
+      author: c.author_name,
+      email: c.author_email,
+      text: c.content || c.message,
+      at: c.created_at,
+      replies: 0,
+      where: e.title,
+      link: `${SITE_URL}/launchpad-detail.html?slug=${encodeURIComponent(e.slug)}`,
+    })));
+
+    items.sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+    cachedItems.moderation = items;
+
+    paint();
+
+    function paint() {
+      const byFilter = modFilter === 'all' ? items : items.filter((i) => i.source === modFilter);
+      const shown = AdminList.apply(key, byFilter, { searchFields: ['author', 'text', 'where', 'email'] });
+      const unanswered = items.filter((i) => i.source !== 'launchpad' && !i.replies).length;
+
+      let html = listHeader('Moderation');
+      html += AdminList.toolbar(key, {
+        placeholder: 'Search messages, names or pages',
+        filters: [
+          { value: '', label: 'Everything' },
+        ],
+        extra: `<div class="tab-bar mod-tabs">
+          ${[['all', 'All'], ['board', 'Public board'], ['product', 'Products'], ['launchpad', 'Launchpad']]
+            .map(([v, l]) => `<button class="tab-btn ${modFilter === v ? 'active' : ''}" data-mod-tab="${v}">${l}</button>`).join('')}
+        </div>`,
+      });
+
+      if (unanswered) {
+        html += `<p class="reorder-hint">${unanswered} message${unanswered > 1 ? 's have' : ' has'} no reply yet.</p>`;
+      }
+
+      if (!shown.length) {
+        html += AdminList.empty(items.length ? 'Nothing matches that.' : 'No public messages yet.');
+      } else {
+        html += '<div class="mod-list">' + shown.map((i) => `
+          <article class="mod-item" data-source="${esc(i.source)}">
+            <header class="mod-item-head">
+              <span class="mod-item-author">${esc(i.author || 'Anonymous')}</span>
+              ${i.email ? `<span class="mod-item-email">${esc(i.email)}</span>` : ''}
+              <span class="badge badge-gray">${esc(i.sourceLabel)}</span>
+              <span class="mod-item-where">${esc(i.where || '')}</span>
+              <span class="mod-item-time">${timeAgo(i.at)}</span>
+            </header>
+            <p class="mod-item-text">${esc(i.text || '')}</p>
+            <footer class="mod-item-actions">
+              ${i.replies ? `<span class="mod-item-replied">${i.replies} repl${i.replies > 1 ? 'ies' : 'y'}</span>`
+                          : '<span class="mod-item-pending">No reply</span>'}
+              <a class="btn btn-secondary btn-sm" href="${esc(i.link)}" target="_blank" rel="noopener">See in place</a>
+              <button class="btn btn-secondary btn-sm" data-mod-open="${esc(i.source)}">Open ${esc(i.sourceLabel.toLowerCase())}</button>
+            </footer>
+          </article>`).join('') + '</div>';
+      }
+
+      content.innerHTML = html;
+
+      AdminList.bind(key, paint, {
+        countText: shown.length === items.length ? `${items.length} shown` : `${shown.length} of ${items.length}`,
+      });
+
+      addContentListener('click', (e) => {
+        const tab = e.target.dataset.modTab;
+        if (tab) { modFilter = tab; AdminList.get(key).page = 1; paint(); return; }
+        const open = e.target.dataset.modOpen;
+        if (open) {
+          const to = open === 'board' ? 'chat' : open === 'product' ? 'products' : 'launchpad';
+          AdminUI.Router.go(to);
+        }
+      });
+    }
+  }
 
   // ── Blogs ──
 
@@ -982,6 +1143,7 @@
                 <td>${formatDate(b.created_at)}</td>
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit="${b.id}">Edit</button>
+                  <button class="btn btn-secondary btn-sm" data-duplicate="${b.id}">Duplicate</button>
                   <button class="btn btn-danger btn-sm" data-delete="${b.id}">Delete</button>
                 </td>
               </tr>`).join('')}
@@ -3486,6 +3648,10 @@
             { value: 'inactive', label: 'Inactive' },
           ],
         });
+      const canReorder = !AdminList.get(faqKey).q && !AdminList.get(faqKey).sort;
+      if (canReorder && faqShown.length > 1) {
+        content.innerHTML += '<p class="reorder-hint">Drag a row to reorder, or hold Alt and press the arrow keys. The order here is the order on the site.</p>';
+      }
       if (!faqShown.length) {
         content.innerHTML += AdminList.empty(
           (faqs || []).length ? 'No questions match that search.' : 'No FAQs yet.',
@@ -3495,14 +3661,15 @@
       } else {
         content.innerHTML += `
           <table class="admin-table">
-            <thead><tr>${AdminList.sortableHead(faqKey, [
+            <thead><tr><th class="col-select" aria-label="Reorder"></th>${AdminList.sortableHead(faqKey, [
               { label: 'Question', sort: 'question' },
               { label: 'Status', sort: 'active' },
               { label: 'Order', sort: 'display_order' },
               { label: '' },
             ])}</tr></thead>
             <tbody>${faqShown.map((f) => `
-              <tr>
+              <tr data-order-id="${f.id}" tabindex="0">
+                <td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>
                 <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}${editedBy(f)}</td>
                 <td>
                   <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
@@ -3517,6 +3684,33 @@
               </tr>`).join('')}
             </tbody>
           </table>`;
+      }
+
+      const faqBody = content.querySelector('.admin-table tbody');
+      if (faqBody && canReorder && faqShown.length > 1) {
+        AdminReorder.enable(faqBody, {
+          onChange: async (rows) => {
+            // only the rows whose position actually moved are written
+            const changed = rows.filter((r) => {
+              const original = (faqs || []).find((f) => f.id === r.id);
+              return original && (original.display_order ?? 0) !== r.display_order;
+            });
+            if (!changed.length) return;
+            const results = await Promise.allSettled(changed.map((r) =>
+              AdminAPI.request(`/api/faqs/${r.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ display_order: r.display_order }),
+              })
+            ));
+            const bad = results.filter((x) => x.status === 'rejected').length;
+            if (bad) AdminUI.toast(`${changed.length - bad} reordered, ${bad} failed.`, 'warn');
+            else AdminUI.toast('Order saved.', 'success');
+            changed.forEach((r) => {
+              const original = (faqs || []).find((f) => f.id === r.id);
+              if (original) original.display_order = r.display_order;
+            });
+          },
+        });
       }
 
       AdminList.bind(faqKey, loadFaqs, {
@@ -4000,7 +4194,7 @@
       const [statsRes, chartsRes, logs] = await Promise.all([
         AdminAPI.request('/api/admin/stats'),
         AdminAPI.request(`/api/admin/charts?days=${dashChartDays}`),
-        AdminAPI.request('/api/admin/activity?limit=20'),
+        AdminAPI.request(`/api/admin/activity?page=${actPage}&limit=30`),
       ]);
 
       const s = statsRes.data || {};
@@ -4168,8 +4362,25 @@
         <div class="dash-activity">
           <h3>Recent Activity</h3>
           ${(logs && logs.length) ? `
+          <div class="activity-controls">
+            <select class="list-filter" id="act-who">
+              <option value="">Everyone</option>
+              ${[...new Set(logs.map((l) => l.admin_email).filter(Boolean))]
+                .map((e) => `<option value="${esc(e)}"${e === actWho ? ' selected' : ''}>${esc(e)}</option>`).join('')}
+            </select>
+            <select class="list-filter" id="act-kind">
+              <option value="">Everything</option>
+              ${[...new Set(logs.map((l) => l.entity_type).filter(Boolean))]
+                .map((t) => `<option value="${esc(t)}"${t === actKind ? ' selected' : ''}>${esc(t)}</option>`).join('')}
+            </select>
+            <span class="list-pager-info">Page ${actPage}</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="act-prev"${actPage <= 1 ? ' disabled' : ''}>Newer</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="act-next"${logs.length < 30 ? ' disabled' : ''}>Older</button>
+          </div>
           <div class="activity-timeline">
-            ${logs.map((l) => `
+            ${logs
+              .filter((l) => (!actWho || l.admin_email === actWho) && (!actKind || l.entity_type === actKind))
+              .map((l) => `
               <div class="activity-item">
                 <div class="activity-dot"></div>
                 <div class="activity-body">
@@ -4189,6 +4400,16 @@
           loadDashboard();
         });
       });
+
+      // the log used to end at the newest twenty with no way to look further
+      const actWhoEl = document.getElementById('act-who');
+      if (actWhoEl) actWhoEl.addEventListener('change', () => { actWho = actWhoEl.value; loadDashboard(); });
+      const actKindEl = document.getElementById('act-kind');
+      if (actKindEl) actKindEl.addEventListener('change', () => { actKind = actKindEl.value; loadDashboard(); });
+      const actPrev = document.getElementById('act-prev');
+      if (actPrev) actPrev.addEventListener('click', () => { if (actPage > 1) { actPage--; loadDashboard(); } });
+      const actNext = document.getElementById('act-next');
+      if (actNext) actNext.addEventListener('click', () => { actPage++; loadDashboard(); });
 
       dashChartInstances.forEach((ch) => ch.destroy());
       dashChartInstances = [];

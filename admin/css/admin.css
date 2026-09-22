@@ -1822,3 +1822,81 @@ body.is-splitting {
   font-size: 0.86rem;
 }
 .draft-banner-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* ---------- drag to reorder ---------- */
+
+.is-draggable { cursor: grab; }
+.is-draggable:active { cursor: grabbing; }
+.is-dragging { opacity: 0.4; }
+.is-over { box-shadow: inset 0 2px 0 var(--accent); }
+.reorder-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  margin-bottom: 10px;
+}
+.drag-handle {
+  cursor: grab;
+  color: var(--text-muted, #888);
+  user-select: none;
+  letter-spacing: 2px;
+}
+
+/* ---------- moderation inbox ---------- */
+
+.mod-tabs { margin: 0; }
+.mod-list { display: grid; gap: 12px; }
+
+.mod-item {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.mod-item[data-source="board"] { border-left-color: var(--accent); }
+.mod-item[data-source="product"] { border-left-color: var(--dash-ok, #2F6B46); }
+.mod-item[data-source="launchpad"] { border-left-color: var(--dash-warn, #8A5A14); }
+
+.mod-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+.mod-item-author { font-weight: 600; font-size: 0.92rem; }
+.mod-item-email,
+.mod-item-where,
+.mod-item-time { font-size: 0.78rem; color: var(--text-muted, #888); }
+.mod-item-time { margin-left: auto; }
+
+.mod-item-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mod-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.mod-item-replied { font-size: 0.78rem; color: var(--dash-ok, #2F6B46); }
+.mod-item-pending { font-size: 0.78rem; color: var(--dash-warn, #8A5A14); font-weight: 600; }
+.mod-item-actions .btn { margin-left: 0; }
+.mod-item-actions a.btn { text-decoration: none; }
+.mod-item-actions > :nth-child(2) { margin-left: auto; }
+
+/* ---------- activity controls ---------- */
+
+.activity-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.activity-controls .list-pager-info { margin-left: auto; }

@@ -723,3 +723,71 @@ const AdminList = (() => {
     selectCell, selectHead, bind, empty, bindEmpty, query, trim,
   };
 })();
+
+
+/* Reordering.
+
+   display_order was a number you typed and had to guess. This turns a list
+   into something you can drag, and hands back the new order. */
+const AdminReorder = (() => {
+
+  function enable(container, opts) {
+    const o = opts || {};
+    const rowSelector = o.rowSelector || '[data-order-id]';
+    let dragging = null;
+
+    container.querySelectorAll(rowSelector).forEach((row) => {
+      row.setAttribute('draggable', 'true');
+      row.classList.add('is-draggable');
+
+      row.addEventListener('dragstart', (e) => {
+        dragging = row;
+        row.classList.add('is-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', row.dataset.orderId); } catch (err) {}
+      });
+
+      row.addEventListener('dragend', () => {
+        row.classList.remove('is-dragging');
+        container.querySelectorAll(rowSelector).forEach((r) => r.classList.remove('is-over'));
+        dragging = null;
+        if (o.onChange) o.onChange(order(container, rowSelector));
+      });
+
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!dragging || dragging === row) return;
+        const box = row.getBoundingClientRect();
+        const after = (e.clientY - box.top) > box.height / 2;
+        row.classList.add('is-over');
+        if (after) row.parentNode.insertBefore(dragging, row.nextSibling);
+        else row.parentNode.insertBefore(dragging, row);
+      });
+
+      row.addEventListener('dragleave', () => row.classList.remove('is-over'));
+      row.addEventListener('drop', (e) => e.preventDefault());
+    });
+
+    /* keyboard: the same move without a mouse */
+    container.addEventListener('keydown', (e) => {
+      const row = e.target.closest ? e.target.closest(rowSelector) : null;
+      if (!row) return;
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      if (!e.altKey) return;
+      e.preventDefault();
+      const sibling = e.key === 'ArrowUp' ? row.previousElementSibling : row.nextElementSibling;
+      if (!sibling) return;
+      if (e.key === 'ArrowUp') row.parentNode.insertBefore(row, sibling);
+      else row.parentNode.insertBefore(sibling, row);
+      row.focus();
+      if (o.onChange) o.onChange(order(container, rowSelector));
+    });
+  }
+
+  function order(container, rowSelector) {
+    return Array.from(container.querySelectorAll(rowSelector || '[data-order-id]'))
+      .map((r, i) => ({ id: r.dataset.orderId, display_order: i }));
+  }
+
+  return { enable, order };
+})();
