@@ -459,11 +459,16 @@
     return el ? el.value.trim() : '';
   }
 
-  function stepIndicator(current, total) {
+  function stepIndicator(current, total, editing) {
     let html = '<div class="step-indicator">';
     for (let i = 1; i <= total; i++) {
       const cls = i === current ? 'step-dot active' : i < current ? 'step-dot done' : 'step-dot';
-      html += `<div class="${cls}"><span>${i}</span></div>`;
+      // on an existing record every step is reachable, so changing one field
+      // does not mean clicking through the whole wizard
+      const jumpable = editing || i <= current;
+      html += `<button type="button" class="${cls}${jumpable ? ' is-jumpable' : ''}"` +
+              (jumpable ? ` data-goto-step="${i}"` : ' disabled') +
+              `><span>${i}</span></button>`;
       if (i < total) html += '<div class="step-line' + (i < current ? ' done' : '') + '"></div>';
     }
     html += '</div>';
@@ -579,7 +584,7 @@
           <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">${title}</h2>
         </div>
-        ${stepIndicator(currentStep, steps.length)}
+        ${stepIndicator(currentStep, steps.length, !!item.id)}
         <form id="crud-form">
           <div class="step-content">`;
 
@@ -610,9 +615,13 @@
       html += '<button type="button" class="btn btn-secondary" id="prev-step">Previous step</button>';
     }
     if (isLast) {
-      html += `<button type="submit" class="btn btn-primary">${item.id ? 'Update' : 'Publish'}</button>`;
+      html += `<button type="submit" class="btn btn-primary">${item.id ? 'Save changes' : 'Publish'}</button>`;
+    } else if (item.id) {
+      // editing: saving is the primary action wherever you are in the form
+      html += '<button type="submit" class="btn btn-primary">Save changes</button>';
+      html += '<button type="button" class="btn btn-secondary" id="next-step">Next step</button>';
     } else {
-      html += '<button type="button" class="btn btn-primary" id="next-step">Save & Continue</button>';
+      html += '<button type="button" class="btn btn-primary" id="next-step">Save &amp; continue</button>';
     }
     html += '</div>';
     html += '<div class="form-msg" id="form-msg"></div>';
@@ -622,12 +631,18 @@
 
     if (step.onMount) step.onMount(config);
 
+    offerDraft(config);
+
     document.getElementById('back-btn').addEventListener('click', async () => {
       if (!(await AdminUI.guard())) return;
       onBack();
     });
 
-    // typing anywhere in the form marks it unsaved
+    // typing marks it unsaved, and tells the core how to snapshot the form
+    AdminUI.watchForm(draftKeyFor(config.apiPath, item && item.id), () => {
+      try { collectStepData(steps[currentStep - 1], config); } catch (e) {}
+      return config.formData;
+    });
     document.getElementById('crud-form').addEventListener('input', () => AdminUI.markDirty());
 
     const prevBtn = document.getElementById('prev-step');
@@ -646,11 +661,58 @@
       });
     }
 
+    document.querySelectorAll('[data-goto-step]').forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const target = Number(dot.dataset.gotoStep);
+        if (target === currentStep) return;
+        collectStepData(step, config);
+        renderStepForm({ ...config, currentStep: target });
+      });
+    });
+
     document.getElementById('crud-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       collectStepData(step, config);
       const data = onSubmit(config.formData);
       await submitForm(item.id, config.apiPath, data, config.reloadFn, entityType, config.formData.slug);
+    });
+  }
+
+  /* a draft only exists if a session died or the tab closed mid-edit, so it
+     is offered rather than applied behind the reader's back */
+  function offerDraft(config) {
+    const key = draftKeyFor(config.apiPath, config.item && config.item.id);
+    if (!key || config.draftHandled) return;
+    const draft = AdminUI.readDraft(key);
+    if (!draft || !draft.data) return;
+
+    config.draftHandled = true;
+    const card = document.querySelector('.form-card');
+    if (!card) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'draft-banner';
+    banner.innerHTML = `
+      <span>Unsaved changes from ${esc(timeAgo(new Date(draft.at).toISOString()))} were kept when your session ended.</span>
+      <span class="draft-banner-actions">
+        <button type="button" class="btn btn-primary btn-sm" data-draft="restore">Restore them</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-draft="discard">Discard</button>
+      </span>`;
+    const header = card.querySelector('.form-card-header');
+    if (header && header.nextSibling) card.insertBefore(banner, header.nextSibling);
+    else card.insertBefore(banner, card.firstChild);
+
+    banner.addEventListener('click', (e) => {
+      const action = e.target.dataset && e.target.dataset.draft;
+      if (!action) return;
+      AdminUI.dropDraft(key);
+      if (action === 'restore') {
+        Object.assign(config.formData, draft.data);
+        AdminUI.toast('Draft restored.', 'success');
+        renderStepForm({ ...config, currentStep: 1 });
+        return;
+      }
+      banner.remove();
     });
   }
 
@@ -834,6 +896,29 @@
     });
   }
 
+  AdminSettings.describe({
+    chatbot_model: 'Model',
+    chatbot_temperature: 'Temperature',
+    chatbot_system_prompt: 'System prompt',
+    chatbot_max_tokens: 'Max tokens',
+    chatbot_top_k: 'Top-K results',
+    chatbot_backup_enabled: 'Automatic backup',
+    chatbot_visible: 'Assistant visible on the site',
+    default_blog_status: 'Default blog status',
+    default_job_expiry_days: 'Default job expiry',
+    team_size: 'Team size',
+    product_chat_enabled: 'Product discussion',
+    chat_show_details: 'Show author details',
+    emails_enabled: 'Email notifications',
+    animations_enabled: 'Animations',
+    game_enabled: 'Hero run',
+    ai_brain_enabled: 'Signal field',
+    pipeline_enabled: 'Workflow panel',
+    stats_enabled: 'Studio figures',
+    home_chat_enabled: 'Public board',
+    faq_enabled: 'FAQs',
+  });
+
   // ── Blogs ──
 
   async function loadBlogs() {
@@ -1005,20 +1090,7 @@
       textarea.dispatchEvent(new Event('input'));
 
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('context', context);
-        const token = AdminAPI.getToken();
-        const res = await fetch(`${AdminAPI.BASE}/api/uploads/image`, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token },
-          body: formData,
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || 'Upload failed');
-        }
-        const result = await res.json();
+        const result = await AdminUpload.send(file, 'image', { context });
         const url = resolveUploadUrl(result);
         if (!url) throw new Error('Upload succeeded but the server returned no image URL.');
         const alt = prompt('Alt text:', '') || '';
@@ -1061,20 +1133,7 @@
       const file = input.files[0];
       if (!file) { done(); return; }
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('context', context);
-        const token = AdminAPI.getToken();
-        const res = await fetch(`${AdminAPI.BASE}/api/uploads/image`, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token },
-          body: formData,
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || 'Upload failed');
-        }
-        const result = await res.json();
+        const result = await AdminUpload.send(file, 'image', { context });
         const url = resolveUploadUrl(result);
         if (!url) {
           throw new Error('The server accepted the file but sent back no image URL. Response: '
@@ -2434,20 +2493,10 @@
               msg.textContent = 'Uploading...';
               msg.className = 'form-msg';
               try {
-                if (!config.item.id) throw new Error('Save the product once before uploading documents');
-                const formData = new FormData();
-                formData.append('file', file);
-                const token = AdminAPI.getToken();
-                const res = await fetch(`${AdminAPI.BASE}/api/products/${config.item.id}/upload-document`, {
-                  method: 'POST',
-                  headers: { 'Authorization': 'Bearer ' + token },
-                  body: formData,
+                if (!config.item.id) throw new Error('Save the product once before uploading a document.');
+                const result = await AdminUpload.send(file, 'document', {
+                  path: `/api/products/${config.item.id}/upload-document`,
                 });
-                if (!res.ok) {
-                  const err = await res.json().catch(() => ({}));
-                  throw new Error(err.detail || 'Upload failed');
-                }
-                const result = await res.json();
                 productDocuments.push({ name: result.name, url: resolveUploadUrl(result) });
                 renderProductDocuments();
                 msg.textContent = 'Uploaded.';
@@ -3633,9 +3682,9 @@
 
     let settings = {};
     try {
-      const keys = ['chatbot_model', 'chatbot_temperature', 'chatbot_system_prompt', 'chatbot_max_tokens', 'chatbot_top_k', 'chatbot_backup_enabled'];
-      const results = await Promise.all(keys.map((k) => AdminAPI.request(`/api/settings/${k}`).catch(() => null)));
-      keys.forEach((k, i) => { if (results[i]) settings[k] = results[i].value; });
+      const keys = ['chatbot_model', 'chatbot_temperature', 'chatbot_system_prompt',
+                    'chatbot_max_tokens', 'chatbot_top_k', 'chatbot_backup_enabled'];
+      settings = await AdminSettings.readMany(keys);
     } catch {}
 
     const model = settings.chatbot_model || 'gpt-4o-mini';
@@ -3782,14 +3831,12 @@
         chatbot_top_k: val('cb-top-k'),
       };
 
-      try {
-        await Promise.all(Object.entries(pairs).map(([k, v]) =>
-          AdminAPI.request(`/api/settings/${k}`, { method: 'PUT', body: JSON.stringify({ value: v }) })
-        ));
+      const { failed } = await AdminSettings.saveMany(pairs);
+      if (!failed.length) {
         msg.textContent = 'Settings saved.';
         msg.classList.add('form-msg-success');
-      } catch (err) {
-        msg.textContent = AdminUI.friendly(err);
+      } else {
+        msg.textContent = `Not saved: ${failed.map((f) => AdminSettings.label(f.key)).join(', ')}.`;
         msg.classList.add('form-msg-error');
       }
       btn.disabled = false;
@@ -3813,32 +3860,17 @@
 
     async function uploadDocument(file) {
       const statusEl = document.getElementById('cb-upload-status');
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) { statusEl.innerHTML = '<span class="form-msg form-msg-error">File exceeds 10MB limit.</span>'; return; }
-
-      const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-      const ext = file.name.split('.').pop().toLowerCase();
-      if (!allowed.includes(file.type) && !['pdf', 'docx', 'txt'].includes(ext)) {
-        statusEl.innerHTML = '<span class="form-msg form-msg-error">Only PDF, DOCX, TXT files are accepted.</span>';
+      const problem = AdminUpload.check(file, 'document');
+      if (problem) {
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(problem)}</span>`;
         return;
       }
 
       statusEl.innerHTML = '<span class="form-msg">Uploading...</span>';
-      const formData = new FormData();
-      formData.append('file', file);
-
       try {
-        const token = AdminAPI.getToken();
-        const res = await fetch(`${AdminAPI.BASE}/api/chatbot/documents`, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token },
-          body: formData,
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Upload failed');
-        }
+        await AdminUpload.send(file, 'document', { path: '/api/chatbot/documents' });
         statusEl.innerHTML = '<span class="form-msg form-msg-success">Document uploaded and indexed.</span>';
+        AdminUI.toast('Document indexed. The assistant can use it now.', 'success');
         loadDocuments();
       } catch (err) {
         statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(AdminUI.friendly(err))}</span>`;
@@ -4275,7 +4307,7 @@
   async function loadSettings() {
     showLoading();
     const keys = [
-      'chatbot_visible', 'product_chat_enabled', 'chat_show_details', 'emails_enabled',
+      'product_chat_enabled', 'chat_show_details', 'emails_enabled',
       'animations_enabled',
       'game_enabled', 'ai_brain_enabled', 'pipeline_enabled', 'stats_enabled', 'home_chat_enabled', 'faq_enabled',
       'default_blog_status', 'default_job_expiry_days', 'team_size',
@@ -4314,7 +4346,6 @@
       <div class="settings-group">
         <h3 class="settings-group-title">Website</h3>
         <p class="settings-group-note">What visitors can see and use on the public site.</p>
-        ${toggleRow('s-chatbot', 'Chatbot', 'chatbot_visible', 'false', 'The assistant bubble in the bottom corner')}
         ${toggleRow('s-product-chat', 'Product discussion boards', 'product_chat_enabled', 'false', 'The comment board under each product')}
         ${toggleRow('s-chat-details', 'Profession and company on the message board', 'chat_show_details', 'false')}
         ${toggleRow('s-emails', 'Email notifications', 'emails_enabled', 'false', 'Applications, contact messages and replies')}
@@ -4381,13 +4412,28 @@
           <span class="text-muted">Always on</span>
         </div>
         <div class="toggle-row">
-          <span class="toggle-label">Failed login lock<span class="toggle-hint">Five wrong passwords locks the login form for a minute</span></span>
-          <span class="text-muted">Always on</span>
+          <span class="toggle-label">Repeated sign-in attempts<span class="toggle-hint">The server allows five a minute. The form also waits between tries, which is a courtesy rather than the limit itself.</span></span>
+          <span class="text-muted">Enforced by the server</span>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">Sign out<span class="toggle-hint">Ends this session and every other tab on this browser</span></span>
           <button class="btn btn-danger btn-sm" id="s-signout-all">Sign out everywhere</button>
         </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">File storage</h3>
+        <p class="settings-group-note">Images, resumes and documents live on the file server. If an upload
+           ever stops appearing on the site, check here before anything else.</p>
+        <div class="toggle-row">
+          <span class="toggle-label">Connection<span class="toggle-hint">Reads the settings and checks each upload directory exists</span></span>
+          <button class="btn btn-secondary btn-sm" id="s-storage-check">Check</button>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Write test<span class="toggle-hint">Writes a small file, reads it back, then removes it</span></span>
+          <button class="btn btn-secondary btn-sm" id="s-storage-test">Run</button>
+        </div>
+        <div id="s-storage-out" class="storage-out"></div>
       </div>`;
 
     function showMsg(id, text, success) {
@@ -4401,18 +4447,70 @@
     content.querySelectorAll('.settings-toggle').forEach((cb) => {
       cb.addEventListener('change', async () => {
         cb.disabled = true;
-        try {
-          await AdminAPI.request(`/api/settings/${cb.dataset.key}`, {
-            method: 'PUT',
-            body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
-          });
-        } catch (err) {
-          showMsg(cb.id, AdminUI.friendly(err), false);
+        const { failed } = await AdminSettings.saveOne(cb.dataset.key, cb.checked ? 'true' : 'false');
+        // a toggle that did not save must not keep showing the new position
+        if (failed.length) {
+          showMsg(cb.id, 'Not saved.', false);
           cb.checked = !cb.checked;
         }
         cb.disabled = false;
       });
     });
+
+    const storageOut = document.getElementById('s-storage-out');
+
+    function renderStorage(title, res) {
+      const data = (res && res.data) || {};
+      const warnings = (res && res.warnings) || [];
+      const good = !!(res && res.success);
+      const rows = [];
+      const names = {
+        host: 'Host', user: 'User', base_dir: 'Base directory',
+        remote_path: 'Wrote', public_url: 'Reachable at', stage: 'Failed at',
+      };
+      Object.keys(names).forEach((k) => { if (data[k]) rows.push([names[k], data[k]]); });
+
+      if (Array.isArray(data.dirs)) {
+        data.dirs.forEach((d) => {
+          if (typeof d === 'string') { rows.push([d, 'checked']); return; }
+          const name = d.path || d.dir || d.name;
+          if (name) rows.push([name, d.ok === false ? 'missing' : 'ok']);
+        });
+      }
+
+      storageOut.innerHTML = `
+        <div class="storage-result ${good ? 'is-ok' : 'is-bad'}">
+          <div class="storage-result-head">${esc(title)}: ${good ? 'working' : 'a problem'}</div>
+          ${rows.length ? `<dl class="storage-rows">${rows.map(([k, v]) =>
+            `<div><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`).join('')}</dl>` : ''}
+          ${warnings.length ? `<ul class="storage-warnings">${warnings.map((w) =>
+            `<li>${esc(String(w))}</li>`).join('')}</ul>` : ''}
+        </div>`;
+    }
+
+    function wireStorage(btnId, path, method, title) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        storageOut.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
+        try {
+          const res = await AdminAPI.request(path, method === 'POST' ? { method: 'POST' } : {});
+          renderStorage(title, res);
+          AdminUI.toast(res && res.success ? `${title} passed.` : `${title} found a problem.`,
+                        res && res.success ? 'success' : 'warn');
+        } catch (err) {
+          storageOut.innerHTML = `<div class="storage-result is-bad">
+            <div class="storage-result-head">${esc(title)}: could not run</div>
+            <ul class="storage-warnings"><li>${esc(AdminUI.friendly(err))}</li></ul>
+          </div>`;
+        }
+        btn.disabled = false;
+      });
+    }
+
+    wireStorage('s-storage-check', '/api/uploads/diagnostics', 'GET', 'Connection check');
+    wireStorage('s-storage-test', '/api/uploads/self-test', 'POST', 'Write test');
 
     const signOutAll = document.getElementById('s-signout-all');
     if (signOutAll) {
@@ -4431,25 +4529,16 @@
       const jobExpiry = document.getElementById('s-job-expiry').value;
       const teamSize = document.getElementById('s-team-size').value;
 
-      try {
-        await Promise.all([
-          AdminAPI.request('/api/settings/default_blog_status', {
-            method: 'PUT',
-            body: JSON.stringify({ value: blogStatus }),
-          }),
-          AdminAPI.request('/api/settings/default_job_expiry_days', {
-            method: 'PUT',
-            body: JSON.stringify({ value: jobExpiry }),
-          }),
-          AdminAPI.request('/api/settings/team_size', {
-            method: 'PUT',
-            body: JSON.stringify({ value: teamSize }),
-          }),
-        ]);
+      const { failed } = await AdminSettings.saveMany({
+        default_blog_status: blogStatus,
+        default_job_expiry_days: jobExpiry,
+        team_size: teamSize,
+      });
+      if (!failed.length) {
         showMsg('s-blog-status', 'Saved', true);
         showMsg('s-job-expiry', 'Saved', true);
-      } catch (err) {
-        showMsg('s-blog-status', AdminUI.friendly(err), false);
+      } else {
+        showMsg('s-blog-status', 'Some settings did not save. See the notice.', false);
       }
       btn.disabled = false;
     });
@@ -4463,7 +4552,7 @@
       const admins = await AdminAPI.request('/api/admin/users');
       const currentEmail = localStorage.getItem('admin_email');
 
-      content.innerHTML = listHeader('Team', 'Add Admin') + `
+      content.innerHTML = listHeader('Admin Users', 'Add Admin') + `
         <table class="admin-table">
           <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Last Active</th><th></th></tr></thead>
           <tbody>${admins.map((a) => {

@@ -345,6 +345,165 @@ const AdminUI = (() => {
   };
 })();
 
+/* Uploads.
+
+   The same upload was written out four times, each with its own size
+   ceiling, its own idea of which types are allowed and its own error
+   handling. One path now, with the limits stated once. */
+const AdminUpload = (() => {
+
+  const KINDS = {
+    image: {
+      path: '/api/uploads/image',
+      accept: 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml',
+      exts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'],
+      maxMB: 8,
+      label: 'image',
+    },
+    document: {
+      path: '/api/uploads/document',
+      accept: '.pdf,.docx,.txt',
+      exts: ['pdf', 'docx', 'txt'],
+      maxMB: 10,
+      label: 'document',
+    },
+  };
+
+  function check(file, kind) {
+    const k = KINDS[kind];
+    if (!k) return 'Unknown upload type.';
+    if (file.size > k.maxMB * 1024 * 1024) {
+      return `That ${k.label} is ${(file.size / 1048576).toFixed(1)}MB. The limit is ${k.maxMB}MB.`;
+    }
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (k.exts.indexOf(ext) < 0) {
+      return `Only ${k.exts.join(', ')} files are accepted.`;
+    }
+    return null;
+  }
+
+  /* opens the file picker and resolves with the chosen file, or null */
+  function pick(kind) {
+    return new Promise((resolve) => {
+      const k = KINDS[kind] || KINDS.image;
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = k.accept;
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        document.body.removeChild(input);
+        resolve(file || null);
+      });
+      // a cancelled picker should not leave a stray input behind
+      window.addEventListener('focus', function once() {
+        window.removeEventListener('focus', once);
+        setTimeout(() => {
+          if (input.parentNode) { document.body.removeChild(input); resolve(null); }
+        }, 400);
+      });
+      input.click();
+    });
+  }
+
+  async function send(file, kind, opts) {
+    const o = opts || {};
+    const k = KINDS[kind] || KINDS.image;
+    const problem = check(file, kind);
+    if (problem) throw new Error(problem);
+
+    const body = new FormData();
+    body.append('file', file);
+    if (o.context) body.append('context', o.context);
+
+    // FormData sets its own content type, so nothing is forced here
+    const res = await fetch(`${AdminAPI.BASE}${o.path || k.path}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + AdminAPI.getToken() },
+      body,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Upload failed (${res.status})`);
+    }
+    return res.json();
+  }
+
+  return { pick, send, check, KINDS };
+})();
+
+/* Settings.
+
+   Saving several keys used to be a Promise.all: one rejection reported one
+   generic error and left you guessing which of them actually saved. These
+   report per key, and say plainly what did and did not land. */
+const AdminSettings = (() => {
+
+  const LABELS = {};
+
+  function label(key) { return LABELS[key] || key.replace(/_/g, ' '); }
+  function describe(map) { Object.assign(LABELS, map); }
+
+  async function saveMany(pairs) {
+    const keys = Object.keys(pairs);
+    if (!keys.length) return { ok: [], failed: [] };
+
+    const results = await Promise.allSettled(keys.map((k) =>
+      AdminAPI.request(`/api/settings/${k}`, {
+        method: 'PUT',
+        body: JSON.stringify({ value: String(pairs[k]) }),
+      })
+    ));
+
+    const ok = [];
+    const failed = [];
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') ok.push(keys[i]);
+      else failed.push({ key: keys[i], reason: r.reason });
+    });
+
+    if (!failed.length) {
+      AdminUI.toast(
+        keys.length === 1 ? `${label(keys[0])} saved.` : `${keys.length} settings saved.`,
+        'success',
+        { href: 'https://avennex.com', hrefLabel: 'Open the site' }
+      );
+    } else if (!ok.length) {
+      AdminUI.toast(AdminUI.friendly(failed[0].reason, 'Nothing could be saved.'), 'error');
+    } else {
+      // the half-success case the old code reported as a single failure
+      AdminUI.toast(
+        `Saved ${ok.length} of ${keys.length}. Not saved: ${failed.map((f) => label(f.key)).join(', ')}.`,
+        'warn',
+        { sticky: true }
+      );
+      if (window.console) failed.forEach((f) => console.error('[settings]', f.key, f.reason));
+    }
+    return { ok, failed };
+  }
+
+  async function saveOne(key, value) {
+    return saveMany({ [key]: value });
+  }
+
+  /* reading them one key at a time is what the API offers, so at least do
+     it in parallel and tolerate individual misses */
+  async function readMany(keys) {
+    const out = {};
+    const results = await Promise.allSettled(
+      keys.map((k) => AdminAPI.request(`/api/settings/${k}`))
+    );
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled' && r.value) out[keys[i]] = r.value.value;
+    });
+    return out;
+  }
+
+  return { saveMany, saveOne, readMany, describe, label };
+})();
+
 /* Shared list behaviour.
 
    Every module used to fetch a hard-capped 50 rows and render them straight

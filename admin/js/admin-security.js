@@ -46,10 +46,10 @@
         return;
       }
       btn.disabled = true;
-      btn.textContent = 'Locked';
+      btn.textContent = 'Waiting';
       if (errorEl) {
         errorEl.dataset.lock = '1';
-        errorEl.textContent = 'Too many failed attempts. Try again in ' + Math.ceil(left / 1000) + 's.';
+        errorEl.textContent = 'Too many attempts. Waiting ' + Math.ceil(left / 1000) + 's before the next try.';
       }
       if (!timer) timer = setInterval(paintLock, 1000);
     }
