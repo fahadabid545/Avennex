@@ -1274,7 +1274,6 @@
   }
 
   function uploadToLibrary(context) {
-    AdminUI.toast('Choose an image to upload.', 'info');
     pickAndUploadImage(context || 'blog', () => {
       AdminUI.toast('Uploaded.', 'success');
       loadMedia();
