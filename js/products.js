@@ -63,7 +63,8 @@
       if (p.cover_image) {
         html += '<a href="product-detail.html?slug=' + encodeURIComponent(p.slug) + '"><img src="' + API.escHtml(API.assetUrl(p.cover_image)) + '" alt="' + API.escHtml(p.name) + '" class="product-cover-img"></a>';
       } else {
-        html += '<div class="product-placeholder">Preview coming soon</div>';
+        html += '<div class="product-placeholder">' +
+          (typeof AvxFig !== 'undefined' ? AvxFig.productMock(p.name) : '') + '</div>';
       }
       html += '</div>';
 

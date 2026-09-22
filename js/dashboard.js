@@ -1,7 +1,9 @@
 (function (global) {
   'use strict';
 
-  var PALETTE = ['#2B4ACB', '#0E9F6E', '#7C3AED', '#B45309', '#0891B2', '#DB2777'];
+  // a categorical set drawn from the page's own palette: low chroma, all
+  // legible on the ledger-grey paper, all distinguishable from one another
+  var PALETTE = ['#8C6E1C', '#2F6B46', '#3E5C7E', '#8C3A2C', '#6B5B7B', '#5C6B2E'];
   var reduceMotion = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var RANGES = [
@@ -453,8 +455,8 @@
 
     if (model.stage === 'building') {
       if (model.roadmap) html += roadmapCard(model, state);
-      else html += emptyCard('Roadmap', 'No start or target date set for this build yet.',
-        'Add them under Products, Schedule and metrics.');
+      else html += emptyCard('Roadmap', 'No dates published for this build yet.',
+        'The schedule appears here once it is set.');
 
       if (model.velocity.length > 1) {
         html += card('Development velocity', chartBody('velocity'), {
@@ -462,11 +464,11 @@
           id: 'velocity',
           unit: 'progress %',
           tools: model.momentum ? momentumChip(model.momentum) : '',
-          note: 'Recorded every time the progress value is saved in the admin panel.',
+          note: 'Each point is a progress reading, recorded when it changed.',
         });
       } else {
         html += emptyCard('Development velocity', 'Only one progress reading so far.',
-          'The chart draws itself once progress has been saved a second time.');
+          'The trend appears once there is a second reading to compare.');
       }
 
       if (model.features) html += featureCard(model.features);
@@ -482,10 +484,10 @@
           note: 'Running total of ' + model.primary.name + '.',
         });
       } else {
-        html += emptyCard('Active users over time', 'Not yet tracked.',
-          'Add this metric from Products, Metrics, then tag it as active users.');
-        html += emptyCard('Growth trend', 'Not yet tracked.',
-          'It builds itself from the active users metric once that exists.');
+        html += emptyCard('Active users over time', 'Not published yet.',
+          'This chart appears once usage is being reported.');
+        html += emptyCard('Growth trend', 'Not published yet.',
+          'It follows from the usage figures above.');
       }
     }
 
@@ -554,7 +556,7 @@
           data: points.map(function (p) { return p.y; }),
           borderColor: color,
           borderWidth: bar ? 0 : 2.2,
-          borderRadius: bar ? 6 : 0,
+          borderRadius: 0,
           maxBarThickness: 44,
           tension: 0.38,
           pointRadius: 0,
@@ -578,7 +580,7 @@
           tooltip: {
             backgroundColor: theme.ink,
             padding: 11,
-            cornerRadius: 9,
+            cornerRadius: 0,
             displayColors: false,
             titleFont: { size: 11, weight: '600' },
             bodyFont: { size: 12 },
@@ -633,7 +635,7 @@
             labels: { color: theme.text, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } },
           },
           tooltip: {
-            backgroundColor: theme.ink, padding: 11, cornerRadius: 9,
+            backgroundColor: theme.ink, padding: 11, cornerRadius: 0,
             callbacks: {
               label: function (item) {
                 return ' ' + item.label + ': ' + formatNumber(item.parsed) + (spec.unit ? ' ' + spec.unit : '');
@@ -768,7 +770,7 @@
         '<p class="dash-empty-line">Nothing recorded yet.</p>' +
         '<p class="dash-empty-prompt">' + (id === 'activity'
           ? 'It fills in as people post on this page.'
-          : 'Add the numbers from the admin panel to draw this.') + '</p></div>';
+          : 'The chart appears once there are figures to plot.') + '</p></div>';
     }
 
     function fallbackTable(canvas, spec) {

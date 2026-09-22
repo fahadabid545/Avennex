@@ -110,7 +110,7 @@
         if (!h1) return;
         observer.disconnect();
         var date = contentEl.querySelector('time, .blog-date, .post-date');
-        var body = contentEl.querySelector('.blog-body, .post-body, article');
+        var body = contentEl.querySelector('.blog-article-body, .blog-body, .post-body, article');
         inject({
           '@type': 'BlogPosting',
           headline: h1.textContent.trim(),
@@ -183,7 +183,7 @@
     var acadEl = document.getElementById('academy-content');
     if (acadEl) {
       var observer = new MutationObserver(function () {
-        var playlists = acadEl.querySelectorAll('.playlist-card');
+        var playlists = acadEl.querySelectorAll('.academy-card, .playlist-card');
         if (!playlists.length) return;
         observer.disconnect();
         playlists.forEach(function (pl) {

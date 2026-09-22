@@ -21,8 +21,9 @@
             '<div class="academy-launching-icon">' +
               '<i data-lucide="play-circle" width="28" height="28"></i>' +
             '</div>' +
-            '<h3>Coming soon</h3>' +
-            '<p>Video playlists will show up here. Topics: code walkthroughs, product decisions, and the things we learned the hard way.</p>' +
+            '<h3>Nothing published yet</h3>' +
+            '<p>Walkthroughs of the code, the product calls we got wrong, and what we would do differently. It lands here first.</p>' +
+            '<p><a href="blog.html">Read the journal</a> in the meantime.</p>' +
           '</div>';
         if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
@@ -61,8 +62,8 @@
           '<div class="academy-launching-icon">' +
             '<i data-lucide="play-circle" width="28" height="28"></i>' +
           '</div>' +
-          '<h3>Coming soon</h3>' +
-          '<p>Video playlists will show up here. Topics: code walkthroughs, product decisions, and the things we learned the hard way.</p>' +
+          '<h3>Playlists could not load</h3>' +
+          '<p>Something went wrong fetching them. Refreshing usually sorts it.</p>' +
         '</div>';
       if (typeof lucide !== 'undefined') lucide.createIcons();
     });
@@ -141,7 +142,9 @@
 
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }).catch(function (err) {
-      API.showError(container, err.message);
+      // the real reason goes to the console, not to the visitor
+      if (window.console) console.error('academy load failed:', err);
+      API.showError(container, 'Could not load this playlist. Try refreshing.');
     });
   }
 

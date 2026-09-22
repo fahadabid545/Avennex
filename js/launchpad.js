@@ -43,12 +43,13 @@
         html += '</div>';
       }
 
-      html += '<div class="lp-details-grid">';
-      html += detailItem('Timeline', API.escHtml(e.timeline || 'TBD'));
-      html += detailItem('Funding needed', API.escHtml(e.funding_needed || 'TBD'));
-      html += detailItem('Team needed', API.escHtml(e.team_needed || 'TBD'));
-      html += detailItem('Stage', stageLabel(e.stage));
-      html += '</div>';
+      // a field with nothing in it is left out, rather than printed as "TBD"
+      var details = '';
+      if (e.timeline) details += detailItem('Timeline', API.escHtml(e.timeline));
+      if (e.funding_needed) details += detailItem('Funding needed', API.escHtml(e.funding_needed));
+      if (e.team_needed) details += detailItem('Team needed', API.escHtml(e.team_needed));
+      details += detailItem('Stage', stageLabel(e.stage));
+      html += '<div class="lp-details-grid">' + details + '</div>';
 
       html += '<a href="launchpad-detail.html?slug=' + encodeURIComponent(e.slug) + '" class="text-link">See full details <span class="text-link-arrow">&rarr;</span></a>';
 

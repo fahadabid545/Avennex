@@ -76,11 +76,12 @@
       html += buildTimelineSection(entry.timeline);
     }
 
-    html += '<div class="lp-details-grid">';
-    html += detailItem('Funding needed', API.escHtml(entry.funding_needed || 'TBD'));
-    html += detailItem('Team needed', API.escHtml(entry.team_needed || 'TBD'));
-    html += detailItem('Status', API.escHtml(entry.status));
-    html += '</div>';
+    // a field with nothing in it is left out, rather than printed as "TBD"
+    var details = '';
+    if (entry.funding_needed) details += detailItem('Funding needed', API.escHtml(entry.funding_needed));
+    if (entry.team_needed) details += detailItem('Team needed', API.escHtml(entry.team_needed));
+    if (entry.status) details += detailItem('Status', API.escHtml(entry.status));
+    if (details) html += '<div class="lp-details-grid">' + details + '</div>';
 
     if (entry.tech_stack) {
       html += '<div class="product-article-section">';
@@ -108,7 +109,8 @@
     mountDashboard(entry);
     showComments(entry);
   }).catch(function (err) {
-    API.showError(content, err.message || 'Could not load this entry.');
+    if (window.console) console.error('launchpad entry load failed:', err);
+    API.showError(content, 'Could not load this entry. Try refreshing.');
   });
 
   function mountDashboard(entry) {

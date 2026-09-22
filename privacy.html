@@ -10,34 +10,24 @@
 
   <meta property="og:title" content="Privacy Policy | Avennex">
   <meta property="og:description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <meta property="og:image" content="https://avennex.com/img/og-image.png">
+  <meta property="og:url" content="https://avennex.com/privacy.html">
+  <meta property="og:type" content="website">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Privacy Policy | Avennex">
   <meta name="twitter:description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
   <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:url" content="https://avennex.com/privacy.html">
-  <meta property="og:type" content="website">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="css/reset.css?v=202609120030">
-  <link rel="stylesheet" href="css/variables.css?v=202609120030">
-  <link rel="stylesheet" href="css/global.css?v=202609120030">
-  <link rel="stylesheet" href="css/layout.css?v=202609120030">
-  <link rel="stylesheet" href="css/header.css?v=202609120030">
-  <link rel="stylesheet" href="css/footer.css?v=202609120030">
-  <link rel="stylesheet" href="css/animations.css?v=202609120030">
-  <link rel="stylesheet" href="css/components.css?v=202609120030">
-
-  <link rel="stylesheet" href="css/theme.css?v=202609120030">
-  <link rel="stylesheet" href="css/design.css?v=202609120030">
-  <link rel="stylesheet" href="css/chatbot.css?v=202609120030">
-  <script src="https://unpkg.com/lucide@0.460.0"></script>
+  <link rel="stylesheet" href="css/base.css?v=202609221200">
+  <link rel="stylesheet" href="css/chrome.css?v=202609221200">
+  <link rel="stylesheet" href="css/ui.css?v=202609221200">
+  <link rel="stylesheet" href="css/pages.css?v=202609221200">
+  <link rel="stylesheet" href="css/chatbot.css?v=202609221200">
 </head>
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
@@ -46,122 +36,133 @@
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="index.html">Home</a>
+        <a href="index.html">Index</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
-        <a href="blog.html">Blog</a>
+        <a href="blog.html">Journal</a>
         <a href="academy.html">Academy</a>
         <a href="careers.html">Careers</a>
-        <a href="about.html">About</a>
-        <a href="contact.html" class="nav-cta">Let's Talk</a>
+        <a href="about.html">Studio</a>
+        <a href="contact.html" class="nav-cta">Let's talk</a>
       </nav>
-      <button class="menu-toggle" aria-label="Open menu">
-        <i data-lucide="menu" width="24" height="24"></i>
+      <button class="menu-toggle" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
+        <i data-icon="menu" width="22" height="22"></i>
       </button>
     </div>
   </header>
 
-  <div class="mobile-menu">
+  <div class="mobile-menu" id="mobile-menu">
     <button class="mobile-menu-close" aria-label="Close menu">
-      <i data-lucide="x" width="28" height="28"></i>
+      <i data-icon="x" width="24" height="24"></i>
     </button>
-    <a href="index.html">Home</a>
-    <a href="products.html">Products</a>
-    <a href="launchpad.html">Launchpad</a>
-    <a href="blog.html">Blog</a>
-    <a href="academy.html">Academy</a>
-    <a href="careers.html">Careers</a>
-    <a href="about.html">About</a>
-    <a href="contact.html" class="nav-cta">Let's Talk</a>
+    <a href="index.html" data-n="01">Index</a>
+    <a href="products.html" data-n="02">Products</a>
+    <a href="launchpad.html" data-n="03">Launchpad</a>
+    <a href="blog.html" data-n="04">Journal</a>
+    <a href="academy.html" data-n="05">Academy</a>
+    <a href="careers.html" data-n="06">Careers</a>
+    <a href="about.html" data-n="07">Studio</a>
+    <a href="contact.html" data-n="08" class="nav-cta">Let's talk</a>
   </div>
-
   <main id="main">
-    <section class="page-hero section">
+    <section class="page-hero">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <p class="section-eyebrow" data-animate="fade-up">Legal</p>
-        <h1 class="section-heading" data-animate="fade-up">Privacy Policy</h1>
-        <p class="page-hero-subtext" data-animate="fade-up">How we handle your data. Plain language, no legal tricks.</p>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 01</p>
+            <div class="record-head">
+              <p class="section-eyebrow m-in">Legal</p>
+              <h1 class="section-heading" data-set-type>Privacy policy.</h1>
+              <p class="page-hero-subtext m-in">How we handle your data. Plain language, no legal tricks.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <div class="legal-content" data-animate="fade-up">
-          <p class="legal-updated">Last updated: September 2, 2026</p>
+        <div class="grid">
+          <div class="legal-content m-in">
+            <p class="legal-updated">Last updated: 22 September 2026</p>
 
-          <h2>What we collect</h2>
-          <p>When you fill out a contact form or submit a job application, we collect your name, email, and whatever you type into the message fields. That's it.</p>
-          <p>Our site doesn't use tracking cookies. We don't run third-party analytics scripts. No pixel trackers, no retargeting.</p>
+            <h2>What we collect</h2>
+            <p>When you fill out a contact form or submit a job application, we collect your name, email, and whatever you type into the message fields. That's it.</p>
+            <p>Our site doesn't use tracking cookies. We don't run analytics scripts. No pixel trackers, no retargeting.</p>
 
-          <h2>How we use it</h2>
-          <p>Contact form submissions go straight to our team inbox so we can reply to you. Job applications are reviewed internally and stored for the hiring process.</p>
-          <p>We won't sell your information. We won't share it with third parties for marketing. The data exists for one reason: so we can respond to you.</p>
+            <h2>How we use it</h2>
+            <p>Contact form submissions go straight to our team inbox so we can reply to you. Job applications are reviewed internally and stored for the hiring process.</p>
+            <p>We won't sell your information. We won't share it with third parties for marketing. The data exists for one reason: so we can respond to you.</p>
 
-          <h2>Where it's stored</h2>
-          <p>Data lives in Supabase (PostgreSQL), hosted on AWS infrastructure. Connections are encrypted in transit. Passwords are hashed with bcrypt before storage.</p>
+            <h2>Where it's stored</h2>
+            <p>Data lives in Supabase (PostgreSQL), hosted on AWS infrastructure. Connections are encrypted in transit. Passwords are hashed with bcrypt before storage.</p>
 
-          <h2>How long we keep it</h2>
-          <p>Contact messages: until the conversation is resolved, then deleted within 90 days.</p>
-          <p>Job applications: kept for 12 months after the role closes, then removed.</p>
-          <p>Account data (admin only): kept as long as the account is active.</p>
+            <h2>How long we keep it</h2>
+            <ul>
+              <li>Contact messages: until the conversation is resolved, then deleted within 90 days.</li>
+              <li>Job applications: kept for 12 months after the role closes, then removed.</li>
+              <li>Account data (admin only): kept as long as the account is active.</li>
+            </ul>
 
-          <h2>Your rights</h2>
-          <p>You can ask us to delete any data we have on you. Send an email to <a href="mailto:hello@avennex.com">hello@avennex.com</a> and we'll handle it within 7 business days.</p>
+            <h2>Your rights</h2>
+            <p>You can ask us to delete any data we hold on you. Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> and we'll handle it within 7 business days.</p>
 
-          <h2>Third-party services</h2>
-          <p>We use Google Fonts for typography (loaded from Google's CDN). Google may log font requests per their own privacy policy. No other third-party services process your personal data through our site.</p>
+            <h2>Third-party services</h2>
+            <p>There aren't any on the front end. Fonts and icons are served from our own domain, so no external CDN sees your visit. Nothing on this site loads a script from anywhere else.</p>
+            <p>The one external request a page makes is to our own API, which is what fills in products, posts and job listings.</p>
 
-          <h2>Changes</h2>
-          <p>If we update this policy, the "last updated" date changes above. Major changes get a note on the homepage. We won't sneak anything in.</p>
+            <h2>Changes</h2>
+            <p>If we update this policy the date above changes. Anything major gets a note on the homepage. We won't sneak something in.</p>
 
-          <h2>Questions</h2>
-          <p>Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> with any privacy questions.</p>
+            <h2>Questions</h2>
+            <p>Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> with any privacy question.</p>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer site-footer--rounded">
+  <footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-grid">
         <div class="footer-col">
           <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-          <p class="footer-brand-text">AI-powered products that automate complex workflows.</p>
+          <p class="footer-brand-text">A product studio in Lahore. We find the bottleneck, then build the thing that removes it.</p>
           <div class="footer-social">
-            <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin" width="18" height="18"></i></a>
-            <a href="#" aria-label="GitHub"><i data-lucide="github" width="18" height="18"></i></a>
+            <a href="https://www.linkedin.com/company/avennex/posts/?feedView=all" aria-label="Avennex on LinkedIn" rel="noopener" target="_blank"><i data-icon="linkedin" width="17" height="17"></i></a>
           </div>
         </div>
         <div class="footer-col">
-          <h4>Explore</h4>
-          <a href="products.html">All products</a>
+          <h4>Index</h4>
+          <a href="products.html">Products</a>
           <a href="launchpad.html">Launchpad</a>
+          <a href="blog.html">Journal</a>
           <a href="academy.html">Academy</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="about.html">About</a>
+          <a href="about.html">Studio</a>
           <a href="careers.html">Careers</a>
-          <a href="blog.html">Blog</a>
           <a href="contact.html">Contact</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
-          <a href="privacy.html">Privacy Policy</a>
+          <a href="privacy.html">Privacy</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 Avennex. All rights reserved.</p>
+      <p>&copy; 2026 Avennex</p>
+      <p>Lahore, Pakistan</p>
     </div>
   </footer>
 
-  <script src="js/main.js?v=202609120030" defer></script>
-  <script src="js/header.js?v=202609120030" defer></script>
-  <script src="js/api.js?v=202609120030" defer></script>
-  <script src="js/animations.js?v=202609120030" defer></script>
-  <script src="js/chatbot.js?v=202609120030" defer></script>
-  <script>if (typeof lucide !== "undefined") lucide.createIcons();</script>
+  <script src="js/icons.js?v=202609221200" defer></script>
+  <script src="js/api.js?v=202609221200" defer></script>
+  <script src="js/motion.js?v=202609221200" defer></script>
+  <script src="js/chatbot.js?v=202609221200" defer></script>
 
 </body>
 </html>

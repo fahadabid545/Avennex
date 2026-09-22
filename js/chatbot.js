@@ -15,8 +15,8 @@
   var SUGGESTIONS = [
     'What does Avennex build?',
     'Are you hiring?',
-    'How much does a project cost?',
-    'What is the Launchpad?',
+    'What is on the launchpad?',
+    'Can I help build something?',
     'How do I get in touch?',
     'Who is on the team?'
   ];
@@ -56,40 +56,26 @@
 
   function render() {
     trigger = document.createElement('button');
-    trigger.className = 'chatbot-trigger pulse';
-    trigger.setAttribute('aria-label', 'Open chat');
+    trigger.className = 'chatbot-trigger';
+    trigger.setAttribute('aria-label', 'Ask a question');
     trigger.innerHTML =
-      '<svg class="chatbot-robot" width="78" height="86" viewBox="0 0 78 86" fill="none" aria-hidden="true">' +
-        '<ellipse class="chatbot-robot-shadow" cx="39" cy="81" rx="19" ry="4" fill="#0A0A0A" opacity="0.14"/>' +
-        '<g class="chatbot-robot-body">' +
-          '<g class="chatbot-robot-antenna">' +
-            '<line x1="39" y1="14" x2="39" y2="5" stroke="#0A0A0A" stroke-width="2.6" stroke-linecap="round"/>' +
-            '<circle class="chatbot-robot-antenna-tip" cx="39" cy="4" r="4" fill="#0A0A0A"/>' +
-          '</g>' +
-          '<rect x="6" y="34" width="8" height="16" rx="4" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.4"/>' +
-          '<rect x="64" y="34" width="8" height="16" rx="4" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.4"/>' +
-          '<rect x="20" y="58" width="38" height="16" rx="7" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.4"/>' +
-          '<rect x="14" y="14" width="50" height="46" rx="16" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="2.6"/>' +
-          '<rect x="21" y="24" width="36" height="21" rx="10" fill="#0A0A0A"/>' +
-          '<rect class="chatbot-robot-eye chatbot-robot-eye-l" x="28" y="30" width="6" height="9" rx="3" fill="#FFFFFF"/>' +
-          '<rect class="chatbot-robot-eye chatbot-robot-eye-r" x="44" y="30" width="6" height="9" rx="3" fill="#FFFFFF"/>' +
-          '<path class="chatbot-robot-smile" d="M31 52c2.4 2.2 13.6 2.2 16 0" stroke="#0A0A0A" stroke-width="2.4" stroke-linecap="round"/>' +
-        '</g>' +
-      '</svg>';
+      '<span class="glyph" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" ' +
+        'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">' +
+        '<path d="M4 4h16v11H9l-5 4V4z"/></svg>' +
+      '</span>' +
+      '<span>Ask</span>';
     document.body.appendChild(trigger);
 
-    setTimeout(function () { trigger.classList.remove('pulse'); }, 6000);
-
-    scheduleBlink();
     showGreeting();
 
     panel = document.createElement('div');
     panel.className = 'chatbot-panel';
     panel.innerHTML =
       '<div class="chatbot-header">' +
-        '<span class="chatbot-header-title">Chat with us</span>' +
+        '<span class="chatbot-header-title">Ask Avennex</span>' +
         '<button class="chatbot-close" aria-label="Close chat">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M5 5l14 14M19 5L5 19"/></svg>' +
         '</button>' +
       '</div>' +
       '<div class="chatbot-messages" id="chatbot-messages"></div>' +
@@ -97,7 +83,7 @@
       '<div class="chatbot-input-area">' +
         '<input class="chatbot-input" id="chatbot-input" placeholder="Ask a question..." maxlength="1000" autocomplete="off">' +
         '<button class="chatbot-send" id="chatbot-send" disabled aria-label="Send">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M21 3L3 10.5l7 3 3 7L21 3z"/></svg>' +
         '</button>' +
       '</div>';
     document.body.appendChild(panel);
@@ -192,19 +178,6 @@
     } catch (e) {
       /* private mode */
     }
-  }
-
-  function scheduleBlink() {
-    var delay = 4000 + Math.random() * 2000;
-    setTimeout(function () {
-      if (trigger && !open) {
-        trigger.classList.add('blink');
-        setTimeout(function () {
-          if (trigger) trigger.classList.remove('blink');
-        }, 220);
-      }
-      scheduleBlink();
-    }, delay);
   }
 
   function addBotMessage(text, sources) {

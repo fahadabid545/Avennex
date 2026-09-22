@@ -60,7 +60,8 @@
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
   }).catch(function (err) {
-    API.showError(content, err.message);
+    if (window.console) console.error('post load failed:', err);
+    API.showError(content, 'Could not load this post. Try refreshing.');
   });
 
 })();
