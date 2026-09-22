@@ -20,6 +20,7 @@ create table blogs (
   content text,
   excerpt text,
   meta_description text,
+  cover_image text,
   status text default 'draft' check (status in ('draft', 'published')),
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
