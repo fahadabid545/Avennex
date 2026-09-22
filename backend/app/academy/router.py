@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.academy import service
 from app.academy.schemas import (
     PlaylistCreate, PlaylistUpdate,
@@ -79,7 +79,7 @@ def update_playlist(id: str, body: PlaylistUpdate, _user: dict = Depends(get_cur
 
 
 @router.delete("/playlists/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_playlist(id: str, _user: dict = Depends(get_current_user)):
+def delete_playlist(id: str, _user: dict = Depends(require_manager)):
     playlist = service.get_playlist_by_id(id)
     if not service.delete_playlist(id):
         raise HTTPException(status_code=404, detail="Playlist not found")
@@ -112,7 +112,7 @@ def update_video(id: str, body: VideoUpdate, _user: dict = Depends(get_current_u
 
 
 @router.delete("/videos/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_video(id: str, _user: dict = Depends(get_current_user)):
+def delete_video(id: str, _user: dict = Depends(require_manager)):
     video = service.get_video_by_id(id)
     if not service.delete_video(id):
         raise HTTPException(status_code=404, detail="Video not found")

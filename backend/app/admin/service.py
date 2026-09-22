@@ -33,13 +33,40 @@ def list_activity(page: int, limit: int):
     return result.data
 
 
+PUBLIC_ADMIN_FIELDS = ("id", "email", "name", "created_at", "last_login_at", "role")
+
+
+def _public_admin(row: dict) -> dict:
+    # selecting * and trimming here keeps the query working on a database
+    # that has not had the role column added yet
+    out = {k: row.get(k) for k in PUBLIC_ADMIN_FIELDS}
+    out["role"] = out["role"] if out["role"] in ("owner", "admin", "editor") else "owner"
+    return out
+
+
 def list_admins():
     db = get_supabase()
-    result = db.table("admins").select("id, email, name, created_at, last_login_at").order("created_at").execute()
-    return result.data
+    result = db.table("admins").select("*").order("created_at").execute()
+    return [_public_admin(row) for row in (result.data or [])]
 
 
-def create_admin(email: str, password: str, name: str):
+def get_admin(admin_id: str):
+    db = get_supabase()
+    result = db.table("admins").select("*").eq("id", admin_id).execute()
+    return _public_admin(result.data[0]) if result.data else None
+
+
+def count_owners(exclude_id: str = None) -> int:
+    db = get_supabase()
+    try:
+        result = db.table("admins").select("id, role").eq("role", "owner").execute()
+    except Exception:
+        return 0
+    rows = [r for r in (result.data or []) if r["id"] != exclude_id]
+    return len(rows)
+
+
+def create_admin(email: str, password: str, name: str, role: str = "editor"):
     from app.auth.service import hash_password
     db = get_supabase()
 
@@ -52,14 +79,22 @@ def create_admin(email: str, password: str, name: str):
         "email": email,
         "password_hash": password_hash,
         "name": name or "Admin",
+        "role": role,
     }).execute()
-    return result.data[0] if result.data else None
+    return _public_admin(result.data[0]) if result.data else None
 
 
-def update_admin(admin_id: str, name: str):
+def update_admin(admin_id: str, name: str = None, role: str = None):
     db = get_supabase()
-    result = db.table("admins").update({"name": name}).eq("id", admin_id).execute()
-    return result.data[0] if result.data else None
+    patch = {}
+    if name is not None:
+        patch["name"] = name
+    if role is not None:
+        patch["role"] = role
+    if not patch:
+        return get_admin(admin_id)
+    result = db.table("admins").update(patch).eq("id", admin_id).execute()
+    return _public_admin(result.data[0]) if result.data else None
 
 
 def delete_admin(admin_id: str):

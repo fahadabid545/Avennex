@@ -15,11 +15,12 @@ def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
-def create_access_token(admin_id: str, email: str) -> str:
+def create_access_token(admin_id: str, email: str, role: str = "admin") -> str:
     settings = get_settings()
     payload = {
         "sub": admin_id,
         "email": email,
+        "role": role,
         "type": "access",
         "exp": datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes),
         "iat": datetime.now(timezone.utc),

@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.auth.service import decode_access_token
 from app.settings import service
 from app.settings.schemas import SettingUpdate
@@ -43,7 +43,7 @@ def get_setting(
 
 
 @router.put("/{key}")
-def update_setting(key: str, body: SettingUpdate, _user: dict = Depends(get_current_user)):
+def update_setting(key: str, body: SettingUpdate, _user: dict = Depends(require_manager)):
     try:
         result = service.upsert_setting(key, body.value)
         log_activity(_user["email"], "update", "setting", key, f"{key} = {body.value}")

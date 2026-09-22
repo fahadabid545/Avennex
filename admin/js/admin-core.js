@@ -793,3 +793,51 @@ const AdminReorder = (() => {
 
   return { enable, order };
 })();
+
+// who is signed in decides what the panel offers. the server enforces the
+// same rules, so this is about not showing a door that will not open.
+const AdminRole = (() => {
+  const RANK = { owner: 3, admin: 2, editor: 1 };
+  const LABELS = { owner: 'Owner', admin: 'Admin', editor: 'Editor' };
+  const NOTES = {
+    owner: 'Full access, including admin accounts.',
+    admin: 'Everything except admin accounts.',
+    editor: 'Writes and edits content. Cannot delete or change settings.',
+  };
+
+  let role = 'owner';
+  try {
+    const saved = localStorage.getItem('admin_role');
+    if (RANK[saved]) role = saved;
+  } catch {}
+
+  function set(next) {
+    role = RANK[next] ? next : 'owner';
+    try { localStorage.setItem('admin_role', role); } catch {}
+    document.body.dataset.role = role;
+    return role;
+  }
+
+  async function load() {
+    try {
+      const me = await AdminAPI.request('/api/admin/me');
+      set(me && me.role);
+    } catch {
+      // an unreachable profile is not a reason to lock the panel down: the
+      // server still refuses anything this account may not do
+      document.body.dataset.role = role;
+    }
+    return role;
+  }
+
+  const get = () => role;
+  const atLeast = (r) => (RANK[role] || 0) >= (RANK[r] || 0);
+  const canDelete = () => atLeast('admin');
+  const canConfigure = () => atLeast('admin');
+  const canManageUsers = () => role === 'owner';
+  const label = (r) => LABELS[r] || 'Admin';
+  const note = (r) => NOTES[r] || '';
+  const all = () => Object.keys(LABELS);
+
+  return { load, set, get, atLeast, canDelete, canConfigure, canManageUsers, label, note, all };
+})();

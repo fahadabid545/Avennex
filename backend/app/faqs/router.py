@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.faqs import service
 from app.faqs.schemas import FaqCreate, FaqUpdate, FaqResponse
 from app.admin.service import log_activity
@@ -58,7 +58,7 @@ def update_faq(id: str, body: FaqUpdate, _user: dict = Depends(get_current_user)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_faq(id: str, _user: dict = Depends(get_current_user)):
+def delete_faq(id: str, _user: dict = Depends(require_manager)):
     faq = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="FAQ not found")

@@ -8,7 +8,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import Optional
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.jobs import service
 from app.jobs.schemas import JobCreate, JobUpdate, JobResponse, JobApplication
 from app.email.service import send_email, is_email_enabled
@@ -47,7 +47,7 @@ def list_closed_jobs(
 
 
 @router.delete("/admin/cleanup")
-def cleanup_old_jobs(_user: dict = Depends(get_current_user)):
+def cleanup_old_jobs(_user: dict = Depends(require_manager)):
     result = service.cleanup_old_closed_jobs()
     log_activity(_user["email"], "cleanup", "jobs", "", f"Deleted {result['deleted']} old jobs")
     return {"success": True, "deleted": result["deleted"], "warnings": result.get("warnings", [])}
@@ -88,7 +88,7 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_job(id: str, _user: dict = Depends(get_current_user)):
+def delete_job(id: str, _user: dict = Depends(require_manager)):
     job = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="Job not found")
@@ -104,7 +104,7 @@ def get_applications(id: str, _user: dict = Depends(get_current_user)):
 
 
 @router.delete("/applications/{id}")
-def delete_application(id: str, _user: dict = Depends(get_current_user)):
+def delete_application(id: str, _user: dict = Depends(require_manager)):
     result, warnings = service.delete_application(id)
     if not result:
         raise HTTPException(status_code=404, detail="Application not found")

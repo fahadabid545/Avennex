@@ -6,7 +6,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import Optional
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.database import get_supabase
 from app.settings.service import get_setting
 from app.storage import ftp_service
@@ -92,7 +92,7 @@ def chat(body: ChatRequest, request: Request, x_chat_token: Optional[str] = Head
 async def upload_document(
     request: Request,
     file: UploadFile = File(...),
-    _user: dict = Depends(get_current_user),
+    _user: dict = Depends(require_manager),
 ):
     file_type = FILE_TYPE_MAP.get(file.content_type)
     if not file_type:
@@ -172,14 +172,14 @@ async def upload_document(
 
 
 @router.get("/documents")
-def list_documents(_user: dict = Depends(get_current_user)):
+def list_documents(_user: dict = Depends(require_manager)):
     db = get_supabase()
     result = db.table("chatbot_documents").select("*").order("created_at", desc=True).execute()
     return result.data
 
 
 @router.delete("/documents/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_document(doc_id: str, _user: dict = Depends(get_current_user)):
+def delete_document(doc_id: str, _user: dict = Depends(require_manager)):
     db = get_supabase()
     existing = db.table("chatbot_documents").select("id").eq("id", doc_id).execute()
     if not existing.data:
@@ -198,7 +198,7 @@ def delete_document(doc_id: str, _user: dict = Depends(get_current_user)):
 
 
 @router.post("/backup")
-def trigger_backup(_user: dict = Depends(get_current_user)):
+def trigger_backup(_user: dict = Depends(require_manager)):
     svc = get_chatbot_service()
     try:
         svc.save_backup()
@@ -209,12 +209,12 @@ def trigger_backup(_user: dict = Depends(get_current_user)):
 
 
 @router.delete("/backup", status_code=status.HTTP_204_NO_CONTENT)
-def delete_backup(_user: dict = Depends(get_current_user)):
+def delete_backup(_user: dict = Depends(require_manager)):
     svc = get_chatbot_service()
     svc.delete_backup()
 
 
 @router.get("/backup/status", response_model=BackupStatusResponse)
-def backup_status(_user: dict = Depends(get_current_user)):
+def backup_status(_user: dict = Depends(require_manager)):
     svc = get_chatbot_service()
     return svc.get_backup_status()

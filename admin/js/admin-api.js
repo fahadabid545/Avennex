@@ -25,6 +25,7 @@ const AdminAPI = (() => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_refresh');
     localStorage.removeItem('admin_email');
+    localStorage.removeItem('admin_role');
   }
 
   async function refreshAccessToken() {

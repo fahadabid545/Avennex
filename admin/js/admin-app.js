@@ -12,6 +12,25 @@
   const MODULES = ['dashboard', 'blogs', 'jobs', 'products', 'launchpad', 'academy',
                    'moderation', 'chat', 'faqs', 'chatbot', 'settings', 'team'];
 
+  // each module says what it takes to open it. the sidebar drops the rest
+  // rather than leaving links that answer with a refusal
+  const MODULE_ACCESS = {
+    settings: () => AdminRole.canConfigure(),
+    chatbot: () => AdminRole.canConfigure(),
+    team: () => AdminRole.canManageUsers(),
+  };
+
+  function allowed(mod) {
+    const rule = MODULE_ACCESS[mod];
+    return rule ? rule() : true;
+  }
+
+  function applyRoleToNav() {
+    navLinks.forEach((l) => {
+      l.hidden = !allowed(l.dataset.module);
+    });
+  }
+
   navLinks.forEach((link) => {
     link.addEventListener('click', async () => {
       const target = link.dataset.module;
@@ -46,6 +65,17 @@
     if (!loaders[mod]) return;
     currentModule = mod;
     markNav(mod);
+    if (!allowed(mod)) {
+      AdminUI.markClean();
+      content.innerHTML = listHeader(mod.charAt(0).toUpperCase() + mod.slice(1)) +
+        `<div class="admin-empty">
+           <p>This section is for ${mod === 'team' ? 'owners' : 'owners and admins'}. You are signed in as ${esc(AdminRole.label(AdminRole.get()))}.</p>
+           <button class="btn btn-secondary btn-sm" id="back-overview">Go to Overview</button>
+         </div>`;
+      const back = document.getElementById('back-overview');
+      if (back) back.addEventListener('click', () => AdminUI.Router.go('dashboard'));
+      return;
+    }
     AdminUI.markClean();
     try {
       await loaders[mod]();
@@ -140,6 +170,13 @@
         <h1 class="content-title">${title}</h1>
         ${addLabel ? `<button class="btn btn-primary btn-sm" id="add-btn">${addLabel}</button>` : ''}
       </div>`;
+  }
+
+  // an editor has no delete anywhere, so the button is left out rather
+  // than shown and refused
+  function delBtn(attrs, label) {
+    if (!AdminRole.canDelete()) return '';
+    return `<button class="btn btn-danger btn-sm" ${attrs}>${label || 'Delete'}</button>`;
   }
 
   function esc(v) {
@@ -1440,7 +1477,7 @@
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit="${b.id}">Edit</button>
                   <button class="btn btn-secondary btn-sm" data-duplicate="${b.id}">Duplicate</button>
-                  <button class="btn btn-danger btn-sm" data-delete="${b.id}">Delete</button>
+                  ${delBtn(`data-delete="${b.id}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -1551,6 +1588,7 @@
     if (!spec) return [];
     return Object.keys(spec.actions)
       .filter((id) => !only || only.indexOf(id) > -1)
+      .filter((id) => !spec.actions[id].danger || AdminRole.canDelete())
       .map((id) => ({ id, label: spec.actions[id].label, danger: !!spec.actions[id].danger }));
   }
 
@@ -1936,7 +1974,7 @@
           ${isClosed ? `<button class="btn btn-primary btn-sm" data-republish="${j.id}">Republish</button>` : ''}
           <button class="btn btn-secondary btn-sm" data-edit="${j.id}">Edit</button>
           <button class="btn btn-secondary btn-sm" data-duplicate="${j.id}">Duplicate</button>
-          <button class="btn btn-danger btn-sm" data-delete="${j.id}">Delete</button>
+          ${delBtn(`data-delete="${j.id}"`)}
         </td>
       </tr>`;
   }
@@ -2126,7 +2164,7 @@
                   <button class="btn btn-secondary btn-sm" data-view-app="${esc(a.id)}">View</button>
                 </td>
                 <td class="row-actions">
-                  <button class="btn btn-danger btn-sm" data-delete-app="${esc(a.id)}">Delete</button>
+                  ${delBtn(`data-delete-app="${esc(a.id)}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -2647,7 +2685,7 @@
                   <button class="btn btn-secondary btn-sm" data-product-chat="${prod.id}">Chat (${chatCounts[prod.id] || 0})</button>
                   <button class="btn btn-secondary btn-sm" data-edit="${prod.id}">Edit</button>
                   <button class="btn btn-secondary btn-sm" data-duplicate="${prod.id}">Duplicate</button>
-                  <button class="btn btn-danger btn-sm" data-delete="${prod.id}">Delete</button>
+                  ${delBtn(`data-delete="${prod.id}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -2712,7 +2750,7 @@
                   ${m.has_reply ? `<span style="font-size:0.75rem;color:var(--accent)">Replied</span>` : ''}
                   <div style="margin-top:8px;display:flex;gap:6px">
                     ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-pchat-reply="${m.id}">Reply</button>` : ''}
-                    <button class="btn btn-danger btn-sm" data-pchat-delete="${m.id}">Delete</button>
+                    ${delBtn(`data-pchat-delete="${m.id}"`)}
                   </div>
                 </div>`).join('')}
             </div>`}
@@ -3304,7 +3342,7 @@
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit="${e.id}">Edit</button>
                   <button class="btn btn-secondary btn-sm" data-duplicate="${e.id}">Duplicate</button>
-                  <button class="btn btn-danger btn-sm" data-delete="${e.id}">Delete</button>
+                  ${delBtn(`data-delete="${e.id}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -3344,7 +3382,7 @@
                 <span class="comment-author">${esc(c.author_name)}</span>
                 ${c.author_email ? `<span class="comment-email">${esc(c.author_email)}</span>` : ''}
                 <span class="comment-date">${formatTime(c.created_at)}</span>
-                <button class="btn btn-danger btn-sm" data-delete-comment="${c.id}">Delete</button>
+                ${delBtn(`data-delete-comment="${c.id}"`)}
               </div>
               <p class="comment-body">${esc(c.content)}</p>
             </div>`).join('')}
@@ -3713,7 +3751,7 @@
                 <td>${pl.display_order ?? 0}</td>
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit="${pl.id}">Edit</button>
-                  <button class="btn btn-danger btn-sm" data-delete-playlist="${pl.id}">Delete</button>
+                  ${delBtn(`data-delete-playlist="${pl.id}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -3825,7 +3863,7 @@
                 <td>${v.display_order ?? 0}</td>
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit-video="${v.id}">Edit</button>
-                  <button class="btn btn-danger btn-sm" data-delete-video="${v.id}">Delete</button>
+                  ${delBtn(`data-delete-video="${v.id}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -3992,7 +4030,7 @@
               <div style="margin-top:8px;display:flex;gap:6px">
                 ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-reply-chat="${m.id}">Reply</button>` : ''}
                 <button class="btn btn-secondary btn-sm" data-edit-chat="${m.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete-chat="${m.id}">Delete</button>
+                ${delBtn(`data-delete-chat="${m.id}"`)}
               </div>
             </div>`).join('')}
         </div>`;
@@ -4180,7 +4218,7 @@
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit-faq="${f.id}">Edit</button>
                   <button class="btn btn-secondary btn-sm" data-duplicate-faq="${f.id}">Duplicate</button>
-                  <button class="btn btn-danger btn-sm" data-delete-faq="${f.id}">Delete</button>
+                  ${delBtn(`data-delete-faq="${f.id}"`)}
                 </td>
               </tr>`).join('')}
             </tbody>
@@ -4590,7 +4628,7 @@
             <td>${statusBadge(d.status)}</td>
             <td class="row-error">${d.status === 'failed' && d.error ? `<span title="${esc(d.error)}">${esc(d.error)}</span>` : ''}</td>
             <td>${formatDate(d.created_at)}</td>
-            <td class="row-actions"><button class="btn btn-danger btn-sm" data-delete-doc="${d.id}">Delete</button></td>
+            <td class="row-actions">${delBtn(`data-delete-doc="${d.id}"`)}</td>
           </tr>`).join('');
 
         body.querySelectorAll('[data-delete-doc]').forEach((btn) => {
@@ -5279,10 +5317,10 @@
             <tr>
               <td class="row-title">${esc(a.email)}${isYou ? ' <span class="team-you">(you)</span>' : ''}</td>
               <td>${esc(a.name)}</td>
-              <td>Admin</td>
+              <td><span class="role-pill">${esc(AdminRole.label(a.role))}</span></td>
               <td>${lastActive}</td>
               <td class="row-actions">
-                <button class="btn btn-secondary btn-sm" data-edit-admin="${a.id}" data-admin-name="${esc(a.name)}">Edit</button>
+                <button class="btn btn-secondary btn-sm" data-edit-admin="${a.id}" data-admin-name="${esc(a.name)}" data-admin-role="${esc(a.role)}">Edit</button>
                 ${!isYou ? `<button class="btn btn-danger btn-sm" data-remove-admin="${a.id}">Delete</button>` : ''}
               </td>
             </tr>`;
@@ -5307,7 +5345,7 @@
 
         const editId = e.target.dataset.editAdmin;
         if (editId) {
-          showEditAdmin(editId, e.target.dataset.adminName);
+          showEditAdmin(editId, e.target.dataset.adminName, e.target.dataset.adminRole);
         }
       });
     } catch {
@@ -5315,7 +5353,25 @@
     }
   }
 
-  function showEditAdmin(id, currentName) {
+  function roleField(current) {
+    return `
+      <div class="field">
+        <label for="f-role">Role</label>
+        <select id="f-role">
+          ${AdminRole.all().map((r) => `<option value="${r}"${r === current ? ' selected' : ''}>${AdminRole.label(r)}</option>`).join('')}
+        </select>
+        <span class="field-hint" id="role-note">${esc(AdminRole.note(current))}</span>
+      </div>`;
+  }
+
+  function bindRoleNote() {
+    const sel = document.getElementById('f-role');
+    const note = document.getElementById('role-note');
+    if (!sel || !note) return;
+    sel.addEventListener('change', () => { note.textContent = AdminRole.note(sel.value); });
+  }
+
+  function showEditAdmin(id, currentName, currentRole) {
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
@@ -5327,6 +5383,7 @@
             <label for="f-name">Name</label>
             <input type="text" id="f-name" required value="${currentName}">
           </div>
+          ${roleField(currentRole || 'editor')}
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save</button>
           </div>
@@ -5335,6 +5392,7 @@
       </div>`;
 
     document.getElementById('back-btn').addEventListener('click', loadTeam);
+    bindRoleNote();
     document.getElementById('crud-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('form-msg');
@@ -5346,7 +5404,7 @@
       try {
         await AdminAPI.request(`/api/admin/users/${id}`, {
           method: 'PUT',
-          body: JSON.stringify({ name: val('f-name') }),
+          body: JSON.stringify({ name: val('f-name'), role: val('f-role') }),
         });
         msg.textContent = 'Admin updated.';
         msg.classList.add('form-msg-success');
@@ -5380,6 +5438,7 @@
             <label for="f-name">Name</label>
             <input type="text" id="f-name">
           </div>
+          ${roleField('editor')}
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Add Admin</button>
           </div>
@@ -5388,6 +5447,7 @@
       </div>`;
 
     document.getElementById('back-btn').addEventListener('click', loadTeam);
+    bindRoleNote();
     document.getElementById('crud-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('form-msg');
@@ -5403,6 +5463,7 @@
             email: val('f-email'),
             password: val('f-password'),
             name: val('f-name') || null,
+            role: val('f-role'),
           }),
         });
         msg.textContent = 'Admin added.';
@@ -5418,5 +5479,14 @@
 
   // the panel remembers where you were: each module has its own URL, so a
   // refresh, a bookmark and the browser's Back button all behave
-  AdminUI.Router.start(MODULES, loadModule, 'dashboard');
+  // routing waits on the role: starting first would let a module the
+  // account may not open paint over the refusal once its fetches land
+  applyRoleToNav();
+  showLoading();
+  AdminRole.load().then((role) => {
+    applyRoleToNav();
+    const who = document.getElementById('admin-email');
+    if (who) who.textContent = `${localStorage.getItem('admin_email') || ''} (${AdminRole.label(role)})`;
+    AdminUI.Router.start(MODULES, loadModule, 'dashboard');
+  });
 })();

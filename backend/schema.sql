@@ -7,6 +7,10 @@ create table admins (
   email text unique not null,
   password_hash text not null,
   name text,
+  role text not null default 'editor' check (role in ('owner', 'admin', 'editor')),
+  last_login_at timestamptz,
+  reset_token text,
+  reset_token_expires timestamptz,
   created_at timestamptz default now()
 );
 

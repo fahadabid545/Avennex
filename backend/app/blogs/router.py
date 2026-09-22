@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.blogs import service
 from app.blogs.schemas import BlogCreate, BlogUpdate, BlogResponse
 from app.admin.service import log_activity
@@ -58,7 +58,7 @@ def update_blog(id: str, body: BlogUpdate, _user: dict = Depends(get_current_use
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_blog(id: str, _user: dict = Depends(get_current_user)):
+def delete_blog(id: str, _user: dict = Depends(require_manager)):
     blog = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="Blog not found")

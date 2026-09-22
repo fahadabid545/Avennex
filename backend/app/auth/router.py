@@ -54,11 +54,18 @@ def setup(body: SetupRequest):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Setup already complete")
 
     password_hash = hash_password(body.password)
-    db.table("admins").insert({
+    record = {
         "email": body.email,
         "password_hash": password_hash,
         "name": "Admin",
-    }).execute()
+        "role": "owner",
+    }
+    try:
+        db.table("admins").insert(record).execute()
+    except Exception:
+        # a database that predates roles has no column to write
+        record.pop("role")
+        db.table("admins").insert(record).execute()
     return {"message": "Admin created"}
 
 
@@ -75,7 +82,7 @@ def login(body: LoginRequest, request: Request):
     if not verify_password(body.password, admin["password_hash"]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    access_token = create_access_token(admin["id"], admin["email"])
+    access_token = create_access_token(admin["id"], admin["email"], admin.get("role") or "owner")
     refresh_token, expires_at = create_refresh_token()
 
     db.table("refresh_tokens").insert({
@@ -100,7 +107,7 @@ def refresh(body: RefreshRequest):
 
     result = (
         db.table("refresh_tokens")
-        .select("*, admins(id, email)")
+        .select("*, admins(*)")
         .eq("token", body.refresh_token)
         .eq("revoked", False)
         .execute()
@@ -116,7 +123,7 @@ def refresh(body: RefreshRequest):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
 
     admin = record["admins"]
-    access_token = create_access_token(admin["id"], admin["email"])
+    access_token = create_access_token(admin["id"], admin["email"], admin.get("role") or "owner")
     return AccessTokenResponse(access_token=access_token)
 
 

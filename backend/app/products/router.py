@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.products import service
 from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.admin.service import log_activity
@@ -117,7 +117,7 @@ async def upload_document(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_product(id: str, _user: dict = Depends(get_current_user)):
+def delete_product(id: str, _user: dict = Depends(require_manager)):
     product = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="Product not found")

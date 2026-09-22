@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.chat import service
 from app.chat.schemas import ChatMessageCreate, ChatReply, ChatMessageUpdate
 from app.email.service import send_email, is_email_enabled
@@ -105,7 +105,7 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_message(id: str, _user: dict = Depends(get_current_user)):
+def delete_message(id: str, _user: dict = Depends(require_manager)):
     msg = service.get_by_id(id)
     if not service.delete_message(id):
         raise HTTPException(status_code=404, detail="Message not found")

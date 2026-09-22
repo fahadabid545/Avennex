@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_manager
 from app.launchpad import service
 from app.admin.service import log_activity
 from app.launchpad.schemas import (
@@ -84,7 +84,7 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_entry(id: str, _user: dict = Depends(get_current_user)):
+def delete_entry(id: str, _user: dict = Depends(require_manager)):
     entry = service.get_by_id(id)
     if not service.delete(id):
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -106,6 +106,6 @@ def add_comment(slug: str, body: CommentCreate, request: Request):
 
 
 @router.delete("/comments/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_comment(id: str, _user: dict = Depends(get_current_user)):
+def delete_comment(id: str, _user: dict = Depends(require_manager)):
     if not service.delete_comment(id):
         raise HTTPException(status_code=404, detail="Comment not found")

@@ -1952,3 +1952,13 @@ body.is-splitting {
   border: 0;
   background: #E9E9E3;
 }
+
+.role-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  font-size: 12px;
+  line-height: 18px;
+}

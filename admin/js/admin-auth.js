@@ -84,6 +84,9 @@
         const password = document.getElementById('password').value;
         await AdminAPI.login(email, password);
         localStorage.setItem('admin_email', email);
+        // the panel asks the server who this is on boot, so a role left
+        // over from whoever signed in last must not be believed
+        localStorage.removeItem('admin_role');
         window.location.href = 'dashboard.html';
       } catch (err) {
         errorEl.textContent = err.message;
