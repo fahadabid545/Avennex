@@ -168,3 +168,23 @@ create index content_revisions_entity_idx
   on content_revisions (entity_type, entity_id, created_at desc);
 
 alter table content_revisions disable row level security;
+
+-- Media library
+create table media (
+  id uuid primary key default gen_random_uuid(),
+  url text not null,
+  remote_path text,
+  filename text,
+  context text,
+  kind text default 'image',
+  size_bytes integer,
+  alt_text text,
+  uploaded_by text,
+  created_at timestamptz default now()
+);
+
+create index media_created_idx on media (created_at desc);
+create index media_context_idx on media (context);
+create unique index media_remote_path_idx on media (remote_path) where remote_path is not null;
+
+alter table media disable row level security;

@@ -10,7 +10,7 @@
   }
 
   const MODULES = ['dashboard', 'blogs', 'jobs', 'products', 'launchpad', 'academy',
-                   'moderation', 'chat', 'faqs', 'chatbot', 'settings', 'team'];
+                   'media', 'moderation', 'chat', 'faqs', 'chatbot', 'settings', 'team'];
 
   // each module says what it takes to open it. the sidebar drops the rest
   // rather than leaving links that answer with a refusal
@@ -54,6 +54,7 @@
       products: loadProducts,
       launchpad: loadLaunchpad,
       academy: loadAcademy,
+      media: loadMedia,
       chat: loadChat,
       moderation: loadModeration,
       faqs: loadFaqs,
@@ -93,8 +94,19 @@
 
   let contentListeners = [];
 
+  /* Listeners sit on the content element, so replacing its markup does not
+     remove them. A list that repaints on every search keystroke would stack
+     a fresh copy each time, and one delete click would open three dialogs.
+     A handler registered again from the same place replaces the old one. */
   function addContentListener(type, fn) {
-    contentListeners.push({ type, fn });
+    const source = fn.toString();
+    for (let i = contentListeners.length - 1; i >= 0; i--) {
+      const held = contentListeners[i];
+      if (held.type !== type || held.source !== source) continue;
+      content.removeEventListener(type, held.fn);
+      contentListeners.splice(i, 1);
+    }
+    contentListeners.push({ type, fn, source });
     content.addEventListener(type, fn);
   }
 
@@ -352,6 +364,11 @@
     btn.className = 'btn btn-secondary btn-sm';
     btn.textContent = 'Upload image';
 
+    const browse = document.createElement('button');
+    browse.type = 'button';
+    browse.className = 'btn btn-secondary btn-sm';
+    browse.textContent = 'Choose from library';
+
     const clear = document.createElement('button');
     clear.type = 'button';
     clear.className = 'btn btn-secondary btn-sm';
@@ -441,7 +458,17 @@
       if (v) verify(v);
     });
     input.addEventListener('input', paint);
+    browse.addEventListener('click', async () => {
+      const url = await pickFromLibrary(context);
+      if (!url) return;
+      input.value = url;
+      paint();
+      verify(url);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
     holder.appendChild(btn);
+    holder.appendChild(browse);
     holder.appendChild(clear);
     input.parentNode.appendChild(holder);
     input.parentNode.appendChild(preview);
@@ -1087,6 +1114,267 @@
           AdminUI.fail(err, 'The version could not be restored.');
         }
       }
+    });
+  }
+
+
+  // ── Media library ──
+
+  const MEDIA_CONTEXTS = [
+    { value: '', label: 'Everywhere' },
+    { value: 'blog', label: 'Blogs' },
+    { value: 'product', label: 'Products' },
+    { value: 'launchpad', label: 'Launchpad' },
+  ];
+
+  function fileSize(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function mediaCard(m, pickable) {
+    const meta = [m.context, fileSize(m.size_bytes)].filter(Boolean).join(' · ');
+    return `
+      <figure class="media-card" data-media-id="${esc(m.id)}">
+        <div class="media-thumb">
+          <img src="${esc(assetUrl(m.url))}" alt="${esc(m.alt_text || m.filename || '')}" loading="lazy">
+        </div>
+        <figcaption class="media-meta">
+          <p class="media-name" title="${esc(m.filename || m.url)}">${esc(m.filename || m.url)}</p>
+          <p class="media-sub">${esc(meta)}</p>
+          ${m.alt_text ? `<p class="media-alt">${esc(m.alt_text)}</p>` : '<p class="media-alt media-alt-missing">No alt text</p>'}
+        </figcaption>
+        <div class="media-actions">
+          ${pickable
+            ? `<button type="button" class="btn btn-primary btn-sm" data-media-pick="${esc(m.url)}">Use this</button>`
+            : `<button type="button" class="btn btn-secondary btn-sm" data-media-copy="${esc(m.url)}">Copy URL</button>
+               <button type="button" class="btn btn-secondary btn-sm" data-media-alt="${esc(m.id)}">Alt text</button>
+               ${delBtn(`data-media-delete="${esc(m.id)}"`)}`}
+        </div>
+      </figure>`;
+  }
+
+  async function loadMedia() {
+    showLoading();
+    const key = 'media';
+
+    try {
+      const res = await AdminAPI.request('/api/uploads/media' + AdminList.query(key));
+      const raw = (res && res.data) || [];
+      const { rows, hasMore } = AdminList.trim(key, raw);
+      const warning = res && res.warnings && res.warnings[0];
+      paint(rows, hasMore, warning);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      showEmpty(esc(AdminUI.friendly(err, 'The media library could not be loaded.')), 'Media');
+    }
+
+    function paint(rows, hasMore, warning) {
+      const shown = AdminList.apply(key, rows, {
+        searchFields: ['filename', 'alt_text', 'url', 'uploaded_by'],
+        filterFn: (r, f) => r.context === f,
+      });
+
+      let html = listHeader('Media', 'Upload image');
+      if (AdminRole.canConfigure()) {
+        html += `<p class="media-hint">Files uploaded before the library existed are only on the file server.
+                 <button type="button" class="btn btn-secondary btn-sm" id="media-scan">Scan server</button></p>`;
+      }
+      if (warning) html += `<p class="form-msg form-msg-error">${esc(warning)}</p>`;
+      html += AdminList.toolbar(key, {
+        placeholder: 'Search by file name, alt text or who uploaded it',
+        filters: MEDIA_CONTEXTS,
+      });
+
+      if (!shown.length) {
+        html += AdminList.empty(
+          rows.length ? 'No files match that search.' : 'Nothing in the library yet.',
+          rows.length ? '' : 'Upload the first one'
+        );
+        content.innerHTML = html;
+        AdminList.bindEmpty(() => uploadToLibrary());
+      } else {
+        html += `<div class="media-grid">${shown.map((m) => mediaCard(m, false)).join('')}</div>`;
+        html += AdminList.pager(key, shown.length, hasMore);
+        content.innerHTML = html;
+      }
+
+      AdminList.bind(key, () => paint(rows, hasMore, warning), {
+        reload: loadMedia,
+        countText: shown.length === rows.length ? `${rows.length} shown` : `${shown.length} of ${rows.length}`,
+      });
+
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => uploadToLibrary());
+
+      const scan = document.getElementById('media-scan');
+      if (scan) scan.addEventListener('click', () => scanServer(scan));
+
+      addContentListener('click', async (e) => {
+        const copy = e.target.dataset && e.target.dataset.mediaCopy;
+        if (copy) {
+          try {
+            await navigator.clipboard.writeText(assetUrl(copy));
+            AdminUI.toast('URL copied.', 'success');
+          } catch {
+            AdminUI.toast('Copying is blocked here. The URL is in the file name tooltip.', 'warn');
+          }
+          return;
+        }
+
+        const altId = e.target.dataset && e.target.dataset.mediaAlt;
+        if (altId) {
+          const row = rows.find((m) => m.id === altId);
+          editAlt(row, () => loadMedia());
+          return;
+        }
+
+        const delId = e.target.dataset && e.target.dataset.mediaDelete;
+        if (delId) {
+          const row = rows.find((m) => m.id === delId);
+          const ok = await confirmDialog({
+            title: 'Delete this file?',
+            body: `"${row && row.filename ? row.filename : 'This file'}" is removed from the server. Any post still pointing at it will show a broken image.`,
+            note: 'This cannot be undone.',
+            verb: 'Delete file',
+          });
+          if (!ok) return;
+          try {
+            const res = await AdminAPI.request(`/api/uploads/media/${delId}`, { method: 'DELETE' });
+            const warn = res && res.warnings && res.warnings[0];
+            if (warn) AdminUI.toast(`Removed from the library. ${warn}`, 'warn');
+            else AdminUI.toast('File deleted.', 'success');
+            loadMedia();
+          } catch (err) {
+            AdminUI.fail(err, 'The file could not be deleted.');
+          }
+        }
+      });
+    }
+  }
+
+  async function scanServer(btn) {
+    btn.disabled = true;
+    const label = btn.textContent;
+    btn.textContent = 'Scanning...';
+    try {
+      const res = await AdminAPI.request('/api/uploads/media/import', { method: 'POST' });
+      const added = (res && res.data && res.data.added) || 0;
+      const warn = res && res.warnings && res.warnings.length;
+      if (added) AdminUI.toast(`${added} file${added === 1 ? '' : 's'} added.${warn ? ' Some folders could not be read.' : ''}`, warn ? 'warn' : 'success');
+      else AdminUI.toast(warn ? res.warnings[0] : 'Nothing new on the server.', warn ? 'warn' : 'info');
+      if (added) return loadMedia();
+    } catch (err) {
+      AdminUI.fail(err, 'The file server could not be scanned.');
+    }
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+
+  function uploadToLibrary(context) {
+    AdminUI.toast('Choose an image to upload.', 'info');
+    pickAndUploadImage(context || 'blog', () => {
+      AdminUI.toast('Uploaded.', 'success');
+      loadMedia();
+    }, (err) => {
+      if (err) AdminUI.fail(new Error(err), 'The upload failed.');
+    });
+  }
+
+  function editAlt(row, onDone) {
+    if (!row) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-box" role="dialog" aria-modal="true">
+        <h3 class="confirm-title">Alt text</h3>
+        <p class="confirm-body">What a screen reader says in place of this image.</p>
+        <input type="text" id="media-alt-input" class="media-alt-input" value="${esc(row.alt_text || '')}" maxlength="200">
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-secondary btn-sm" data-alt-cancel>Cancel</button>
+          <button type="button" class="btn btn-primary btn-sm" data-alt-save>Save</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('#media-alt-input');
+    input.focus();
+
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      if (e.key === 'Enter' && document.activeElement === input) { e.preventDefault(); save(); }
+    }
+    async function save() {
+      try {
+        await AdminAPI.request(`/api/uploads/media/${row.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ alt_text: input.value.trim() }),
+        });
+        AdminUI.toast('Alt text saved.', 'success');
+        close();
+        if (onDone) onDone();
+      } catch (err) {
+        AdminUI.fail(err, 'The alt text could not be saved.');
+      }
+    }
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay || (e.target.dataset && e.target.dataset.altCancel !== undefined)) return close();
+      if (e.target.dataset && e.target.dataset.altSave !== undefined) save();
+    });
+  }
+
+  /* the picker reuses the library rather than making people upload the same
+     cover twice, and hands back whichever URL was chosen */
+  function pickFromLibrary(context) {
+    return new Promise((resolve) => {
+      const prev = document.activeElement;
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      overlay.innerHTML = `
+        <div class="history-box" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+          <div class="history-head">
+            <h3 class="confirm-title" id="picker-title">Choose from the library</h3>
+            <button type="button" class="btn btn-secondary btn-sm" data-picker-close>Close</button>
+          </div>
+          <div class="history-body"><div class="admin-spinner"></div></div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      function close(url) {
+        document.removeEventListener('keydown', onKey, true);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        if (prev && prev.focus) prev.focus();
+        resolve(url || null);
+      }
+      function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(null); } }
+      document.addEventListener('keydown', onKey, true);
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) return close(null);
+        if (e.target.dataset && e.target.dataset.pickerClose !== undefined) return close(null);
+        const pick = e.target.dataset && e.target.dataset.mediaPick;
+        if (pick) close(pick);
+      });
+
+      const body = overlay.querySelector('.history-body');
+      AdminAPI.request('/api/uploads/media?limit=60' + (context ? '&context=' + encodeURIComponent(context) : ''))
+        .then((res) => {
+          const rows = (res && res.data) || [];
+          if (!rows.length) {
+            body.innerHTML = '<p class="admin-empty">Nothing in the library for this yet. Upload an image and it lands here.</p>';
+            return;
+          }
+          body.innerHTML = `<div class="media-grid media-grid-compact">${rows.map((m) => mediaCard(m, true)).join('')}</div>`;
+        })
+        .catch((err) => {
+          body.innerHTML = `<p class="admin-empty">${esc(AdminUI.friendly(err, 'The library could not be loaded.'))}</p>`;
+        });
     });
   }
 

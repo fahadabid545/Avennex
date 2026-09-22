@@ -301,6 +301,47 @@ def remote_path_from_url(url: str) -> Optional[str]:
     return f"{WEB_ROOT_NAME}/{url[len(PUBLIC_BASE_URL) + 1:]}"
 
 
+def list_dir(remote_dir: str, extensions: tuple = ()) -> tuple[list, Optional[str]]:
+    """Names and sizes of the files in one directory. Used to bring files
+    that were uploaded before the library existed into it."""
+    try:
+        ftp = _connect()
+    except FTPStorageError as e:
+        return [], str(e)
+
+    try:
+        absolute = _resolve(ftp, remote_dir)
+        try:
+            names = ftp.nlst(absolute)
+        except error_perm as e:
+            if str(e).startswith("550"):
+                return [], None
+            raise
+
+        found = []
+        for entry in names:
+            base = entry.rsplit("/", 1)[-1]
+            if base in (".", ".."):
+                continue
+            ext = base.rsplit(".", 1)[-1].lower() if "." in base else ""
+            if extensions and ext not in extensions:
+                continue
+            try:
+                size = ftp.size(f"{absolute}/{base}")
+            except Exception:
+                size = None
+            found.append({
+                "name": base,
+                "size": size,
+                "remote_path": f"{remote_dir.strip('/')}/{base}",
+            })
+        return found, None
+    except Exception as e:
+        return [], str(e)
+    finally:
+        _quit(ftp)
+
+
 def diagnostics(probe_dirs: list[str]) -> dict:
     report = {"connected": False, "layout": None, "directories": [], "round_trip": None, "errors": []}
 
