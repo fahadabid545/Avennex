@@ -906,6 +906,164 @@
     config.formData.metrics = data.metrics;
   }
 
+  // ── Edit history ──
+
+  const REVISION_TYPES = { blog: 1, job: 1, product: 1, launchpad: 1, faq: 1 };
+
+  const HISTORY_LABELS = {
+    title: 'Title', name: 'Name', question: 'Question', answer: 'Answer',
+    slug: 'Slug', content: 'Content', excerpt: 'Excerpt', description: 'Description',
+    meta_description: 'Meta description', author: 'Author', status: 'Status',
+    stage: 'Stage', tagline: 'Tagline', requirements: 'Must have',
+    good_to_have: 'Good to have', type: 'Type', commitment: 'Commitment',
+    location: 'Location', expires_at: 'Closes', max_applications: 'Application cap',
+    custom_questions: 'Custom questions', features: 'Features', progress: 'Progress',
+    timeline: 'Timeline', tech_stack: 'Tech stack', cover_image: 'Cover image',
+    chat_enabled: 'Chat', display_order: 'Order', active: 'Visible',
+    funding_needed: 'Funding needed', team_needed: 'Team needed',
+    diagrams: 'Diagrams', collaboration_details: 'How to collaborate',
+    milestones: 'Milestones', metrics: 'Metrics', published_at: 'Published',
+    publish_at: 'Scheduled for',
+  };
+
+  function fieldLabel(name) {
+    return HISTORY_LABELS[name] || name.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+  }
+
+  function historyValue(v) {
+    if (v == null || v === '') return '<span class="text-muted">Not set</span>';
+    if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+    const text = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return esc(text.length > 220 ? text.slice(0, 220) + '\u2026' : text);
+  }
+
+  function historyRow(r) {
+    const changed = (r.changed || []).map(fieldLabel);
+    const summary = changed.length
+      ? `Changed ${changed.slice(0, 4).join(', ')}${changed.length > 4 ? ` and ${changed.length - 4} more` : ''}`
+      : 'No field changes recorded';
+    return `
+      <li class="history-item">
+        <div class="history-item-head">
+          <div>
+            <p class="history-when">${esc(timeAgo(r.created_at))}</p>
+            <p class="history-who">${esc(r.admin_email || 'Unknown')}</p>
+          </div>
+          <div class="history-item-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-history-open="${esc(r.id)}">Compare</button>
+            <button type="button" class="btn btn-primary btn-sm" data-history-restore="${esc(r.id)}">Restore</button>
+          </div>
+        </div>
+        <p class="history-summary">${esc(summary)}</p>
+        <div class="history-detail" data-history-detail="${esc(r.id)}" hidden></div>
+      </li>`;
+  }
+
+  async function showHistory(entityType, id, config) {
+    const prev = document.activeElement;
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="history-box" role="dialog" aria-modal="true" aria-labelledby="history-title">
+        <div class="history-head">
+          <h3 class="confirm-title" id="history-title">Edit history</h3>
+          <button type="button" class="btn btn-secondary btn-sm" data-history-close>Close</button>
+        </div>
+        <div class="history-body"><div class="admin-spinner"></div></div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      if (prev && prev.focus) prev.focus();
+    }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    const body = overlay.querySelector('.history-body');
+    let rows = [];
+    try {
+      const res = await AdminAPI.request(`/api/revisions/${entityType}/${encodeURIComponent(id)}`);
+      rows = (res && res.data) || [];
+      if (res && res.warnings && res.warnings.length) {
+        body.innerHTML = `<p class="admin-empty">${esc(res.warnings[0])}</p>`;
+        return;
+      }
+    } catch (err) {
+      body.innerHTML = `<p class="admin-empty">${esc(AdminUI.friendly(err, 'History could not be loaded.'))}</p>`;
+      return;
+    }
+
+    if (!rows.length) {
+      body.innerHTML = '<p class="admin-empty">No earlier versions yet. The next save starts the history.</p>';
+      return;
+    }
+
+    body.innerHTML = `<ul class="history-list">${rows.map(historyRow).join('')}</ul>`;
+
+    overlay.addEventListener('click', async (e) => {
+      if (e.target.dataset && e.target.dataset.historyClose !== undefined) return close();
+
+      const openId = e.target.dataset && e.target.dataset.historyOpen;
+      if (openId) {
+        const pane = overlay.querySelector(`[data-history-detail="${openId}"]`);
+        if (!pane) return;
+        if (!pane.hidden) { pane.hidden = true; e.target.textContent = 'Compare'; return; }
+        pane.hidden = false;
+        e.target.textContent = 'Hide';
+        if (pane.dataset.loaded) return;
+        pane.innerHTML = '<p class="text-muted">Loading...</p>';
+        try {
+          const full = await AdminAPI.request(`/api/revisions/item/${encodeURIComponent(openId)}`);
+          const snap = (full && full.snapshot) || {};
+          const live = config.formData || {};
+          const names = Object.keys(snap).filter((k) => (
+            k !== 'id' && k !== 'created_at' && k !== 'updated_at' &&
+            k !== 'last_edited_by' && k !== 'last_edited_at' &&
+            JSON.stringify(snap[k]) !== JSON.stringify(live[k])
+          ));
+          pane.innerHTML = names.length
+            ? names.map((k) => `
+                <div class="history-diff">
+                  <span class="history-diff-label">${esc(fieldLabel(k))}</span>
+                  <span class="history-diff-old">${historyValue(snap[k])}</span>
+                  <span class="history-diff-new">${historyValue(live[k])}</span>
+                </div>`).join('')
+            : '<p class="text-muted">This version matches what is in the form.</p>';
+          pane.dataset.loaded = '1';
+        } catch (err) {
+          pane.innerHTML = `<p class="text-muted">${esc(AdminUI.friendly(err, 'That version could not be read.'))}</p>`;
+        }
+        return;
+      }
+
+      const restoreId = e.target.dataset && e.target.dataset.historyRestore;
+      if (restoreId) {
+        const ok = await confirmDialog({
+          title: 'Restore this version?',
+          body: 'The record goes back to how it looked then. Anything unsaved in the form is dropped.',
+          note: 'The current version is kept in the history, so this can be undone.',
+          verb: 'Restore',
+          danger: false,
+        });
+        if (!ok) return;
+        e.target.disabled = true;
+        try {
+          await AdminAPI.request(`/api/revisions/item/${encodeURIComponent(restoreId)}/restore`, { method: 'POST' });
+          AdminUI.markClean();
+          AdminUI.toast('Version restored.', 'success');
+          close();
+          if (config.reloadFn) config.reloadFn();
+        } catch (err) {
+          e.target.disabled = false;
+          AdminUI.fail(err, 'The version could not be restored.');
+        }
+      }
+    });
+  }
+
   // ── Multi-step form engine ──
 
   function renderStepForm(config) {
@@ -919,6 +1077,7 @@
         <div class="form-card-header">
           <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">${title}</h2>
+          ${item.id && REVISION_TYPES[entityType] ? '<button class="btn btn-secondary btn-sm" id="history-btn" type="button">History</button>' : ''}
         </div>
         ${stepIndicator(currentStep, steps.length, !!item.id)}
         <form id="crud-form">
@@ -975,6 +1134,14 @@
       if (!(await AdminUI.guard())) return;
       onBack();
     });
+
+    const historyBtn = document.getElementById('history-btn');
+    if (historyBtn) {
+      historyBtn.addEventListener('click', () => {
+        collectStepData(steps[currentStep - 1], config);
+        showHistory(entityType, item.id, config);
+      });
+    }
 
     // typing marks it unsaved, and tells the core how to snapshot the form
     AdminUI.watchForm(draftKeyFor(config.apiPath, item && item.id), () => {

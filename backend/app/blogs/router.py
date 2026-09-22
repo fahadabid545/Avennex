@@ -6,6 +6,7 @@ from app.auth.dependencies import get_current_user, require_manager
 from app.blogs import service
 from app.blogs.schemas import BlogCreate, BlogUpdate, BlogResponse
 from app.admin.service import log_activity
+from app.revisions import service as revisions
 
 router = APIRouter(prefix="/api/blogs", tags=["blogs"])
 
@@ -49,6 +50,7 @@ def update_blog(id: str, body: BlogUpdate, _user: dict = Depends(get_current_use
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    revisions.record_before("blog", id, service.get_by_id, _user["email"], data)
     action = "publish" if data.get("status") == "published" else "update"
     result = service.update(id, data)
     if not result:

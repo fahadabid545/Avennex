@@ -9,6 +9,7 @@ from app.auth.dependencies import get_current_user, require_manager
 from app.products import service
 from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.admin.service import log_activity
+from app.revisions import service as revisions
 from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ def update_product(id: str, body: ProductUpdate, _user: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    revisions.record_before("product", id, service.get_by_id, _user["email"], data)
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Product not found")

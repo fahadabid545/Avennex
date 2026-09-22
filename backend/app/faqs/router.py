@@ -7,6 +7,7 @@ from app.auth.dependencies import get_current_user, require_manager
 from app.faqs import service
 from app.faqs.schemas import FaqCreate, FaqUpdate, FaqResponse
 from app.admin.service import log_activity
+from app.revisions import service as revisions
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ def update_faq(id: str, body: FaqUpdate, _user: dict = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    revisions.record_before("faq", id, service.get_by_id, _user["email"], data)
     try:
         result = service.update(id, data)
     except Exception as e:

@@ -14,6 +14,7 @@ from app.jobs.schemas import JobCreate, JobUpdate, JobResponse, JobApplication
 from app.email.service import send_email, is_email_enabled
 from app.config import get_settings
 from app.admin.service import log_activity
+from app.revisions import service as revisions
 from app.database import get_supabase
 from app.storage import ftp_service
 
@@ -80,6 +81,7 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    revisions.record_before("job", id, service.get_by_id, _user["email"], data)
     result = service.update(id, data)
     if not result:
         raise HTTPException(status_code=404, detail="Job not found")

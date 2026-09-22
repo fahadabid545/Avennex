@@ -8,6 +8,7 @@ from slowapi.util import get_remote_address
 from app.auth.dependencies import get_current_user, require_manager
 from app.launchpad import service
 from app.admin.service import log_activity
+from app.revisions import service as revisions
 from app.launchpad.schemas import (
     LaunchpadCreate,
     LaunchpadUpdate,
@@ -72,6 +73,7 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    revisions.record_before("launchpad", id, service.get_by_id, _user["email"], data)
     try:
         result = service.update(id, data)
     except Exception as e:
