@@ -2,21 +2,53 @@
   var items = document.querySelectorAll('.story-item');
   var copies = document.querySelectorAll('.story-copy');
 
-  if (items.length && copies.length && 'IntersectionObserver' in window) {
-    var storyObserver = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        var key = entry.target.getAttribute('data-story-item');
-        items.forEach(function (el) {
-          el.classList.toggle('is-active', el === entry.target);
-        });
-        copies.forEach(function (el) {
-          el.classList.toggle('is-active', el.getAttribute('data-story') === key);
-        });
-      });
-    }, { threshold: 0.55, rootMargin: '-20% 0px -20% 0px' });
+  if (!items.length || !copies.length) return;
 
-    items.forEach(function (el) { storyObserver.observe(el); });
+  // whichever entry sits closest to the middle of the screen leads. a plain
+  // threshold let two short entries qualify at once, and the lower one won
+  function lead() {
+    var mid = window.innerHeight / 2;
+    var best = null;
+    var bestDist = Infinity;
+    for (var i = 0; i < items.length; i++) {
+      var r = items[i].getBoundingClientRect();
+      var d = Math.abs(r.top + r.height / 2 - mid);
+      if (d < bestDist) { bestDist = d; best = items[i]; }
+    }
+    if (!best) return;
+    var key = best.getAttribute('data-story-item');
+    for (var j = 0; j < items.length; j++) {
+      items[j].classList.toggle('is-active', items[j] === best);
+    }
+    for (var k = 0; k < copies.length; k++) {
+      copies[k].classList.toggle('is-active', copies[k].getAttribute('data-story') === key);
+    }
+  }
+
+  var live = false;
+  var ticking = false;
+
+  function onScroll() {
+    if (!live || ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { ticking = false; lead(); });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+
+  // the run only costs anything while the section is on screen
+  if ('IntersectionObserver' in window) {
+    var section = items[0].closest('.story-scroll') || items[0].parentElement;
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        live = e.isIntersecting;
+        if (live) lead();
+      });
+    }, { rootMargin: '10% 0px 10% 0px' }).observe(section);
+  } else {
+    live = true;
+    lead();
   }
 })();
 
