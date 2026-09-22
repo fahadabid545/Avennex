@@ -11,6 +11,8 @@ class BlogCreate(BaseModel):
     meta_description: Optional[str] = None
     author: Optional[str] = None
     status: Optional[str] = "draft"
+    cover_image: Optional[str] = None
+    publish_at: Optional[datetime] = None
 
 
 class BlogUpdate(BaseModel):
@@ -21,6 +23,8 @@ class BlogUpdate(BaseModel):
     meta_description: Optional[str] = None
     author: Optional[str] = None
     status: Optional[str] = None
+    cover_image: Optional[str] = None
+    publish_at: Optional[datetime] = None
 
 
 class BlogResponse(BaseModel):
@@ -35,5 +39,6 @@ class BlogResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     published_at: Optional[datetime] = None
+    publish_at: Optional[datetime] = None
     last_edited_by: Optional[str] = None
     last_edited_at: Optional[datetime] = None

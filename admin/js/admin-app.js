@@ -148,7 +148,7 @@
 
   function statusBadge(status) {
     const map = {
-      published: 'green', draft: 'gray',
+      published: 'green', draft: 'gray', scheduled: 'blue',
       open: 'green', closed: 'red',
       active: 'green', inactive: 'gray', archived: 'gray',
       'in-development': 'blue', launched: 'green', paused: 'yellow',
@@ -157,6 +157,29 @@
     };
     if (!status) return badge('unknown', 'gray');
     return badge(status, map[status] || 'gray');
+  }
+
+  // <input type="datetime-local"> speaks local wall clock, the API speaks
+  // ISO in UTC. these two keep the crossing in one place.
+  function toLocalInput(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function fromLocalInput(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    return isNaN(d) ? null : d.toISOString();
+  }
+
+  function scheduleNote(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   }
 
   function confirmDialog(msg, opts) {
@@ -770,6 +793,9 @@
 
     const status = fields.querySelector('#f-status');
     if (status) wrap.appendChild(status.closest('.field') || status);
+    // the schedule belongs beside the status it depends on, not inside a tab
+    const schedule = fields.querySelector('#schedule-field');
+    if (schedule) wrap.appendChild(schedule);
 
     tabs.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-review-tab]');
@@ -1226,6 +1252,8 @@
     if (step.review) {
       const statusEl = document.getElementById('f-status');
       if (statusEl) config.formData.status = statusEl.value;
+      const whenEl = document.getElementById('f-publish-at');
+      if (whenEl) config.formData.publish_at = fromLocalInput(whenEl.value);
       return;
     }
     step.fields.forEach((f) => {
@@ -1611,6 +1639,7 @@
         filters: [
           { value: '', label: 'All statuses' },
           { value: 'published', label: 'Published' },
+          { value: 'scheduled', label: 'Scheduled' },
           { value: 'draft', label: 'Draft' },
         ],
       });
@@ -1639,7 +1668,8 @@
               <tr>
                 ${AdminList.selectCell(key, b.id)}
                 <td class="row-title">${esc(b.title)}${editedBy(b)}</td>
-                <td>${statusBadge(b.status)}</td>
+                <td>${statusBadge(b.status)}${b.status === 'scheduled' && b.publish_at
+                  ? `<span class="row-note">${esc(scheduleNote(b.publish_at))}</span>` : ''}</td>
                 <td>${formatDate(b.created_at)}</td>
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit="${b.id}">Edit</button>
@@ -1921,6 +1951,7 @@
       cover_image: b.cover_image || '',
       content: b.content || '',
       status: b.status || 'draft',
+      publish_at: b.publish_at || null,
     };
 
     if (!b.id) {
@@ -2058,19 +2089,38 @@
                 <select id="f-status">
                   <option value="draft" ${d.status === 'draft' ? 'selected' : ''}>Draft</option>
                   <option value="published" ${d.status === 'published' ? 'selected' : ''}>Published</option>
+                  <option value="scheduled" ${d.status === 'scheduled' ? 'selected' : ''}>Scheduled</option>
                 </select>
+              </div>
+              <div class="field" id="schedule-field" ${d.status === 'scheduled' ? '' : 'hidden'}>
+                <label for="f-publish-at">Goes live at</label>
+                <input type="datetime-local" id="f-publish-at" value="${esc(toLocalInput(d.publish_at))}">
+                <span class="field-hint">Your local time. The post stays off the site until then, and goes live on its own.</span>
               </div>`;
 
             wrap.innerHTML = reviewHtml;
 
             const statusSelect = document.getElementById('f-status');
+            const scheduleField = document.getElementById('schedule-field');
+            const publishAt = document.getElementById('f-publish-at');
             const submitBtn = document.querySelector('#crud-form button[type="submit"]');
+            const LABELS = { published: 'Publish', scheduled: 'Schedule', draft: 'Save as Draft' };
             function updateBtnLabel() {
-              if (submitBtn) submitBtn.textContent = statusSelect.value === 'published' ? 'Publish' : 'Save as Draft';
+              if (submitBtn) submitBtn.textContent = LABELS[statusSelect.value] || 'Save';
             }
             statusSelect.addEventListener('change', () => {
               config.formData.status = statusSelect.value;
+              scheduleField.hidden = statusSelect.value !== 'scheduled';
+              // an empty picker on first use gets a sensible starting point
+              if (statusSelect.value === 'scheduled' && !publishAt.value) {
+                const soon = new Date(Date.now() + 60 * 60 * 1000);
+                soon.setMinutes(0, 0, 0);
+                publishAt.value = toLocalInput(soon.toISOString());
+              }
               updateBtnLabel();
+            });
+            publishAt.addEventListener('change', () => {
+              config.formData.publish_at = fromLocalInput(publishAt.value);
             });
             updateBtnLabel();
           },
@@ -2079,6 +2129,8 @@
       onSubmit: (d) => {
         const statusEl = document.getElementById('f-status');
         if (statusEl) d.status = statusEl.value;
+        const whenEl = document.getElementById('f-publish-at');
+        if (whenEl) d.publish_at = fromLocalInput(whenEl.value);
         const contentEl = document.getElementById('f-content');
         if (contentEl) d.content = contentEl.value.trim();
         return {
@@ -2090,6 +2142,7 @@
           content: d.content || null,
           cover_image: d.cover_image || null,
           status: d.status,
+          publish_at: d.status === 'scheduled' ? d.publish_at : null,
         };
       },
       onBack: loadBlogs,

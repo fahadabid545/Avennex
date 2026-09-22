@@ -24,11 +24,18 @@ create table blogs (
   content text,
   excerpt text,
   meta_description text,
-  status text default 'draft' check (status in ('draft', 'published')),
+  cover_image text,
+  author text,
+  status text default 'draft' check (status in ('draft', 'published', 'scheduled')),
+  publish_at timestamptz,
+  last_edited_by text,
+  last_edited_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   published_at timestamptz
 );
+
+create index blogs_scheduled_idx on blogs (publish_at) where status = 'scheduled';
 
 alter table blogs disable row level security;
 

@@ -2036,3 +2036,10 @@ body.is-splitting {
   .history-diff { grid-template-columns: 1fr; gap: 4px; }
   .history-item-head { flex-direction: column; }
 }
+
+.row-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: .7;
+}
