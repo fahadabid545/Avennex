@@ -20,25 +20,15 @@
   <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="css/reset.css?v=202609120030">
-  <link rel="stylesheet" href="css/variables.css?v=202609120030">
-  <link rel="stylesheet" href="css/global.css?v=202609120030">
-  <link rel="stylesheet" href="css/layout.css?v=202609120030">
-  <link rel="stylesheet" href="css/header.css?v=202609120030">
-  <link rel="stylesheet" href="css/footer.css?v=202609120030">
-  <link rel="stylesheet" href="css/animations.css?v=202609120030">
-  <link rel="stylesheet" href="css/hero.css?v=202609120030">
-  <link rel="stylesheet" href="css/components.css?v=202609120030">
-
-  <link rel="stylesheet" href="css/theme.css?v=202609120030">
-  <link rel="stylesheet" href="css/design.css?v=202609120030">
-  <link rel="stylesheet" href="css/chatbot.css?v=202609120030">
-  <script src="https://unpkg.com/lucide@0.460.0"></script>
+  <link rel="stylesheet" href="css/base.css?v=202609221200">
+  <link rel="stylesheet" href="css/chrome.css?v=202609221200">
+  <link rel="stylesheet" href="css/ui.css?v=202609221200">
+  <link rel="stylesheet" href="css/hero.css?v=202609221200">
+  <link rel="stylesheet" href="css/pages.css?v=202609221200">
+  <link rel="stylesheet" href="css/chatbot.css?v=202609221200">
 </head>
 <body data-header-transparent="true">
   <a href="#main" class="skip-link">Skip to content</a>
@@ -47,301 +37,446 @@
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="index.html" class="active">Home</a>
+        <a href="index.html" class="active">Index</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html">Launchpad</a>
-        <a href="blog.html">Blog</a>
+        <a href="blog.html">Journal</a>
         <a href="academy.html">Academy</a>
         <a href="careers.html">Careers</a>
-        <a href="about.html">About</a>
-        <a href="contact.html" class="nav-cta">Let's Talk</a>
+        <a href="about.html">Studio</a>
+        <a href="contact.html" class="nav-cta">Let's talk</a>
       </nav>
-      <button class="menu-toggle" aria-label="Open menu">
-        <i data-lucide="menu" width="24" height="24"></i>
+      <button class="menu-toggle" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
+        <i data-icon="menu" width="22" height="22"></i>
       </button>
     </div>
   </header>
 
-  <div class="mobile-menu">
+  <div class="mobile-menu" id="mobile-menu">
     <button class="mobile-menu-close" aria-label="Close menu">
-      <i data-lucide="x" width="28" height="28"></i>
+      <i data-icon="x" width="24" height="24"></i>
     </button>
-    <a href="index.html" class="active">Home</a>
-    <a href="products.html">Products</a>
-    <a href="launchpad.html">Launchpad</a>
-    <a href="blog.html">Blog</a>
-    <a href="academy.html">Academy</a>
-    <a href="careers.html">Careers</a>
-    <a href="about.html">About</a>
-    <a href="contact.html" class="nav-cta">Let's Talk</a>
+    <a href="index.html" data-n="01" class="active">Index</a>
+    <a href="products.html" data-n="02">Products</a>
+    <a href="launchpad.html" data-n="03">Launchpad</a>
+    <a href="blog.html" data-n="04">Journal</a>
+    <a href="academy.html" data-n="05">Academy</a>
+    <a href="careers.html" data-n="06">Careers</a>
+    <a href="about.html" data-n="07">Studio</a>
+    <a href="contact.html" data-n="08" class="nav-cta">Let's talk</a>
   </div>
 
   <main id="main">
-    <section class="hero">
-      <div class="hero-content">
-        <p class="hero-eyebrow">Product Studio</p>
-        <h1 class="hero-headline">
-          We build AI-powered products
-          <span class="hero-headline-sub">that automate complex workflows.</span>
-        </h1>
-        <p class="hero-subtext">HR teams buried in manual screening. Store owners priced out of e-commerce tools. Real bottlenecks, turned into products that handle the work.</p>
-        <div class="hero-links">
-          <a href="products.html" class="hero-link">
-            <span class="hero-link-index">01</span>
-            <span class="hero-link-rule" aria-hidden="true"></span>
-            <span class="hero-link-label">See our products</span>
-            <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
-          </a>
-          <a href="launchpad.html" class="hero-link">
-            <span class="hero-link-index">02</span>
-            <span class="hero-link-rule" aria-hidden="true"></span>
-            <span class="hero-link-label">Explore the launchpad</span>
-            <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
-          </a>
+    <section class="hero" id="hero-section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="hero-body">
+        <div class="frame" style="width:100%">
+          <div class="grid hero-grid">
+            <div class="hero-content">
+              <p class="hero-eyebrow cap m-in" data-m="1">Product studio &middot; Lahore &middot; since 2022</p>
+              <h1 class="hero-headline h-hero">
+                We find the bottleneck,
+                <span class="hero-headline-sub">then we build the thing that removes it.</span>
+              </h1>
+              <p class="hero-subtext lede m-in" data-m="9">Recruiters drowning in resumes. Sellers priced out of storefront software. We don't take briefs for these problems. We own them, and we keep the revenue.</p>
+
+              <div class="hero-links m-in" data-m="11">
+                <a href="products.html" class="hero-link">
+                  <span class="hero-link-index">01</span>
+                  <span class="hero-link-label">Two products in development</span>
+                  <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
+                </a>
+                <a href="launchpad.html" class="hero-link">
+                  <span class="hero-link-index">02</span>
+                  <span class="hero-link-label">Ideas open before the code exists</span>
+                  <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            <div class="hero-aside m-in" data-m="13">
+              <div class="log-head">
+                <span class="log-live" aria-hidden="true"></span>
+                <span class="cap">Run &mdash; autonomous</span>
+              </div>
+              <dl class="log-rows" aria-hidden="true">
+                <div class="log-row"><dt>Distance</dt><dd data-run="dist">00000 m</dd></div>
+                <div class="log-row"><dt>Cleared</dt><dd data-run="cleared">000</dd></div>
+                <div class="log-row"><dt>Velocity</dt><dd data-run="vel">1.00 u/s</dd></div>
+                <div class="log-row"><dt>Uptime</dt><dd data-run="up">00:00</dd></div>
+              </dl>
+              <p class="log-note">Before the products, this team shipped games to the Play Store. One still runs along the bottom of the page, solving its own jumps.</p>
+
+              <nav class="hero-index" aria-label="What is on this page">
+                <a href="#pipeline-section"><span>01</span><span>What gets removed</span></a>
+                <a href="#brain-section"><span>02</span><span>How the models read</span></a>
+                <a href="#story-scroll"><span>03</span><span>The two products</span></a>
+                <a href="#stats-section"><span>04</span><span>The studio, in figures</span></a>
+                <a href="#chat-section"><span>05</span><span>Say something</span></a>
+              </nav>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="scroll-indicator">
-        <i data-lucide="chevron-down" width="16" height="16"></i>
-        <div class="scroll-indicator-line"></div>
-      </div>
+      <div class="hero-horizon" aria-hidden="true"></div>
 
       <div class="hero-game" id="hero-game">
-        <div class="hero-game-overlay" id="game-overlay">
-          <canvas id="game-canvas"></canvas>
-        </div>
-        <button type="button" class="game-play-tab" id="game-play-tab">
-          <span class="game-play-tab-dot" aria-hidden="true"></span>
-          <span>Click to play</span>
-        </button>
-        <button type="button" class="game-exit" id="game-exit">Exit game</button>
-        <div class="game-scroll-hint" aria-hidden="true">
-          <span class="game-scroll-arrow">&darr;</span>
-          <span>Scroll down to continue on the site</span>
+        <canvas id="game-canvas" aria-hidden="true"></canvas>
+        <div class="hero-game-meta" aria-hidden="true">
+          <span>Fig. 00 &mdash; the studio, still running</span>
+          <span>No input accepted</span>
         </div>
       </div>
-
     </section>
 
-    <section class="section brain-section band-shift" id="brain-section">
+    <section class="section panel" id="pipeline-section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <div class="brain-grid">
-          <div class="brain-text">
-            <p class="section-eyebrow">Built With AI</p>
-            <h2 class="section-heading section-heading-left">Your workflows have patterns. Our models find them.</h2>
-            <p>Most automation tools follow rigid rules you set up yourself. Ours learn the patterns buried in your existing processes, the ones your team follows without thinking about it, and turn those into actions. The HR platform doesn't just match keywords to job descriptions. It picks up on the subtle signals experienced recruiters notice, the ones that separate a strong candidate from someone who's good at writing resumes.</p>
-            <p>Same principle across everything we build. Pattern recognition first, automation second.</p>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 01</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>Pick a workflow. See what gets removed.</h2>
+              <p class="section-subtext m-in">Same pattern behind every product. Find the repetitive part, hand it to the machine, give the person back the judgement call.</p>
+            </div>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>Measured</span></div>
           </div>
-          <div class="brain-canvas-wrap" id="brain-canvas-wrap"></div>
+
+          <div class="flow m-in">
+            <div class="flow-tabs" role="tablist" aria-label="Workflows">
+              <button type="button" class="flow-tab is-active" role="tab" aria-selected="true" data-flow="screening">Resume screening</button>
+              <button type="button" class="flow-tab" role="tab" aria-selected="false" data-flow="storefront">Storefront setup</button>
+              <button type="button" class="flow-tab" role="tab" aria-selected="false" data-flow="orders">Order routing</button>
+            </div>
+
+            <div class="flow-body">
+              <div class="flow-metric">
+                <span class="flow-card-label">Time per cycle</span>
+                <strong class="flow-metric-value" id="flow-value">6 hrs</strong>
+                <span class="flow-metric-note" id="flow-note">down from two full days</span>
+              </div>
+
+              <div class="flow-chart">
+                <span class="flow-card-label">Manual against automated</span>
+                <div id="flow-bars"></div>
+              </div>
+
+              <div class="flow-steps">
+                <span class="flow-card-label">What runs</span>
+                <ol class="flow-step-list" id="flow-steps"></ol>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="scroll-strip">
+    <section class="section brain-section" id="brain-section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="section-inner">
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 02</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>Your workflows already have a shape.</h2>
+            </div>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>In development</span></div>
+          </div>
+
+          <div class="brain-grid">
+            <div class="brain-text m-in">
+              <p>Rule-based tools make you describe the work before they will do any of it. Ours read what your team already does, the steps nobody wrote down, and take the repetitive half.</p>
+              <p>The screening platform doesn't match keywords. It picks up the signals a good recruiter notices in the first fifteen seconds, then shows you why it ranked someone where it did.</p>
+              <p class="pull">Pattern first. Automation second. That order matters more than the model you pick.</p>
+            </div>
+            <div class="brain-canvas-wrap m-in" id="brain-canvas-wrap" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scroll-strip" aria-hidden="true">
       <div class="scroll-strip-track">
-        <span class="scroll-strip-text">AI Automation &middot; HR Automation &middot; E-Commerce Builds &middot; Custom Software &middot; Game Development &middot; Product Design &middot; </span>
-        <span class="scroll-strip-text">AI Automation &middot; HR Automation &middot; E-Commerce Builds &middot; Custom Software &middot; Game Development &middot; Product Design &middot; </span>
-        <span class="scroll-strip-text">AI Automation &middot; HR Automation &middot; E-Commerce Builds &middot; Custom Software &middot; Game Development &middot; Product Design &middot; </span>
-      </div>
-    </section>
-
-    <section class="section dash-section band-dark" id="pipeline-section" data-animate="fade-up">
-      <div class="section-inner">
-        <p class="section-eyebrow">Inside the work</p>
-        <h2 class="section-heading">Pick a workflow. See what gets removed.</h2>
-        <p class="section-subtext">Same pattern behind every product. Find the repetitive part, hand it to the machine, give the person back the judgement call.</p>
-
-        <div class="dash">
-          <div class="dash-tabs" role="tablist" aria-label="Workflows">
-            <button type="button" class="dash-tab is-active" role="tab" aria-selected="true" data-dash="screening">Resume screening</button>
-            <button type="button" class="dash-tab" role="tab" aria-selected="false" data-dash="storefront">Storefront setup</button>
-            <button type="button" class="dash-tab" role="tab" aria-selected="false" data-dash="orders">Order routing</button>
-          </div>
-
-          <div class="dash-body">
-            <div class="dash-card dash-metric">
-              <span class="dash-card-label">Time per cycle</span>
-              <strong class="dash-metric-value" id="dash-value">6 hrs</strong>
-              <span class="dash-metric-note" id="dash-note">down from two full days</span>
-            </div>
-
-            <div class="dash-card dash-chart">
-              <span class="dash-card-label">Manual vs automated</span>
-              <div class="dash-bars" id="dash-bars"></div>
-            </div>
-
-            <div class="dash-card dash-steps">
-              <span class="dash-card-label">What runs</span>
-              <ol class="dash-step-list" id="dash-steps"></ol>
-            </div>
-          </div>
-        </div>
+        <span class="scroll-strip-text">Products we own &middot; Revenue, not invoices &middot; Built in the open &middot; Priced for Lahore, not San Francisco &middot; </span>
+        <span class="scroll-strip-text">Products we own &middot; Revenue, not invoices &middot; Built in the open &middot; Priced for Lahore, not San Francisco &middot; </span>
+        <span class="scroll-strip-text">Products we own &middot; Revenue, not invoices &middot; Built in the open &middot; Priced for Lahore, not San Francisco &middot; </span>
       </div>
     </section>
 
     <section class="section story-scroll" id="story-scroll">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <div class="story-grid">
-          <div class="story-left">
-            <p class="section-eyebrow">What we're building</p>
-            <h2 class="section-heading">Two products, one operating principle</h2>
-            <div class="story-desc">
-              <p class="story-copy is-active" data-story="0">Recruiters lose whole days to resumes that never had a chance. The platform reads every application against what the role actually needs, then hands back a ranked shortlist with the reasoning attached. Volume stops deciding who gets looked at.</p>
-              <p class="story-copy" data-story="1">Storefront tools priced for Western software budgets don't work for a seller in Lahore moving forty orders a week. This one drops the monthly fee and keeps what matters. Products, payments, orders.</p>
-              <p class="story-copy" data-story="2">Some ideas need pressure before they need code. They get published here first, open for anyone to pick apart or help build. What survives the feedback gets built.</p>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 03</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>Two products, one operating principle.</h2>
             </div>
-            <a class="story-link" href="products.html">See all products <span aria-hidden="true">&rarr;</span></a>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>Shipping</span></div>
           </div>
 
-          <div class="story-right">
-            <article class="story-item is-active" data-story-item="0">
-              <span class="story-index">01</span>
-              <h3 class="story-title">AI HR Platform</h3>
-              <ul class="story-stack">
-                <li>Resume parsing</li>
-                <li>Signal scoring</li>
-                <li>Ranked shortlist</li>
-                <li>Bulk export</li>
-              </ul>
-            </article>
-
-            <article class="story-item" data-story-item="1">
-              <span class="story-index">02</span>
-              <h3 class="story-title">E-Commerce Builder</h3>
-              <ul class="story-stack">
-                <li>Storefront</li>
-                <li>Local payments</li>
-                <li>Order management</li>
-                <li>No monthly fee</li>
-              </ul>
-            </article>
-
-            <article class="story-item" data-story-item="2">
-              <span class="story-index">03</span>
-              <h3 class="story-title">Launchpad</h3>
-              <ul class="story-stack">
-                <li>Open concepts</li>
-                <li>Public feedback</li>
-                <li>Collaboration</li>
-                <li>Built in the open</li>
-              </ul>
-            </article>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section facts-section" id="stats-section" data-animate="fade-in">
-      <div class="section-inner">
-        <div class="facts-grid">
-          <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value" id="fact-products">2</span>
-            <span class="fact-label">Products in development</span>
-            <span class="fact-detail">An HR screening platform and a storefront builder. Both get worked on every week.</span>
-          </button>
-          <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value" id="fact-team">7</span>
-            <span class="fact-label">People on the team</span>
-            <span class="fact-detail">Engineers, design, and product. Everyone works part-time alongside a day job.</span>
-          </button>
-          <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value">2022</span>
-            <span class="fact-label">Founded</span>
-            <span class="fact-detail">Started in Lahore after years of shipping other people's software.</span>
-          </button>
-          <button type="button" class="fact" aria-expanded="false">
-            <span class="fact-value" id="fact-launchpad">3</span>
-            <span class="fact-label">Ideas on the launchpad</span>
-            <span class="fact-detail">Published before a line of code exists, so the feedback arrives while it still counts.</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section-tight" data-animate="fade-in">
-      <div class="section-inner">
-        <p class="callout">We didn't start with a pitch deck or a market analysis. We started with problems we hit ourselves, then wrote the software to fix them.</p>
-      </div>
-    </section>
-
-    <section class="section about-preview" data-animate="fade-right">
-      <div class="section-inner">
-        <div class="about-grid">
-          <div class="about-text">
-            <p class="section-eyebrow">Who We Are</p>
-            <h2 class="section-heading section-heading-left about-heading-display">A product studio, not a software house.</h2>
-            <p>Most dev shops wait for a client brief, build it, hand it off, repeat. That's fine work but it's not ours. Every product in our pipeline exists because we found the problem first and decided to own the solution.</p>
-            <p>The HR platform started because our own hiring process was a mess. The e-commerce builder came from watching local sellers pay absurd monthly fees for tools built for Western markets. Each product traces back to a specific frustration, not a pitch deck.</p>
-            <p>Avennex is a small team that ships its own software. Revenue comes from products people pay for, not from billing hours to someone else's roadmap.</p>
-            <a href="about.html" class="text-link">More about us <span class="text-link-arrow">&rarr;</span></a>
-          </div>
-          <div class="about-visual">
-            <div class="about-placeholder">--team photo or visual--</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section chat-section" id="chat-section" data-animate="fade-up">
-      <div class="section-inner">
-        <div class="chat-intro">
-          <h2 class="section-heading">Say something</h2>
-          <p class="section-subtext">Public board. Drop a message, we read everything and reply when there's something worth saying.</p>
-        </div>
-
-        <div class="chat-board">
-          <div class="chat-messages" id="chat-messages"></div>
-          <div class="chat-compose">
-            <input type="text" id="chat-input" placeholder="Write a message..." class="chat-compose-input">
-            <button type="button" id="chat-send-btn" class="hero-btn-primary chat-compose-btn">Send</button>
-          </div>
-          <p class="chat-disclaimer">Messages and replies here are public.</p>
-        </div>
-
-        <div class="chat-modal-overlay" id="chat-modal" style="display:none;">
-          <div class="chat-modal">
-            <button type="button" class="chat-modal-close"><i data-lucide="x" width="20" height="20"></i></button>
-            <h3>Before you send</h3>
-            <form id="chat-details-form">
-              <div class="form-group">
-                <label for="chat-name">Name</label>
-                <input type="text" id="chat-name" required>
+          <div class="story-grid">
+            <div class="story-left">
+              <div class="story-desc">
+                <p class="story-copy is-active" data-story="0">Recruiters lose whole days to resumes that never had a chance. The platform reads every application against what the role actually needs, then hands back a ranked shortlist with the reasoning attached. Volume stops deciding who gets looked at.</p>
+                <p class="story-copy" data-story="1">Storefront tools priced for Western software budgets don't work for a seller in Lahore moving forty orders a week. This one drops the monthly fee and keeps what matters. Products, payments, orders.</p>
+                <p class="story-copy" data-story="2">Some ideas need pressure before they need code. They get published here first, open for anyone to pick apart or help build. What survives the feedback gets built.</p>
               </div>
-              <div class="form-group">
-                <label for="chat-email">Email</label>
-                <input type="email" id="chat-email" required>
-              </div>
-              <div class="form-group">
-                <label for="chat-profession">Profession (optional)</label>
-                <input type="text" id="chat-profession">
-              </div>
-              <div class="form-group">
-                <label for="chat-company">Company (optional)</label>
-                <input type="text" id="chat-company">
-              </div>
-              <div id="chat-form-msg" class="form-msg"></div>
-              <button type="submit" class="hero-btn-primary form-submit" style="width:100%">Send message</button>
-            </form>
+              <a class="story-link" href="products.html">All products <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+            </div>
+
+            <div class="story-right">
+              <article class="story-item is-active" data-story-item="0">
+                <span class="story-index">01</span>
+                <div>
+                  <h3 class="story-title">AI HR Platform</h3>
+                  <ul class="story-stack">
+                    <li>Resume parsing</li>
+                    <li>Signal scoring</li>
+                    <li>Ranked shortlist</li>
+                    <li>Bulk export</li>
+                  </ul>
+                </div>
+              </article>
+
+              <article class="story-item" data-story-item="1">
+                <span class="story-index">02</span>
+                <div>
+                  <h3 class="story-title">E-Commerce Builder</h3>
+                  <ul class="story-stack">
+                    <li>Storefront</li>
+                    <li>Local payments</li>
+                    <li>Order management</li>
+                    <li>No monthly fee</li>
+                  </ul>
+                </div>
+              </article>
+
+              <article class="story-item" data-story-item="2">
+                <span class="story-index">03</span>
+                <div>
+                  <h3 class="story-title">Launchpad</h3>
+                  <ul class="story-stack">
+                    <li>Open concepts</li>
+                    <li>Public feedback</li>
+                    <li>Collaboration</li>
+                    <li>Built in the open</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section faq-section" id="faq-section" data-animate="fade-in">
+    <section class="section facts-section" id="stats-section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <h2 class="section-heading">Things people ask us</h2>
-        <div class="faq-list" id="faq-list"></div>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 04</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>The studio, in figures.</h2>
+            </div>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>On the record</span></div>
+          </div>
+
+          <div class="facts-grid m-in">
+            <button type="button" class="fact" aria-expanded="false">
+              <span class="fact-value" id="fact-products">2</span>
+              <span class="fact-label">Products in development</span>
+              <span class="fact-detail">An HR screening platform and a storefront builder. Both get worked on every week.</span>
+            </button>
+            <button type="button" class="fact" aria-expanded="false">
+              <span class="fact-value" id="fact-team">7</span>
+              <span class="fact-label">People on the team</span>
+              <span class="fact-detail">Engineers, design and product. Everyone works alongside a day job, which is why the roadmap is honest about pace.</span>
+            </button>
+            <button type="button" class="fact" aria-expanded="false">
+              <span class="fact-value">2022</span>
+              <span class="fact-label">Founded</span>
+              <span class="fact-detail">Started in Lahore after years of shipping other people's software.</span>
+            </button>
+            <button type="button" class="fact" aria-expanded="false">
+              <span class="fact-value" id="fact-launchpad">3</span>
+              <span class="fact-label">Ideas on the launchpad</span>
+              <span class="fact-detail">Published before a line of code exists, so the feedback arrives while it still counts.</span>
+            </button>
+            <button type="button" class="fact" aria-expanded="false">
+              <span class="fact-value">0</span>
+              <span class="fact-label">Outside investors</span>
+              <span class="fact-detail">No raise, no board, no runway clock. The products pay for the products.</span>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="section section-loose cta-banner band-dark band-dark-tail" data-animate="fade-in">
+    <section class="section about-preview">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <div class="cta-content">
-          <h2 class="cta-heading">Got something to build?</h2>
-          <p class="cta-subtext">Tell us what you're working on. Or browse what we're working on and jump in.</p>
-          <div class="cta-buttons">
-            <a href="contact.html" class="hero-btn-primary">Get in Touch</a>
-            <a href="launchpad.html" class="hero-btn-secondary">See the Launchpad</a>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 05</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>A product studio, not a software house.</h2>
+            </div>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>Who we are</span></div>
+          </div>
+
+          <div class="about-grid">
+            <div class="about-text m-in">
+              <p>Most dev shops wait for a client brief, build it, hand it off, repeat. Fine work. It just isn't ours. Every product in the pipeline exists because we found the problem first and decided to own the solution.</p>
+              <p>The HR platform started because our own hiring process was a mess. The storefront builder came from watching local sellers pay absurd monthly fees for tools built for Western markets. Each one traces back to a specific frustration, not a pitch deck.</p>
+              <p>Revenue comes from products people pay for, not from billing hours against someone else's roadmap.</p>
+              <a href="about.html" class="text-link">More about the studio <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+            </div>
+            <div class="about-visual m-in">
+              <svg class="fig m-draw" viewBox="0 0 440 340" role="img" aria-label="Drawing of the studio at night: five desks, two of them still lit, and the Lahore skyline behind">
+          <text class="lab" x="0" y="14">Lahore &middot; 23:40 &middot; four of seven still up</text>
+          <line class="ln-soft" x1="0" y1="26" x2="440" y2="26"/>
+
+          <!-- the skyline, kept low so the desks carry the drawing -->
+          <path class="ln-soft" d="M0 132h34v-22h22v22h18v-34h26v34h30v-16h20v16h26v-28h24v28h34v-20h22v20h30v-40h26v40h32v-14h20v14h30"/>
+          <rect class="ln-soft" x="86" y="112" width="4" height="4"/>
+          <rect class="ln-soft" x="232" y="118" width="4" height="4"/>
+          <rect class="fill-mark" x="336" y="104" width="4" height="4"/>
+          <rect class="ln-soft" x="150" y="108" width="4" height="4"/>
+
+          <line class="ln" x1="0" y1="132" x2="440" y2="132"/>
+
+          <!-- five desks. the two with a lamp on are the ones still working -->
+          <g>
+            <rect class="ln" x="16" y="182" width="74" height="4"/>
+            <line class="ln" x1="24" y1="186" x2="24" y2="228"/>
+            <line class="ln" x1="82" y1="186" x2="82" y2="228"/>
+            <rect class="ln" x="34" y="160" width="38" height="22"/>
+            <line class="ln-soft" x1="40" y1="168" x2="66" y2="168"/>
+            <line class="ln-soft" x1="40" y1="174" x2="58" y2="174"/>
+            <path class="ln-mark" d="M96 182v-30l12-8"/>
+            <circle class="fill-mark" cx="110" cy="142" r="4"/>
+            <text class="num" x="16" y="244">01 &mdash; shipping</text>
+          </g>
+
+          <g>
+            <rect class="ln" x="126" y="182" width="74" height="4"/>
+            <line class="ln" x1="134" y1="186" x2="134" y2="228"/>
+            <line class="ln" x1="192" y1="186" x2="192" y2="228"/>
+            <rect class="ln-soft" x="144" y="160" width="38" height="22"/>
+            <text class="num" x="126" y="244">02 &mdash; day job</text>
+          </g>
+
+          <g>
+            <rect class="ln" x="236" y="182" width="74" height="4"/>
+            <line class="ln" x1="244" y1="186" x2="244" y2="228"/>
+            <line class="ln" x1="302" y1="186" x2="302" y2="228"/>
+            <rect class="ln" x="254" y="160" width="38" height="22"/>
+            <line class="ln-soft" x1="260" y1="168" x2="286" y2="168"/>
+            <line class="ln-soft" x1="260" y1="174" x2="278" y2="174"/>
+            <path class="ln-mark" d="M316 182v-30l12-8"/>
+            <circle class="fill-mark" cx="330" cy="142" r="4"/>
+            <text class="num" x="236" y="244">03 &mdash; shipping</text>
+          </g>
+
+          <g>
+            <rect class="ln" x="346" y="182" width="74" height="4"/>
+            <line class="ln" x1="354" y1="186" x2="354" y2="228"/>
+            <line class="ln" x1="412" y1="186" x2="412" y2="228"/>
+            <rect class="ln-soft" x="364" y="160" width="38" height="22"/>
+            <text class="num" x="346" y="244">04 &mdash; asleep</text>
+          </g>
+
+          <line class="ln-soft" x1="0" y1="266" x2="440" y2="266"/>
+          <text class="lab" x="0" y="286">Nobody here is full time. That is not a footnote,</text>
+          <text class="lab" x="0" y="300">it is how the thing gets funded.</text>
+          <text class="num" x="330" y="300">Fig. 05</text>
+        </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section chat-section" id="chat-section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="section-inner">
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 06</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>Say something.</h2>
+              <p class="section-subtext m-in">Public board. Drop a message, we read everything and reply when there's something worth saying.</p>
+            </div>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>Open</span></div>
+          </div>
+
+          <div class="chat-board m-in">
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-compose">
+              <input type="text" id="chat-input" placeholder="Write a message" class="chat-compose-input" autocomplete="off">
+              <button type="button" id="chat-send-btn" class="hero-btn-primary chat-compose-btn">Send</button>
+            </div>
+            <p class="chat-disclaimer">Messages and replies here are public.</p>
+          </div>
+
+          <div class="chat-modal-overlay" id="chat-modal" style="display:none;">
+            <div class="chat-modal">
+              <button type="button" class="chat-modal-close" aria-label="Close"><i data-icon="x" width="18" height="18"></i></button>
+              <h3>Before you send</h3>
+              <form id="chat-details-form">
+                <div class="form-group">
+                  <label for="chat-name">Name</label>
+                  <input type="text" id="chat-name" required>
+                </div>
+                <div class="form-group">
+                  <label for="chat-email">Email</label>
+                  <input type="email" id="chat-email" required>
+                </div>
+                <div class="form-group">
+                  <label for="chat-profession">Profession (optional)</label>
+                  <input type="text" id="chat-profession">
+                </div>
+                <div class="form-group">
+                  <label for="chat-company">Company (optional)</label>
+                  <input type="text" id="chat-company">
+                </div>
+                <div id="chat-form-msg" class="form-msg"></div>
+                <button type="submit" class="hero-btn-primary form-submit" style="width:100%">Send message</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq-section">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="section-inner">
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 07</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>Things people ask us.</h2>
+            </div>
+          </div>
+          <div class="faq-list m-in" id="faq-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-loose cta-banner panel">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="section-inner">
+        <div class="grid">
+          <div class="cta-content">
+            <h2 class="cta-heading" data-set-type>Got something to build?</h2>
+            <p class="cta-subtext m-in">Tell us what you're working on. Or look at what we're working on and jump in.</p>
+            <div class="cta-buttons m-in">
+              <a href="contact.html" class="hero-btn-primary">Get in touch</a>
+              <a href="launchpad.html" class="hero-btn-secondary">See the launchpad</a>
+            </div>
           </div>
         </div>
       </div>
@@ -353,48 +488,47 @@
       <div class="footer-grid">
         <div class="footer-col">
           <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-          <p class="footer-brand-text">AI-powered products that automate complex workflows.</p>
+          <p class="footer-brand-text">A product studio in Lahore. We find the bottleneck, then build the thing that removes it.</p>
           <div class="footer-social">
-            <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin" width="18" height="18"></i></a>
-            <a href="#" aria-label="GitHub"><i data-lucide="github" width="18" height="18"></i></a>
+            <a href="https://www.linkedin.com/company/avennex/posts/?feedView=all" aria-label="Avennex on LinkedIn" rel="noopener" target="_blank"><i data-icon="linkedin" width="17" height="17"></i></a>
           </div>
         </div>
         <div class="footer-col">
-          <h4>Explore</h4>
-          <a href="products.html">All products</a>
+          <h4>Index</h4>
+          <a href="products.html">Products</a>
           <a href="launchpad.html">Launchpad</a>
+          <a href="blog.html">Journal</a>
           <a href="academy.html">Academy</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="about.html">About</a>
+          <a href="about.html">Studio</a>
           <a href="careers.html">Careers</a>
-          <a href="blog.html">Blog</a>
           <a href="contact.html">Contact</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
-          <a href="privacy.html">Privacy Policy</a>
+          <a href="privacy.html">Privacy</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 Avennex. All rights reserved.</p>
+      <p>&copy; 2026 Avennex</p>
+      <p>Lahore, Pakistan</p>
     </div>
   </footer>
 
-  <script src="js/main.js?v=202609120030" defer></script>
-  <script src="js/header.js?v=202609120030" defer></script>
-  <script src="js/api.js?v=202609120030" defer></script>
-  <script src="js/animations.js?v=202609120030" defer></script>
-  <script src="js/game.js?v=202609120030" defer></script>
-  <script src="js/brain-net.js?v=202609120030" defer></script>
-  <script src="js/home.js?v=202609120030" defer></script>
-  <script src="js/home-sections.js?v=202609120030" defer></script>
-  <script src="js/chat.js?v=202609120030" defer></script>
-  <script src="js/schema.js?v=202609120030" defer></script>
-  <script src="js/chatbot.js?v=202609120030" defer></script>
-  <script>if (typeof lucide !== "undefined") lucide.createIcons();</script>
+  <script src="js/icons.js?v=202609221200" defer></script>
+  <script src="js/api.js?v=202609221200" defer></script>
+  <script src="js/motion.js?v=202609221200" defer></script>
+  <script src="js/figures.js?v=202609221200" defer></script>
+  <script src="js/hero-run.js?v=202609221200" defer></script>
+  <script src="js/brain-net.js?v=202609221200" defer></script>
+  <script src="js/home.js?v=202609221200" defer></script>
+  <script src="js/home-sections.js?v=202609221200" defer></script>
+  <script src="js/chat.js?v=202609221200" defer></script>
+  <script src="js/schema.js?v=202609221200" defer></script>
+  <script src="js/chatbot.js?v=202609221200" defer></script>
 
 </body>
 </html>

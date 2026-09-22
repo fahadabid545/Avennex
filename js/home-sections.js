@@ -21,11 +21,11 @@
 })();
 
 (function () {
-  var tabs = document.querySelectorAll('.dash-tab');
-  var valueEl = document.getElementById('dash-value');
-  var noteEl = document.getElementById('dash-note');
-  var barsEl = document.getElementById('dash-bars');
-  var stepsEl = document.getElementById('dash-steps');
+  var tabs = document.querySelectorAll('.flow-tab');
+  var valueEl = document.getElementById('flow-value');
+  var noteEl = document.getElementById('flow-note');
+  var barsEl = document.getElementById('flow-bars');
+  var stepsEl = document.getElementById('flow-steps');
   if (!tabs.length || !valueEl || !barsEl || !stepsEl) return;
 
   var data = {
@@ -66,14 +66,14 @@
     if (noteEl) noteEl.textContent = d.note;
 
     barsEl.innerHTML = d.bars.map(function (b) {
-      return '<div class="dash-bar-row">' +
-        '<span class="dash-bar-label">' + b.label + '</span>' +
-        '<span class="dash-bar-track"><span class="dash-bar-fill" style="width:0%"></span></span>' +
-        '<span class="dash-bar-value">' + b.hours + '</span>' +
+      return '<div class="flow-bar-row' + (b.pct < 100 ? ' is-auto' : '') + '">' +
+        '<span class="flow-bar-label">' + b.label + '</span>' +
+        '<span class="flow-bar-track"><span class="flow-bar-fill" style="width:0%"></span></span>' +
+        '<span class="flow-bar-value">' + b.hours + '</span>' +
         '</div>';
     }).join('');
 
-    var fills = barsEl.querySelectorAll('.dash-bar-fill');
+    var fills = barsEl.querySelectorAll('.flow-bar-fill');
     requestAnimationFrame(function () {
       d.bars.forEach(function (b, i) {
         if (fills[i]) fills[i].style.width = b.pct + '%';
@@ -92,7 +92,7 @@
         t.classList.toggle('is-active', on);
         t.setAttribute('aria-selected', on ? 'true' : 'false');
       });
-      paint(tab.getAttribute('data-dash'));
+      paint(tab.getAttribute('data-flow'));
     });
   });
 
@@ -116,41 +116,6 @@
       }
     });
   });
-})();
-
-(function () {
-  var band = document.querySelector('.band-shift');
-  if (!band) return;
-
-  var ticking = false;
-
-  function progress() {
-    var rect = band.getBoundingClientRect();
-    var vh = window.innerHeight || document.documentElement.clientHeight;
-    var start = vh * 0.95;
-    var end = -rect.height * 0.35;
-    if (rect.top >= start) return 0;
-    if (rect.top <= end) return 1;
-    var t = (start - rect.top) / (start - end);
-    return t * t * (3 - 2 * t);
-  }
-
-  function paint() {
-    ticking = false;
-    var p = progress();
-    band.style.setProperty('--darkness', p.toFixed(3));
-    band.classList.toggle('is-dark', p > 0.5);
-  }
-
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(paint);
-  }
-
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
-  paint();
 })();
 
 (function () {

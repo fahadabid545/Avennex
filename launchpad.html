@@ -10,34 +10,24 @@
 
   <meta property="og:title" content="Launchpad | Avennex">
   <meta property="og:description" content="Product ideas we're publishing before writing code. Read the pitch, give feedback, or join the build. Contributors get profit sharing, not equity theater.">
+  <meta property="og:image" content="https://avennex.com/img/og-image.png">
+  <meta property="og:url" content="https://avennex.com/launchpad.html">
+  <meta property="og:type" content="website">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Launchpad | Avennex">
   <meta name="twitter:description" content="Product ideas we're publishing before writing code. Read the pitch, give feedback, or join the build. Contributors get profit sharing, not equity theater.">
   <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:image" content="https://avennex.com/img/og-image.png">
-  <meta property="og:url" content="https://avennex.com/launchpad.html">
-  <meta property="og:type" content="website">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="css/reset.css?v=202609120030">
-  <link rel="stylesheet" href="css/variables.css?v=202609120030">
-  <link rel="stylesheet" href="css/global.css?v=202609120030">
-  <link rel="stylesheet" href="css/layout.css?v=202609120030">
-  <link rel="stylesheet" href="css/header.css?v=202609120030">
-  <link rel="stylesheet" href="css/footer.css?v=202609120030">
-  <link rel="stylesheet" href="css/animations.css?v=202609120030">
-  <link rel="stylesheet" href="css/components.css?v=202609120030">
-
-  <link rel="stylesheet" href="css/theme.css?v=202609120030">
-  <link rel="stylesheet" href="css/design.css?v=202609120030">
-  <link rel="stylesheet" href="css/chatbot.css?v=202609120030">
-  <script src="https://unpkg.com/lucide@0.460.0"></script>
+  <link rel="stylesheet" href="css/base.css?v=202609221200">
+  <link rel="stylesheet" href="css/chrome.css?v=202609221200">
+  <link rel="stylesheet" href="css/ui.css?v=202609221200">
+  <link rel="stylesheet" href="css/pages.css?v=202609221200">
+  <link rel="stylesheet" href="css/chatbot.css?v=202609221200">
 </head>
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
@@ -46,92 +36,110 @@
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="index.html">Home</a>
+        <a href="index.html">Index</a>
         <a href="products.html">Products</a>
         <a href="launchpad.html" class="active">Launchpad</a>
-        <a href="blog.html">Blog</a>
+        <a href="blog.html">Journal</a>
         <a href="academy.html">Academy</a>
         <a href="careers.html">Careers</a>
-        <a href="about.html">About</a>
-        <a href="contact.html" class="nav-cta">Let's Talk</a>
+        <a href="about.html">Studio</a>
+        <a href="contact.html" class="nav-cta">Let's talk</a>
       </nav>
-      <button class="menu-toggle" aria-label="Open menu">
-        <i data-lucide="menu" width="24" height="24"></i>
+      <button class="menu-toggle" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
+        <i data-icon="menu" width="22" height="22"></i>
       </button>
     </div>
   </header>
 
-  <div class="mobile-menu">
+  <div class="mobile-menu" id="mobile-menu">
     <button class="mobile-menu-close" aria-label="Close menu">
-      <i data-lucide="x" width="28" height="28"></i>
+      <i data-icon="x" width="24" height="24"></i>
     </button>
-    <a href="index.html">Home</a>
-    <a href="products.html">Products</a>
-    <a href="launchpad.html" class="active">Launchpad</a>
-    <a href="blog.html">Blog</a>
-    <a href="academy.html">Academy</a>
-    <a href="careers.html">Careers</a>
-    <a href="about.html">About</a>
-    <a href="contact.html" class="nav-cta">Let's Talk</a>
+    <a href="index.html" data-n="01">Index</a>
+    <a href="products.html" data-n="02">Products</a>
+    <a href="launchpad.html" data-n="03" class="active">Launchpad</a>
+    <a href="blog.html" data-n="04">Journal</a>
+    <a href="academy.html" data-n="05">Academy</a>
+    <a href="careers.html" data-n="06">Careers</a>
+    <a href="about.html" data-n="07">Studio</a>
+    <a href="contact.html" data-n="08" class="nav-cta">Let's talk</a>
   </div>
-
   <main id="main">
-    <section class="page-hero" data-animate="fade-up">
+    <section class="page-hero">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <p class="section-eyebrow">Launchpad</p>
-        <h1 class="section-heading">Ideas before code</h1>
-        <p class="page-hero-subtext">Product ideas get published here before a single line of code is written. Read the pitch, pick it apart, tell us what's missing. If you want to help build it, that's on the table too.</p>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 01</p>
+            <div class="record-head">
+              <p class="section-eyebrow m-in">Launchpad</p>
+              <h1 class="section-heading" data-set-type>Ideas before code.</h1>
+              <p class="page-hero-subtext m-in">Product ideas get published here before a single line is written. Read the pitch, pick it apart, tell us what's missing. If you want to help build it, that's on the table too.</p>
+            </div>
+            <div class="record-state m-in"><span class="dot" aria-hidden="true"></span><span>Open</span></div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="section how-it-works band-dark" data-animate="fade-up">
+    <section class="section panel how-it-works">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <p class="section-eyebrow">How it works</p>
-        <h2 class="section-heading">From a written idea to a team</h2>
-        <div class="steps-row">
-          <div class="step-item">
-            <div class="step-icon">
-              <i data-lucide="lightbulb" width="24" height="24"></i>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 02</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>From a written idea to a team.</h2>
             </div>
-            <h3 class="step-title">We publish the idea</h3>
-            <p class="step-desc">Full product concept with target users, scope, timeline, and what it'll cost to build.</p>
           </div>
-          <div class="step-connector"></div>
-          <div class="step-item">
-            <div class="step-icon">
-              <i data-lucide="message-circle" width="24" height="24"></i>
+
+          <div class="steps-row m-in m-stagger">
+            <div class="step-item">
+              <div class="step-icon"><i data-icon="lightbulb" width="18" height="18"></i></div>
+              <h3 class="step-title">We publish the idea</h3>
+              <p class="step-desc">The full concept: who it is for, what it covers, how long it takes and what it costs to build.</p>
             </div>
-            <h3 class="step-title">You share your thoughts</h3>
-            <p class="step-desc">Feedback, criticism, feature requests. Everything gets read and shapes the final product.</p>
-          </div>
-          <div class="step-connector"></div>
-          <div class="step-item">
-            <div class="step-icon">
-              <i data-lucide="rocket" width="24" height="24"></i>
+            <div class="step-item">
+              <div class="step-icon"><i data-icon="message-circle" width="18" height="18"></i></div>
+              <h3 class="step-title">You take it apart</h3>
+              <p class="step-desc">Feedback, criticism, features we missed. All of it gets read, and it shapes what ships.</p>
             </div>
-            <h3 class="step-title">We build it together</h3>
-            <p class="step-desc">Contributors can join the team. Development starts with real input baked in from day one.</p>
+            <div class="step-item">
+              <div class="step-icon"><i data-icon="users" width="18" height="18"></i></div>
+              <h3 class="step-title">We build it together</h3>
+              <p class="step-desc">Contributors can join the team. Development starts with real input already baked in.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <section class="section launchpad-entries">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <h2 class="section-heading" data-animate="fade-up">On the Launchpad</h2>
-        <p class="section-subtext" data-animate="fade-up">Product concepts open for feedback and collaboration.</p>
-
-        <div id="launchpad-list"></div>
+        <div class="grid">
+          <div class="record">
+            <p class="record-no m-in">&sect; 03</p>
+            <div class="record-head">
+              <h2 class="section-heading" data-set-type>On the launchpad.</h2>
+              <p class="section-subtext m-in">Concepts open for feedback and collaboration.</p>
+            </div>
+          </div>
+          <div id="launchpad-list" style="grid-column:1/-1"></div>
+        </div>
       </div>
     </section>
 
-    <section class="section section-loose cta-banner band-dark band-dark-tail" data-animate="fade-in">
+    <section class="section section-loose cta-banner panel">
+      <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
-        <div class="cta-content">
-          <h2 class="cta-heading">Want to help build something?</h2>
-          <p class="cta-subtext">Developers who contribute get a cut of the product revenue. Not equity theater, actual profit sharing tied to what ships. If you're an investor or just someone with an idea worth pitching, we're listening.</p>
-          <div class="cta-buttons">
-            <a href="contact.html" class="hero-btn-primary">Get in Touch</a>
+        <div class="grid">
+          <div class="cta-content">
+            <h2 class="cta-heading" data-set-type>Want to help build something?</h2>
+            <p class="cta-subtext m-in">Developers who contribute get a cut of the product revenue. Not equity theater, actual profit sharing tied to what ships. Investors and people with an idea worth pitching, we're listening too.</p>
+            <div class="cta-buttons m-in">
+              <a href="contact.html" class="hero-btn-primary">Get in touch</a>
+            </div>
           </div>
         </div>
       </div>
@@ -143,44 +151,42 @@
       <div class="footer-grid">
         <div class="footer-col">
           <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-          <p class="footer-brand-text">AI-powered products that automate complex workflows.</p>
+          <p class="footer-brand-text">A product studio in Lahore. We find the bottleneck, then build the thing that removes it.</p>
           <div class="footer-social">
-            <a href="#" aria-label="LinkedIn"><i data-lucide="linkedin" width="18" height="18"></i></a>
-            <a href="#" aria-label="GitHub"><i data-lucide="github" width="18" height="18"></i></a>
+            <a href="https://www.linkedin.com/company/avennex/posts/?feedView=all" aria-label="Avennex on LinkedIn" rel="noopener" target="_blank"><i data-icon="linkedin" width="17" height="17"></i></a>
           </div>
         </div>
         <div class="footer-col">
-          <h4>Explore</h4>
-          <a href="products.html">All products</a>
+          <h4>Index</h4>
+          <a href="products.html">Products</a>
           <a href="launchpad.html">Launchpad</a>
+          <a href="blog.html">Journal</a>
           <a href="academy.html">Academy</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="about.html">About</a>
+          <a href="about.html">Studio</a>
           <a href="careers.html">Careers</a>
-          <a href="blog.html">Blog</a>
           <a href="contact.html">Contact</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
-          <a href="privacy.html">Privacy Policy</a>
+          <a href="privacy.html">Privacy</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 Avennex. All rights reserved.</p>
+      <p>&copy; 2026 Avennex</p>
+      <p>Lahore, Pakistan</p>
     </div>
   </footer>
 
-  <script src="js/main.js?v=202609120030" defer></script>
-  <script src="js/header.js?v=202609120030" defer></script>
-  <script src="js/api.js?v=202609120030" defer></script>
-  <script src="js/animations.js?v=202609120030" defer></script>
-  <script src="js/launchpad.js?v=202609120030" defer></script>
-  <script src="js/schema.js?v=202609120030" defer></script>
-  <script src="js/chatbot.js?v=202609120030" defer></script>
-  <script>if (typeof lucide !== "undefined") lucide.createIcons();</script>
+  <script src="js/icons.js?v=202609221200" defer></script>
+  <script src="js/api.js?v=202609221200" defer></script>
+  <script src="js/motion.js?v=202609221200" defer></script>
+  <script src="js/launchpad.js?v=202609221200" defer></script>
+  <script src="js/schema.js?v=202609221200" defer></script>
+  <script src="js/chatbot.js?v=202609221200" defer></script>
 
 </body>
 </html>

@@ -14,7 +14,7 @@
     }
 
     var html = '<table class="jobs-table">';
-    html += '<thead><tr><th>#</th><th>Position</th><th>Type</th><th>Closing Date</th></tr></thead>';
+    html += '<thead><tr><th>Position</th><th>Type</th><th>Closing</th></tr></thead>';
     html += '<tbody>';
     for (var i = 0; i < jobs.length; i++) {
       var job = jobs[i];
@@ -32,7 +32,6 @@
       }
 
       html += '<tr class="jobs-table-row" data-slug="' + API.escHtml(job.slug) + '" data-created="' + API.escHtml(job.created_at || '') + '">';
-      html += '<td>' + (i + 1) + '</td>';
       html += '<td>' + API.escHtml(job.title) + '</td>';
       html += '<td>' + API.escHtml(type.join(' / ')) + '</td>';
       html += '<td>' + API.escHtml(closing) + '</td>';

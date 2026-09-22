@@ -453,8 +453,8 @@
 
     if (model.stage === 'building') {
       if (model.roadmap) html += roadmapCard(model, state);
-      else html += emptyCard('Roadmap', 'No start or target date set for this build yet.',
-        'Add them under Products, Schedule and metrics.');
+      else html += emptyCard('Roadmap', 'No dates published for this build yet.',
+        'The schedule appears here once it is set.');
 
       if (model.velocity.length > 1) {
         html += card('Development velocity', chartBody('velocity'), {
@@ -462,11 +462,11 @@
           id: 'velocity',
           unit: 'progress %',
           tools: model.momentum ? momentumChip(model.momentum) : '',
-          note: 'Recorded every time the progress value is saved in the admin panel.',
+          note: 'Each point is a progress reading, recorded when it changed.',
         });
       } else {
         html += emptyCard('Development velocity', 'Only one progress reading so far.',
-          'The chart draws itself once progress has been saved a second time.');
+          'The trend appears once there is a second reading to compare.');
       }
 
       if (model.features) html += featureCard(model.features);
@@ -482,10 +482,10 @@
           note: 'Running total of ' + model.primary.name + '.',
         });
       } else {
-        html += emptyCard('Active users over time', 'Not yet tracked.',
-          'Add this metric from Products, Metrics, then tag it as active users.');
-        html += emptyCard('Growth trend', 'Not yet tracked.',
-          'It builds itself from the active users metric once that exists.');
+        html += emptyCard('Active users over time', 'Not published yet.',
+          'This chart appears once usage is being reported.');
+        html += emptyCard('Growth trend', 'Not published yet.',
+          'It follows from the usage figures above.');
       }
     }
 
@@ -768,7 +768,7 @@
         '<p class="dash-empty-line">Nothing recorded yet.</p>' +
         '<p class="dash-empty-prompt">' + (id === 'activity'
           ? 'It fills in as people post on this page.'
-          : 'Add the numbers from the admin panel to draw this.') + '</p></div>';
+          : 'The chart appears once there are figures to plot.') + '</p></div>';
     }
 
     function fallbackTable(canvas, spec) {

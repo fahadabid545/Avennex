@@ -7,17 +7,21 @@
   canvas.className = 'brain-net-canvas';
   host.appendChild(canvas);
 
-  var inkBand = document.querySelector('.band-shift');
-  var inkValue = 0;
+  /* the field is drawn in ink on paper. a node that is carrying a signal is
+     marked, the rest stay as structure */
+  var INK = [23, 24, 26];
+  var MARK = [140, 110, 28];
 
-  function readInk() {
-    if (!inkBand) { inkValue = 255; return; }
-    var d = parseFloat(getComputedStyle(inkBand).getPropertyValue('--darkness')) || 0;
-    inkValue = Math.round(255 * d);
-  }
+  function readInk() { /* the surface is fixed now, so there is nothing to read */ }
 
   function ink(alpha) {
-    return 'rgba(' + inkValue + ',' + inkValue + ',' + inkValue + ',' + (alpha < 0 ? 0 : alpha > 1 ? 1 : alpha) + ')';
+    var a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;
+    return 'rgba(' + INK[0] + ',' + INK[1] + ',' + INK[2] + ',' + a + ')';
+  }
+
+  function mark(alpha) {
+    var a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;
+    return 'rgba(' + MARK[0] + ',' + MARK[1] + ',' + MARK[2] + ',' + a + ')';
   }
 
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -297,13 +301,13 @@
       if (a2 <= 0.02) continue;
 
       if (n.heat > 0.08) {
-        ctx.fillStyle = ink(n.heat * 0.14);
+        ctx.fillStyle = mark(n.heat * 0.3);
         ctx.beginPath();
         ctx.arc(n.x, n.y, r + 7 * n.heat, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.fillStyle = ink(a2);
+      ctx.fillStyle = mark(a2);
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
       ctx.fill();
