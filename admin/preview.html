@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/chrome.css">
+  <link rel="stylesheet" href="../css/ui.css">
+  <link rel="stylesheet" href="../css/pages.css">
+  <style>
+    body { overflow-x: hidden; }
+    /* the page's own section rhythm is dead space inside a panel */
+    .preview-stage { padding: 24px 0 28px; }
+    .preview-stage .section { padding-top: 0; padding-bottom: 0; }
+    .preview-stage .back-link,
+    .preview-stage .blog-article-foot { display: none; }
+  </style>
+</head>
+<body>
+  <main id="main" class="preview-stage">
+    <section class="section detail-section">
+      <div class="section-inner">
+        <div class="grid">
+          <div id="preview-root" class="grid" style="grid-column:1/-1"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="../js/icons.js"></script>
+  <script src="js/preview-frame.js"></script>
+</body>
+</html>

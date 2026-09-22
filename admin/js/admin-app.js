@@ -211,6 +211,15 @@
     return assetUrl(raw);
   }
 
+  // the same passes the site runs in js/api.js, so the editor preview and the
+  // published page cannot disagree about what a paragraph turns into
+  function inlineMd(str) {
+    return str
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?]|$)/g, '$1<em>$2</em>');
+  }
+
   function richText(text) {
     if (!text) return '';
     const blockTagRe = /<(h[1-6]|ul|ol|li|blockquote|pre|img|div|table|p)[\s>/]/i;
@@ -222,18 +231,23 @@
       if (blockTagRe.test(para)) {
         html += para;
       } else if (para.startsWith('## ')) {
-        html += '<h2>' + para.substring(3) + '</h2>';
+        html += '<h2>' + inlineMd(para.substring(3)) + '</h2>';
       } else if (para.startsWith('### ')) {
-        html += '<h3>' + para.substring(4) + '</h3>';
+        html += '<h3>' + inlineMd(para.substring(4)) + '</h3>';
+      } else if (para.startsWith('> ')) {
+        html += '<blockquote>' + inlineMd(para.replace(/^>\s?/gm, '').trim()).replace(/\n/g, '<br>') + '</blockquote>';
+      } else if (para.startsWith('```')) {
+        const fenced = para.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '');
+        html += '<pre><code>' + esc(fenced) + '</code></pre>';
       } else if (para.startsWith('- ') || para.includes('\n- ')) {
         html += '<ul>';
         for (const line of para.split('\n')) {
           const item = line.replace(/^-\s*/, '').trim();
-          if (item) html += '<li>' + item + '</li>';
+          if (item) html += '<li>' + inlineMd(item) + '</li>';
         }
         html += '</ul>';
       } else {
-        html += '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+        html += '<p>' + inlineMd(para).replace(/\n/g, '<br>') + '</p>';
       }
     }
     return absolutise(html);
@@ -481,15 +495,299 @@
     return `<span class="field-hint">${text}</span>`;
   }
 
+  /* where a record actually lives on the site. This was written out twice
+     and disagreed with itself: the toast link sent every type to a listing
+     page that does not read a slug. */
+  const SITE_PAGES = {
+    blog: 'blog-post.html',
+    job: 'job-post.html',
+    product: 'product-detail.html',
+    launchpad: 'launchpad-detail.html',
+  };
+
+  function sitePath(type, slug) {
+    const page = SITE_PAGES[type];
+    if (!page) return type === 'faq' ? `${SITE_URL}/#faq` : `${SITE_URL}/`;
+    if (!slug) return `${SITE_URL}/${page}`;
+    return `${SITE_URL}/${page}?slug=${encodeURIComponent(slug)}`;
+  }
+
   function viewOnSiteLink(type, slug) {
-    const paths = {
-      blog: `/blog-post.html?slug=${slug}`,
-      job: `/job-post.html?slug=${slug}`,
-      product: `/product-detail.html?slug=${slug}`,
-      launchpad: `/launchpad.html`,
-    };
-    const url = SITE_URL + (paths[type] || '/');
-    return `<a href="${url}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm view-site-link">View on Site</a>`;
+    return `<a href="${esc(sitePath(type, slug))}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm view-site-link">View on Site</a>`;
+  }
+
+  // ── Preview ──
+  // The review step used to list field names and their values, which told you
+  // what you typed but not what a reader would get. This builds the markup the
+  // site itself builds, and admin/preview.html renders it under the site's own
+  // stylesheets inside a frame.
+
+  function ytId(url) {
+    const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : '';
+  }
+
+  function previewList(value, cls, itemCls) {
+    const parts = String(value || '').split(/[,\n]+/).map((t) => t.trim()).filter(Boolean);
+    if (!parts.length) return '';
+    return `<div class="${cls}">${parts.map((t) => `<span class="${itemCls}">${esc(t)}</span>`).join('')}</div>`;
+  }
+
+  function previewTimeline(value) {
+    const lines = String(value || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    return `<div class="product-article-section"><h2>Timeline</h2><div class="product-timeline">${
+      lines.map((l) => `<div class="product-timeline-item"><div class="product-timeline-dot"></div><span>${esc(l)}</span></div>`).join('')
+    }</div></div>`;
+  }
+
+  function previewGallery(urls, heading, alt) {
+    const list = (urls || []).filter(Boolean);
+    if (!list.length) return '';
+    return `<div class="product-article-section"><h2>${esc(heading)}</h2><div class="product-gallery">${
+      list.map((u, i) => `<img class="product-gallery-item" src="${esc(assetUrl(u))}" alt="${esc(alt)} ${i + 1}">`).join('')
+    }</div></div>`;
+  }
+
+  function productStatusBadge(status) {
+    const cls = status === 'launched' ? 'badge-blue' : status === 'paused' ? 'badge-yellow' : 'badge-green';
+    const dot = status === 'launched' ? 'badge-dot-blue' : status === 'paused' ? 'badge-dot-yellow' : '';
+    const label = status === 'in-development' ? 'In Development'
+      : status === 'launched' ? 'Launched'
+      : status === 'paused' ? 'Paused'
+      : String(status || '').charAt(0).toUpperCase() + String(status || '').slice(1);
+    return `<span class="badge ${cls}"><span class="badge-dot ${dot}"></span> ${esc(label)}</span>`;
+  }
+
+  function stagePreviewBadge(stage) {
+    let cls = 'badge';
+    let dot = 'badge-dot';
+    if (stage === 'open-for-feedback') { cls += ' badge-blue'; dot += ' badge-dot-blue'; }
+    else if (stage === 'planning') { cls += ' badge-yellow'; dot += ' badge-dot-yellow'; }
+    else if (stage === 'building') { cls += ' badge-green'; }
+    else { cls += ' badge-gray'; dot += ' badge-dot-gray'; }
+    const labels = { concept: 'Concept', planning: 'Planning', 'open-for-feedback': 'Open for Feedback', building: 'Building' };
+    return `<span class="${cls}"><span class="${dot}"></span> ${esc(labels[stage] || stage || 'Concept')}</span>`;
+  }
+
+  function previewMarkup(type, d) {
+    if (type === 'blog') {
+      let html = '<article class="blog-article">';
+      const meta = [
+        d.published_at ? `<time class="blog-article-date">${esc(formatDate(d.published_at))}</time>` : `<time class="blog-article-date">${esc(formatDate(new Date().toISOString()))}</time>`,
+        d.author ? `<span class="blog-article-author">${esc(d.author)}</span>` : '',
+      ].join('');
+      html += `<p class="blog-article-meta">${meta}</p>`;
+      html += `<h1 class="blog-article-title">${esc(d.title || 'Untitled post')}</h1>`;
+      if (d.cover_image) {
+        html += `<figure class="blog-article-cover"><img src="${esc(assetUrl(d.cover_image))}" alt="${esc(d.title || '')}"></figure>`;
+      }
+      if (d.content) html += `<div class="blog-article-body">${richText(d.content)}</div>`;
+      else if (d.excerpt) html += `<div class="blog-article-body"><p>${esc(d.excerpt)}</p></div>`;
+      return html + '</article>';
+    }
+
+    if (type === 'product') {
+      let html = '<article class="product-article">';
+      html += '<div class="product-article-header">';
+      html += productStatusBadge(d.status || 'in-development');
+      html += `<h1 class="product-article-title">${esc(d.name || 'Untitled product')}</h1>`;
+      if (d.tagline) html += `<p class="product-article-tagline">${esc(d.tagline)}</p>`;
+      html += '</div>';
+
+      if (d.cover_image) {
+        html += `<div class="product-article-cover"><img src="${esc(assetUrl(d.cover_image))}" alt="${esc(d.name || '')}"></div>`;
+      }
+      const vid = ytId(d.video_url);
+      if (vid) {
+        html += `<div class="product-article-section"><div class="product-video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${esc(vid)}" allow="encrypted-media" allowfullscreen title="Product video"></iframe></div></div>`;
+      }
+      html += previewGallery(d.gallery, 'Gallery', (d.name || 'Product') + ' screenshot');
+
+      const pct = Number(d.progress);
+      if (!isNaN(pct) && d.status !== 'launched') {
+        html += '<div class="product-progress product-progress-detail product-wide-band">';
+        html += `<div class="product-progress-header"><span class="product-progress-label">Development Progress</span><span class="product-progress-pct">${pct}%</span></div>`;
+        html += `<div class="product-progress-bar"><div class="product-progress-fill" style="width:${pct}%"></div></div>`;
+        html += '</div>';
+      }
+
+      if (d.content) html += `<div class="product-article-body">${richText(d.content)}</div>`;
+      else if (d.description) html += `<div class="product-article-body">${richText(d.description)}</div>`;
+
+      const feats = (Array.isArray(d.features) ? d.features : []).filter((f) => f && f.text);
+      if (feats.length) {
+        html += '<div class="product-article-section"><h2>Features</h2><div class="feature-grid feature-grid-detail">';
+        html += feats.map((f) => `<div class="feature-item"><i data-icon="${esc(f.icon || 'check')}" width="20" height="20"></i><span>${esc(f.text)}</span></div>`).join('');
+        html += '</div></div>';
+      }
+
+      html += previewTimeline(d.timeline);
+      if (d.tech_stack) {
+        html += `<div class="product-article-section"><h2>Tech Stack</h2>${previewList(d.tech_stack, 'product-tech-list', 'product-tech-tag')}</div>`;
+      }
+      return html + '</article>';
+    }
+
+    if (type === 'launchpad') {
+      let html = '<article class="product-article">';
+      html += '<div class="product-article-header">';
+      html += stagePreviewBadge(d.stage || 'concept');
+      html += `<h1 class="product-article-title">${esc(d.title || 'Untitled idea')}</h1>`;
+      if (d.tagline) html += `<p class="product-article-tagline">${esc(d.tagline)}</p>`;
+      html += '</div>';
+
+      if (d.content) html += `<div class="product-article-body">${richText(d.content)}</div>`;
+      else if (d.description) html += `<div class="product-article-body">${richText(d.description)}</div>`;
+
+      const diagrams = String(d.diagrams || '').split('\n').map((x) => x.trim()).filter(Boolean);
+      html += previewGallery(diagrams, 'Diagrams', (d.title || 'Idea') + ' diagram');
+      html += previewTimeline(d.timeline);
+
+      let details = '';
+      const item = (label, value) => `<div class="lp-detail"><span class="lp-detail-label">${esc(label)}</span><span class="lp-detail-value">${esc(value)}</span></div>`;
+      if (d.funding_needed) details += item('Funding needed', d.funding_needed);
+      if (d.team_needed) details += item('Team needed', d.team_needed);
+      if (d.status) details += item('Status', d.status);
+      if (details) html += `<div class="lp-details-grid">${details}</div>`;
+
+      if (d.tech_stack) {
+        html += `<div class="product-article-section"><h2>Tech Stack</h2>${previewList(d.tech_stack, 'product-tech-list', 'product-tech-tag')}</div>`;
+      }
+      if (d.collaboration_details) {
+        html += `<div class="product-article-section"><h2>How to Collaborate</h2><div class="product-article-body">${richText(d.collaboration_details)}</div></div>`;
+      }
+      return html + '</article>';
+    }
+
+    if (type === 'job') {
+      let html = '<div class="job-detail"><div class="job-detail-header">';
+      html += `<h1 class="job-detail-title">${esc(d.title || 'Untitled role')}</h1>`;
+      const tags = [d.type, d.commitment, d.location].filter(Boolean);
+      if (d.expires_at) {
+        const days = Math.ceil((new Date(d.expires_at) - new Date()) / 86400000);
+        if (days > 0) tags.push(`Closes in ${days} days`);
+      }
+      if (tags.length) {
+        html += `<div class="job-detail-tags">${tags.map((t) => `<span class="job-tag">${esc(t)}</span>`).join('')}</div>`;
+      }
+      html += '</div><div class="job-layout"><div class="job-main">';
+      if (d.description) html += `<div class="job-section"><h2>About the role</h2><div class="job-body">${richText(d.description)}</div></div>`;
+      if (d.requirements) html += `<div class="job-section"><h2>Must have</h2><div class="job-body">${richText(d.requirements)}</div></div>`;
+      if (d.good_to_have) html += `<div class="job-section"><h2>Good to have</h2><div class="job-body">${richText(d.good_to_have)}</div></div>`;
+      html += '</div><aside class="job-aside"><div class="job-aside-card"><p class="job-aside-label">At a glance</p><dl class="job-aside-list">';
+      if (d.type) html += `<dt>Type</dt><dd>${esc(d.type)}</dd>`;
+      if (d.commitment) html += `<dt>Commitment</dt><dd>${esc(d.commitment)}</dd>`;
+      if (d.location) html += `<dt>Location</dt><dd>${esc(d.location)}</dd>`;
+      if (d.expires_at) html += `<dt>Closes</dt><dd>${esc(formatDate(d.expires_at))}</dd>`;
+      html += '</dl></div></aside></div></div>';
+      return html;
+    }
+
+    if (type === 'faq') {
+      return `<div class="faq-item is-open">
+        <h2 class="blog-article-title" style="font-size:1.6rem">${esc(d.question || 'Untitled question')}</h2>
+        <div class="faq-answer-content blog-article-body">${richText(d.answer)}</div>
+      </div>`;
+    }
+
+    return '';
+  }
+
+  /* the frame is same-origin, so it loads the site's stylesheets directly
+     rather than the panel guessing at them */
+  /* Each module writes its own review screen and replaces .step-content to do
+     it, so the preview is folded in afterwards: the existing screen becomes
+     one tab, the rendered page becomes the other, and the status control is
+     lifted out of both because it decides what saving does. */
+  function addReviewPreview(config, entityType) {
+    const wrap = document.querySelector('.step-content');
+    if (!wrap) return;
+    const markup = previewMarkup(entityType, config.formData);
+    if (!markup) return;
+
+    const fields = document.createElement('div');
+    fields.className = 'review-pane is-hidden';
+    fields.dataset.reviewPane = 'fields';
+    while (wrap.firstChild) fields.appendChild(wrap.firstChild);
+
+    // the editor's own content preview is what this replaces
+    const inlinePreview = fields.querySelector('.blog-preview');
+    if (inlinePreview) (inlinePreview.closest('.field') || inlinePreview).remove();
+
+    const tabs = document.createElement('div');
+    tabs.className = 'review-tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.innerHTML = `
+      <button type="button" class="review-tab is-active" data-review-tab="preview" role="tab" aria-selected="true">Preview</button>
+      <button type="button" class="review-tab" data-review-tab="fields" role="tab" aria-selected="false">All fields</button>`;
+
+    const pane = document.createElement('div');
+    pane.className = 'review-pane';
+    pane.dataset.reviewPane = 'preview';
+    pane.innerHTML = '<p class="review-pane-note">The page as the site will draw it. Nothing here is live until you save.</p><div id="site-preview" class="site-preview"></div>';
+
+    wrap.appendChild(tabs);
+    wrap.appendChild(pane);
+    wrap.appendChild(fields);
+
+    const status = fields.querySelector('#f-status');
+    if (status) wrap.appendChild(status.closest('.field') || status);
+
+    tabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-review-tab]');
+      if (!btn) return;
+      const want = btn.dataset.reviewTab;
+      tabs.querySelectorAll('[data-review-tab]').forEach((t) => {
+        const on = t === btn;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      wrap.querySelectorAll('[data-review-pane]').forEach((x) => {
+        x.classList.toggle('is-hidden', x.dataset.reviewPane !== want);
+      });
+    });
+
+    mountPreview(entityType, config.formData);
+  }
+
+  let previewHandler = null;
+
+  function mountPreview(type, data) {
+    const holder = document.getElementById('site-preview');
+    if (!holder) return;
+
+    // each render owns one listener; the panel replaces content wholesale
+    if (previewHandler) window.removeEventListener('message', previewHandler);
+
+    const frame = document.createElement('iframe');
+    frame.className = 'site-preview-frame';
+    frame.setAttribute('title', 'Preview of this entry as the site renders it');
+    frame.src = 'preview.html';
+    holder.innerHTML = '';
+    holder.appendChild(frame);
+
+    const markup = previewMarkup(type, data);
+
+    function send() {
+      try {
+        frame.contentWindow.postMessage({ type: 'preview-render', markup }, window.location.origin);
+      } catch (err) {
+        holder.innerHTML = '<p class="admin-empty">The preview could not be drawn. The fields tab still shows everything.</p>';
+      }
+    }
+
+    function onMessage(e) {
+      if (e.origin !== window.location.origin || !e.data) return;
+      if (e.data.type === 'preview-ready') send();
+      if (e.data.type === 'preview-height' && e.data.height) {
+        frame.style.height = Math.min(Math.max(e.data.height, 240), 2400) + 'px';
+      }
+    }
+
+    previewHandler = onMessage;
+    window.addEventListener('message', onMessage);
+    frame.addEventListener('load', send);
   }
 
   // ── Dashboard builder ──
@@ -591,7 +889,7 @@
 
     if (isReview) {
       html += '<div class="review-fields">';
-      steps.forEach((s, idx) => {
+      steps.forEach((s) => {
         if (s.review) return;
         s.fields.forEach((f) => {
           const v = config.formData[f.name];
@@ -631,6 +929,8 @@
     content.innerHTML = html;
 
     if (step.onMount) step.onMount(config);
+
+    if (isReview) addReviewPreview(config, entityType);
 
     offerDraft(config);
 
@@ -824,7 +1124,7 @@
 
       const opts = {};
       if (entityType && (result.slug || slug)) {
-        opts.href = `${SITE_URL}/${entityType}.html?slug=${encodeURIComponent(result.slug || slug)}`;
+        opts.href = sitePath(entityType, result.slug || slug);
         opts.hrefLabel = 'View on site';
       }
       AdminUI.toast(id ? 'Changes saved.' : 'Created.', 'success', opts);
@@ -871,17 +1171,17 @@
       if (duplicateId) {
         const source = (cachedItems[module] || []).find((i) => i.id === duplicateId);
         if (source) {
-          // a copy opens as a new draft: no id, no slug, and clearly marked
+          // a copy opens as something new and invisible: no id, no slug, and
+          // the quietest status the module allows, since each table checks
+          // its own set and 'draft' is only valid for blogs
+          const quiet = { blogs: 'draft', jobs: 'closed', products: 'in-development', launchpad: 'closed' };
           const copy = Object.assign({}, source);
-          delete copy.id;
-          delete copy.slug;
-          delete copy.created_at;
-          delete copy.last_edited_by;
-          delete copy.last_edited_at;
+          ['id', 'slug', 'created_at', 'updated_at', 'published_at',
+           'last_edited_by', 'last_edited_at', 'progress_history'].forEach((f) => { delete copy[f]; });
           if (copy.title) copy.title = copy.title + ' (copy)';
           if (copy.name) copy.name = copy.name + ' (copy)';
-          copy.status = 'draft';
-          AdminUI.toast('Opened as a new draft. Nothing is saved until you publish it.', 'info');
+          if (quiet[module]) copy.status = quiet[module];
+          AdminUI.toast('Opened as a copy, off the site until you save it.', 'info');
           return formFn(copy);
         }
       }
@@ -1110,11 +1410,7 @@
           { value: 'draft', label: 'Draft' },
         ],
       });
-      html += AdminList.bulkBar(key, [
-        { id: 'publish', label: 'Publish' },
-        { id: 'draft', label: 'Move to draft' },
-        { id: 'delete', label: 'Delete', danger: true },
-      ]);
+      html += AdminList.bulkBar(key, bulkOptions('blogs'));
 
       if (!shown.length) {
         html += AdminList.empty(
@@ -1156,41 +1452,138 @@
       AdminList.bind(key, () => paint(rows, hasMore), {
         reload: loadBlogs,
         countText: shown.length === rows.length ? `${rows.length} shown` : `${shown.length} of ${rows.length}`,
-        onBulk: (action, ids) => bulkBlogs(action, ids),
+        onBulk: (action, ids) => bulkRun('blogs', action, ids, key),
       });
       bindListActions('blogs', blogForm);
     }
   }
 
-  async function bulkBlogs(action, ids) {
-    if (!ids.length) return;
-    const verbs = { publish: 'Publish', draft: 'Move to draft', delete: 'Delete' };
+  function reorderHint(tail) {
+    return `<p class="reorder-hint">Drag a row to reorder, or hold Alt and press the arrow keys.${tail ? ' ' + esc(tail) : ''}</p>`;
+  }
+
+  /* Reordering writes only the rows that actually moved, so a list of forty
+     does not become forty requests because one row went up by one.
+
+     Numbering starts from the lowest order already on screen rather than from
+     zero: a page of a longer list would otherwise renumber itself 0 upwards
+     and collide with the page before it. */
+  function bindReorder(tbody, source, path) {
+    if (!tbody) return;
+    AdminReorder.enable(tbody, {
+      onChange: async (visible) => {
+        const orderOf = (id) => {
+          const original = (source || []).find((x) => x.id === id);
+          return original ? (original.display_order ?? 0) : 0;
+        };
+        const base = visible.length ? Math.min(...visible.map((r) => orderOf(r.id))) : 0;
+        const rows = visible.map((r, i) => ({ id: r.id, display_order: base + i }));
+
+        const changed = rows.filter((r) => orderOf(r.id) !== r.display_order);
+        if (!changed.length) return;
+
+        const results = await Promise.allSettled(changed.map((r) =>
+          AdminAPI.request(`${path}/${r.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ display_order: r.display_order }),
+          })
+        ));
+        const bad = results.filter((x) => x.status === 'rejected').length;
+        if (bad) AdminUI.toast(`${changed.length - bad} reordered, ${bad} failed.`, 'warn');
+        else AdminUI.toast('Order saved.', 'success');
+
+        changed.forEach((r, i) => {
+          if (results[i].status !== 'fulfilled') return;
+          const original = (source || []).find((x) => x.id === r.id);
+          if (original) original.display_order = r.display_order;
+        });
+      },
+    });
+  }
+
+  /* Every list used to need its own copy of this: the confirmation, the
+     request fan-out, the partial-failure count and the reload. Modules now
+     describe what their actions mean and share the machinery. */
+  const BULK = {
+    blogs: {
+      path: '/api/blogs', one: 'post', many: 'posts', reload: () => loadBlogs(),
+      actions: {
+        publish: { label: 'Publish', patch: { status: 'published' }, effect: 'They go live on the site.' },
+        draft: { label: 'Move to draft', patch: { status: 'draft' }, effect: 'They come off the site until published again.' },
+        delete: { label: 'Delete', danger: true },
+      },
+    },
+    jobs: {
+      path: '/api/jobs', one: 'role', many: 'roles', reload: () => loadJobs(),
+      actions: {
+        close: { label: 'Close', patch: { status: 'closed' }, effect: 'They stop accepting applications. The ones already received stay.' },
+        delete: { label: 'Delete', danger: true },
+      },
+    },
+    products: {
+      path: '/api/products', one: 'product', many: 'products', reload: () => loadProducts(),
+      actions: {
+        launched: { label: 'Mark launched', patch: { status: 'launched' }, effect: 'They show as launched on the site.' },
+        paused: { label: 'Mark paused', patch: { status: 'paused' }, effect: 'They show as paused on the site.' },
+        delete: { label: 'Delete', danger: true },
+      },
+    },
+    launchpad: {
+      path: '/api/launchpad', one: 'entry', many: 'entries', reload: () => loadLaunchpad(),
+      actions: {
+        close: { label: 'Close', patch: { status: 'closed' }, effect: 'They stop taking comments and drop off the public list.' },
+        reopen: { label: 'Reopen', patch: { status: 'active' }, effect: 'They go back on the public list and take comments again.' },
+        delete: { label: 'Delete', danger: true },
+      },
+    },
+    faqs: {
+      path: '/api/faqs', one: 'question', many: 'questions', reload: () => loadFaqs(),
+      actions: {
+        activate: { label: 'Activate', patch: { active: true }, effect: 'They appear in the FAQ list on the site.' },
+        deactivate: { label: 'Deactivate', patch: { active: false }, effect: 'They come off the FAQ list.' },
+        delete: { label: 'Delete', danger: true },
+      },
+    },
+  };
+
+  function bulkOptions(module, only) {
+    const spec = BULK[module];
+    if (!spec) return [];
+    return Object.keys(spec.actions)
+      .filter((id) => !only || only.indexOf(id) > -1)
+      .map((id) => ({ id, label: spec.actions[id].label, danger: !!spec.actions[id].danger }));
+  }
+
+  async function bulkRun(module, action, ids, listKey) {
+    const spec = BULK[module];
+    if (!spec || !ids.length) return;
+    const act = spec.actions[action];
+    if (!act) return;
+
+    const n = ids.length;
+    const noun = n > 1 ? spec.many : spec.one;
     const ok = await confirmDialog({
-      title: `${verbs[action]} ${ids.length} post${ids.length > 1 ? 's' : ''}?`,
-      body: action === 'delete'
-        ? 'They are removed from the site immediately.'
-        : `Their status changes to ${action === 'publish' ? 'published' : 'draft'} on the live site.`,
-      note: action === 'delete' ? 'This cannot be undone.' : '',
-      verb: verbs[action],
-      danger: action === 'delete',
+      title: `${act.label} ${n} ${noun}?`,
+      body: act.danger ? 'They are removed from the site immediately.' : act.effect,
+      note: act.danger ? 'This cannot be undone.' : '',
+      verb: act.label,
+      danger: !!act.danger,
     });
     if (!ok) return;
 
-    const results = await Promise.allSettled(ids.map((id) => {
-      if (action === 'delete') return AdminAPI.request(`/api/blogs/${id}`, { method: 'DELETE' });
-      const item = (cachedItems.blogs || []).find((b) => b.id === id) || {};
-      return AdminAPI.request(`/api/blogs/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ title: item.title, status: action === 'publish' ? 'published' : 'draft' }),
-      });
-    }));
+    const results = await Promise.allSettled(ids.map((id) => (
+      act.danger
+        ? AdminAPI.request(`${spec.path}/${id}`, { method: 'DELETE' })
+        : AdminAPI.request(`${spec.path}/${id}`, { method: 'PUT', body: JSON.stringify(act.patch) })
+    )));
 
     // a partial failure names how many, instead of claiming success
     const failed = results.filter((r) => r.status === 'rejected').length;
-    if (failed) AdminUI.toast(`${ids.length - failed} updated, ${failed} failed.`, 'warn');
-    else AdminUI.toast(`${ids.length} post${ids.length > 1 ? 's' : ''} updated.`, 'success');
-    AdminList.get('blogs').selected.clear();
-    loadBlogs();
+    if (failed) AdminUI.toast(`${n - failed} ${act.danger ? 'deleted' : 'updated'}, ${failed} failed.`, 'warn');
+    else AdminUI.toast(`${n} ${noun} ${act.danger ? 'deleted' : 'updated'}.`, 'success');
+
+    AdminList.get(listKey || module).selected.clear();
+    spec.reload();
   }
 
   function blogSlugify(text) {
@@ -1528,19 +1921,21 @@
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }
 
-  function renderJobRow(j, appCounts) {
+  function renderJobRow(j, appCounts, key) {
     const isExpired = isJobExpired(j);
     const isClosed = j.status === 'closed' || isExpired;
     return `
       <tr>
+        ${AdminList.selectCell(key, j.id)}
         <td class="row-title">${esc(j.title)}${editedBy(j)}</td>
         <td>${j.type || ''}${j.commitment ? ' / ' + j.commitment : ''}</td>
-        <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] || 0}${j.max_applications ? '/' + j.max_applications : ''} apps</button></td>
+        <td><button class="btn btn-secondary btn-sm" data-apps="${j.id}">${appCounts[j.id] == null ? 'View' : appCounts[j.id] + (j.max_applications ? '/' + j.max_applications : '')} apps</button></td>
         <td>${isExpired && j.status !== 'closed' ? badge('expired', 'red') : statusBadge(j.status)}</td>
         <td>${formatDate(j.expires_at)}</td>
         <td class="row-actions">
           ${isClosed ? `<button class="btn btn-primary btn-sm" data-republish="${j.id}">Republish</button>` : ''}
           <button class="btn btn-secondary btn-sm" data-edit="${j.id}">Edit</button>
+          <button class="btn btn-secondary btn-sm" data-duplicate="${j.id}">Duplicate</button>
           <button class="btn btn-danger btn-sm" data-delete="${j.id}">Delete</button>
         </td>
       </tr>`;
@@ -1603,8 +1998,8 @@
 
   async function loadJobs() {
     showLoading();
+    const key = 'jobs-' + jobsTab;
     try {
-      const key = 'jobs-' + jobsTab;
       // the closed tab has its own endpoint; deriving it from a capped page
       // of everything meant older closed roles simply vanished
       const path = jobsTab === 'closed' ? '/api/jobs/admin/closed' : '/api/jobs/admin/all';
@@ -1614,19 +2009,37 @@
 
       const { open, closed } = splitJobs(rows);
       const tabRows = jobsTab === 'closed' ? (path.endsWith('closed') ? rows : closed) : open;
+
+      // counted once per load: searching or sorting must not re-run this
+      const appCounts = {};
+      if (tabRows.length) {
+        const counted = await Promise.all(tabRows.map((j) =>
+          AdminAPI.request(`/api/jobs/${j.id}/applications`)
+            .then((apps) => ({ id: j.id, count: Array.isArray(apps) ? apps.length : 0 }))
+            .catch(() => ({ id: j.id, count: null }))
+        ));
+        counted.forEach((a) => { appCounts[a.id] = a.count; });
+      }
+
+      paint(tabRows, appCounts, hasMore);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      showEmpty(esc(AdminUI.friendly(err, 'Job listings could not be loaded.')), 'Job Listings');
+    }
+
+    function paint(tabRows, appCounts, hasMore) {
       const displayJobs = AdminList.apply(key, tabRows, {
         searchFields: ['title', 'slug', 'type', 'commitment', 'location'],
       });
 
-      let appCounts = {};
-      if (displayJobs.length) {
-        try {
-          const allApps = await Promise.all(displayJobs.map((j) =>
-            AdminAPI.request(`/api/jobs/${j.id}/applications`).then((apps) => ({ id: j.id, count: Array.isArray(apps) ? apps.length : 0 })).catch(() => ({ id: j.id, count: 0 }))
-          ));
-          allApps.forEach((a) => { appCounts[a.id] = a.count; });
-        } catch {}
-      }
+      const head = `<tr>${AdminList.selectHead()}${AdminList.sortableHead(key, [
+        { label: 'Title', sort: 'title' },
+        { label: 'Type', sort: 'type' },
+        { label: 'Apps' },
+        { label: 'Status', sort: 'status' },
+        { label: 'Expires', sort: 'expires_at' },
+        { label: '' },
+      ])}</tr>`;
 
       let tableHtml = '';
       if (!displayJobs.length) {
@@ -1640,15 +2053,15 @@
           <div class="job-date-group">
             <div class="job-date-header">${formatDate(dateKey + 'T00:00:00Z')}</div>
             <table class="admin-table">
-              <thead><tr><th>Title</th><th>Type</th><th>Apps</th><th>Status</th><th>Expires</th><th></th></tr></thead>
-              <tbody>${jobs.map((j) => renderJobRow(j, appCounts)).join('')}</tbody>
+              <thead>${head}</thead>
+              <tbody>${jobs.map((j) => renderJobRow(j, appCounts, key)).join('')}</tbody>
             </table>
           </div>`).join('');
       } else {
         tableHtml = `
           <table class="admin-table">
-            <thead><tr><th>Title</th><th>Type</th><th>Apps</th><th>Status</th><th>Expires</th><th></th></tr></thead>
-            <tbody>${displayJobs.map((j) => renderJobRow(j, appCounts)).join('')}</tbody>
+            <thead>${head}</thead>
+            <tbody>${displayJobs.map((j) => renderJobRow(j, appCounts, key)).join('')}</tbody>
           </table>`;
       }
 
@@ -1658,14 +2071,17 @@
           <button class="tab-btn ${jobsTab === 'closed' ? 'active' : ''}" data-tab="closed">Closed</button>
         </div>` +
         AdminList.toolbar(key, { placeholder: 'Search roles by title, type or location' }) +
+        AdminList.bulkBar(key, bulkOptions('jobs', jobsTab === 'open' ? ['close', 'delete'] : ['delete'])) +
         tableHtml + AdminList.pager(key, displayJobs.length, hasMore);
 
-      AdminList.bind(key, loadJobs, {
+      AdminList.bind(key, () => paint(tabRows, appCounts, hasMore), {
         reload: loadJobs,
         countText: displayJobs.length === tabRows.length
           ? `${tabRows.length} shown`
           : `${displayJobs.length} of ${tabRows.length}`,
+        onBulk: (action, ids) => bulkRun('jobs', action, ids, key),
       });
+      AdminList.bindEmpty(() => jobForm(null));
       bindListActions('jobs', jobForm);
 
       addContentListener('click', async (e) => {
@@ -1679,13 +2095,11 @@
         }
 
         const tab = e.target.dataset.tab;
-        if (tab) {
+        if (tab && tab !== jobsTab) {
           jobsTab = tab;
           loadJobs();
         }
       });
-    } catch (err) {
-      showEmpty('Failed to load jobs.', 'Job Listings');
     }
   }
 
@@ -2152,24 +2566,36 @@
 
   async function loadProducts() {
     showLoading();
+    const key = 'products';
     try {
-      const products = await AdminAPI.request('/api/products/admin/all' + AdminList.query('products'));
+      const fetchedProducts = await AdminAPI.request('/api/products/admin/all' + AdminList.query(key));
+      const { rows: products, hasMore } = AdminList.trim(key, fetchedProducts);
       cachedItems.products = products;
 
-      let chatCounts = {};
-      if (products && products.length) {
+      const chatCounts = {};
+      if (products.length) {
         try {
           const stats = await AdminAPI.request('/api/products/admin/chat-stats');
-          stats.forEach((s) => { chatCounts[s.product_id] = s.chat_count; });
+          stats.forEach((st) => { chatCounts[st.product_id] = st.chat_count; });
           cachedItems.productStats = stats;
         } catch {}
       }
 
-      const key = 'products';
+      paint(products, chatCounts, hasMore);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      showEmpty(esc(AdminUI.friendly(err, 'Products could not be loaded.')), 'Products');
+    }
+
+    function paint(products, chatCounts, hasMore) {
       const shown = AdminList.apply(key, products, {
         searchFields: ['name', 'slug', 'tagline'],
         filterFn: (r, f) => r.status === f,
       });
+
+      // dragging only means anything while the rows sit in their stored order
+      const st = AdminList.get(key);
+      const canReorder = !st.q && !st.filter && !st.sort && shown.length > 1;
 
       let html = listHeader('Products', 'New Product');
       html += AdminList.toolbar(key, {
@@ -2181,45 +2607,61 @@
           { value: 'paused', label: 'Paused' },
         ],
       });
+      html += AdminList.bulkBar(key, bulkOptions('products'));
+      if (canReorder) html += reorderHint('The order here is the order on the site.');
 
       if (!shown.length) {
         html += AdminList.empty(
           products.length ? 'No products match that search.' : 'No products yet.',
           products.length ? '' : 'Add the first product'
-        );
+        ) + AdminList.pager(key, 0, hasMore);
         content.innerHTML = html;
         AdminList.bindEmpty(() => productForm(null));
       } else {
         content.innerHTML = html + `
           <table class="admin-table">
-            <thead><tr>${AdminList.sortableHead(key, [
-              { label: 'Name', sort: 'name' },
-              { label: 'Status', sort: 'status' },
-              { label: 'Progress', sort: 'progress' },
-              { label: 'Chat' },
-              { label: '' },
-            ])}</tr></thead>
-            <tbody>${shown.map((p) => `
-              <tr>
-                <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
-                <td>${statusBadge(p.status)}</td>
-                <td>${p.progress ?? 0}%</td>
+            <thead><tr>
+              ${canReorder ? '<th class="col-select" aria-label="Reorder"></th>' : ''}
+              ${AdminList.selectHead()}
+              ${AdminList.sortableHead(key, [
+                { label: 'Name', sort: 'name' },
+                { label: 'Status', sort: 'status' },
+                { label: 'Progress', sort: 'progress' },
+                { label: 'Chat' },
+                { label: '' },
+              ])}
+            </tr></thead>
+            <tbody>${shown.map((prod) => `
+              <tr${canReorder ? ` data-order-id="${prod.id}" tabindex="0"` : ''}>
+                ${canReorder ? '<td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>' : ''}
+                ${AdminList.selectCell(key, prod.id)}
+                <td class="row-title">${esc(prod.name)}${editedBy(prod)}</td>
+                <td>${statusBadge(prod.status)}</td>
+                <td>${prod.progress ?? 0}%</td>
                 <td>
-                  <button class="btn btn-sm ${p.chat_enabled ? 'btn-primary' : 'btn-secondary'}" data-toggle-chat="${p.id}" data-chat-on="${p.chat_enabled ? 'true' : 'false'}">
-                    ${p.chat_enabled ? 'On' : 'Off'}
+                  <button class="btn btn-sm ${prod.chat_enabled ? 'btn-primary' : 'btn-secondary'}" data-toggle-chat="${prod.id}" data-chat-on="${prod.chat_enabled ? 'true' : 'false'}">
+                    ${prod.chat_enabled ? 'On' : 'Off'}
                   </button>
                 </td>
                 <td class="row-actions">
-                  <button class="btn btn-secondary btn-sm" data-product-chat="${p.id}">Chat (${chatCounts[p.id] || 0})</button>
-                  <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
-                  <button class="btn btn-danger btn-sm" data-delete="${p.id}">Delete</button>
+                  <button class="btn btn-secondary btn-sm" data-product-chat="${prod.id}">Chat (${chatCounts[prod.id] || 0})</button>
+                  <button class="btn btn-secondary btn-sm" data-edit="${prod.id}">Edit</button>
+                  <button class="btn btn-secondary btn-sm" data-duplicate="${prod.id}">Duplicate</button>
+                  <button class="btn btn-danger btn-sm" data-delete="${prod.id}">Delete</button>
                 </td>
               </tr>`).join('')}
             </tbody>
-          </table>`;
+          </table>` + AdminList.pager(key, shown.length, hasMore);
+
+        if (canReorder) {
+          bindReorder(content.querySelector('.admin-table tbody'), products, '/api/products');
+        }
       }
-      AdminList.bind(key, loadProducts, {
+
+      AdminList.bind(key, () => paint(products, chatCounts, hasMore), {
+        reload: loadProducts,
         countText: shown.length === products.length ? `${products.length} shown` : `${shown.length} of ${products.length}`,
+        onBulk: (action, ids) => bulkRun('products', action, ids, key),
       });
       bindListActions('products', productForm);
 
@@ -2238,12 +2680,10 @@
 
         const chatId = e.target.dataset.productChat;
         if (chatId) {
-          const product = (cachedItems.products || []).find((p) => p.id === chatId);
+          const product = (cachedItems.products || []).find((prod) => prod.id === chatId);
           if (product) showProductChat(product);
         }
       });
-    } catch (err) {
-      showEmpty('Failed to load products.', 'Products');
     }
   }
 
@@ -2762,31 +3202,48 @@
 
   async function loadLaunchpad() {
     showLoading();
+    const lpKey = 'launchpad';
     try {
-      const entries = await AdminAPI.request('/api/launchpad/admin/all' + AdminList.query('launchpad'));
+      const fetchedEntries = await AdminAPI.request('/api/launchpad/admin/all' + AdminList.query(lpKey));
+      const { rows: entries, hasMore } = AdminList.trim(lpKey, fetchedEntries);
       cachedItems.launchpad = entries;
-      if (!entries || !entries.length) {
+
+      if (!entries.length) {
+        const st = AdminList.get(lpKey);
         content.innerHTML = listHeader('Launchpad', 'New Entry') +
-          AdminList.empty('No launchpad entries yet.', 'Publish the first idea');
+          AdminList.empty(
+            st.page > 1 ? 'Nothing on this page.' : 'No launchpad entries yet.',
+            st.page > 1 ? '' : 'Publish the first idea'
+          ) + AdminList.pager(lpKey, 0, false);
         const addBtn = document.getElementById('add-btn');
         if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
         AdminList.bindEmpty(() => launchpadForm(null));
+        AdminList.bind(lpKey, loadLaunchpad, { reload: loadLaunchpad });
         return;
       }
 
-      let commentCounts = {};
+      // counted once per load, not once per keystroke
+      const commentCounts = {};
       let totalComments = 0;
-      try {
-        const entryIds = entries.map((e) => e.id);
-        const allComments = await Promise.all(entryIds.map((id) =>
-          AdminAPI.request(`/api/launchpad/${id}/comments`).then((c) => ({ id, count: Array.isArray(c) ? c.length : 0 })).catch(() => ({ id, count: 0 }))
-        ));
-        allComments.forEach((c) => {
-          commentCounts[c.id] = c.count;
-          totalComments += c.count;
-        });
-      } catch {}
+      const counted = await Promise.all(entries.map((e) =>
+        AdminAPI.request(`/api/launchpad/${e.id}/comments`)
+          .then((c) => ({ id: e.id, count: Array.isArray(c) ? c.length : 0 }))
+          .catch(() => ({ id: e.id, count: null }))
+      ));
+      counted.forEach((c) => {
+        commentCounts[c.id] = c.count;
+        if (c.count) totalComments += c.count;
+      });
 
+      paint(entries, commentCounts, totalComments, hasMore);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      content.innerHTML = listHeader('Launchpad', 'New Entry') + `<div class="admin-empty">${esc(AdminUI.friendly(err, 'Launchpad entries could not be loaded.'))}</div>`;
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
+    }
+
+    function paint(entries, commentCounts, totalComments, hasMore) {
       const stageCounts = { concept: 0, planning: 0, 'open-for-feedback': 0, building: 0 };
       entries.forEach((e) => { if (stageCounts[e.stage] !== undefined) stageCounts[e.stage]++; });
 
@@ -2800,12 +3257,12 @@
           <span class="admin-stat-chip">${totalComments} comments</span>
         </div>`;
 
-      const lpKey = 'launchpad';
       const lpShown = AdminList.apply(lpKey, entries, {
         searchFields: ['title', 'slug', 'tagline'],
-        filterFn: (r, f) => r.stage === f,
+        filterFn: (r, f) => (f === 'active' || f === 'closed' ? r.status === f : r.stage === f),
       });
-      content.innerHTML = listHeader('Launchpad', 'New Entry') + statsHtml +
+
+      let html = listHeader('Launchpad', 'New Entry') + statsHtml +
         AdminList.toolbar(lpKey, {
           placeholder: 'Search ideas by title or tagline',
           filters: [
@@ -2814,33 +3271,50 @@
             { value: 'planning', label: 'Planning' },
             { value: 'open-for-feedback', label: 'Open for feedback' },
             { value: 'building', label: 'Building' },
+            { value: 'active', label: 'Open entries' },
+            { value: 'closed', label: 'Closed entries' },
           ],
-        }) + `
-        <table class="admin-table">
-          <thead><tr>${AdminList.sortableHead(lpKey, [
-            { label: 'Title', sort: 'title' },
-            { label: 'Stage', sort: 'stage' },
-            { label: 'Status', sort: 'status' },
-            { label: 'Comments' },
-            { label: 'Created', sort: 'created_at' },
-            { label: '' },
-          ])}</tr></thead>
-          <tbody>${lpShown.map((e) => `
-            <tr>
-              <td class="row-title">${esc(e.title)}${editedBy(e)}</td>
-              <td>${statusBadge(e.stage)}</td>
-              <td>${statusBadge(e.status)}</td>
-              <td><button class="btn btn-secondary btn-sm" data-comments="${e.id}">${commentCounts[e.id] || 0} comments</button></td>
-              <td>${formatDate(e.created_at)}</td>
-              <td class="row-actions">
-                <button class="btn btn-secondary btn-sm" data-edit="${e.id}">Edit</button>
-                <button class="btn btn-danger btn-sm" data-delete="${e.id}">Delete</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
-      AdminList.bind(lpKey, loadLaunchpad, {
+        }) + AdminList.bulkBar(lpKey, bulkOptions('launchpad'));
+
+      if (!lpShown.length) {
+        html += AdminList.empty('No ideas match that search.', '') + AdminList.pager(lpKey, 0, hasMore);
+        content.innerHTML = html;
+      } else {
+        content.innerHTML = html + `
+          <table class="admin-table">
+            <thead><tr>
+              ${AdminList.selectHead()}
+              ${AdminList.sortableHead(lpKey, [
+                { label: 'Title', sort: 'title' },
+                { label: 'Stage', sort: 'stage' },
+                { label: 'Status', sort: 'status' },
+                { label: 'Comments' },
+                { label: 'Created', sort: 'created_at' },
+                { label: '' },
+              ])}
+            </tr></thead>
+            <tbody>${lpShown.map((e) => `
+              <tr>
+                ${AdminList.selectCell(lpKey, e.id)}
+                <td class="row-title">${esc(e.title)}${editedBy(e)}</td>
+                <td>${statusBadge(e.stage)}</td>
+                <td>${statusBadge(e.status)}</td>
+                <td><button class="btn btn-secondary btn-sm" data-comments="${e.id}">${commentCounts[e.id] == null ? 'View' : commentCounts[e.id]} comments</button></td>
+                <td>${formatDate(e.created_at)}</td>
+                <td class="row-actions">
+                  <button class="btn btn-secondary btn-sm" data-edit="${e.id}">Edit</button>
+                  <button class="btn btn-secondary btn-sm" data-duplicate="${e.id}">Duplicate</button>
+                  <button class="btn btn-danger btn-sm" data-delete="${e.id}">Delete</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` + AdminList.pager(lpKey, lpShown.length, hasMore);
+      }
+
+      AdminList.bind(lpKey, () => paint(entries, commentCounts, totalComments, hasMore), {
+        reload: loadLaunchpad,
         countText: lpShown.length === entries.length ? `${entries.length} shown` : `${lpShown.length} of ${entries.length}`,
+        onBulk: (action, ids) => bulkRun('launchpad', action, ids, lpKey),
       });
       bindListActions('launchpad', launchpadForm);
 
@@ -2848,10 +3322,6 @@
         const commentsId = e.target.dataset.comments;
         if (commentsId) showLaunchpadComments(commentsId);
       });
-    } catch (err) {
-      content.innerHTML = listHeader('Launchpad', 'New Entry') + `<div class="admin-empty">${esc(AdminUI.friendly(err, 'Launchpad entries could not be loaded.'))}</div>`;
-      const addBtn = document.getElementById('add-btn');
-      if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
     }
   }
 
@@ -3194,48 +3664,67 @@
 
   async function loadAcademy() {
     showLoading();
+    const acKey = 'academy';
     try {
       const playlists = await AdminAPI.request('/api/academy/playlists/admin/all');
-      cachedItems.academy = playlists;
+      cachedItems.academy = Array.isArray(playlists) ? playlists : [];
+      paint(cachedItems.academy);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `<div class="admin-empty">${esc(AdminUI.friendly(err, 'Playlists could not be loaded.'))}</div>`;
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
+    }
 
-      const acKey = 'academy';
-      const acShown = AdminList.apply(acKey, playlists || [], { searchFields: ['title', 'slug', 'description'] });
+    function paint(playlists) {
+      const acShown = AdminList.apply(acKey, playlists, { searchFields: ['title', 'slug', 'description'] });
 
-      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') +
+      const st = AdminList.get(acKey);
+      const canReorder = !st.q && !st.sort && acShown.length > 1;
+
+      let html = listHeader('Academy Playlists', 'New Playlist') +
         AdminList.toolbar(acKey, { placeholder: 'Search playlists' });
+      if (canReorder) html += reorderHint('The order here is the order on the academy page.');
+
       if (!acShown.length) {
-        content.innerHTML += AdminList.empty(
-          (playlists || []).length ? 'No playlists match that search.' : 'No playlists yet.',
-          (playlists || []).length ? '' : 'Create the first playlist'
+        html += AdminList.empty(
+          playlists.length ? 'No playlists match that search.' : 'No playlists yet.',
+          playlists.length ? '' : 'Create the first playlist'
         );
+        content.innerHTML = html;
         AdminList.bindEmpty(() => academyPlaylistForm(null));
       } else {
-        content.innerHTML += `
+        content.innerHTML = html + `
           <table class="admin-table">
-            <thead><tr>${AdminList.sortableHead(acKey, [
-              { label: 'Title', sort: 'title' },
-              { label: 'Videos' },
-              { label: 'Order', sort: 'display_order' },
-              { label: '' },
-            ])}</tr></thead>
-            <tbody>${acShown.map((p) => `
-              <tr>
-                <td class="row-title">${esc(p.title)}</td>
-                <td><button class="btn btn-secondary btn-sm" data-videos="${p.id}">${p.video_count || 0} videos</button></td>
-                <td>${p.display_order ?? 0}</td>
+            <thead><tr>
+              ${canReorder ? '<th class="col-select" aria-label="Reorder"></th>' : ''}
+              ${AdminList.sortableHead(acKey, [
+                { label: 'Title', sort: 'title' },
+                { label: 'Videos' },
+                { label: 'Order', sort: 'display_order' },
+                { label: '' },
+              ])}
+            </tr></thead>
+            <tbody>${acShown.map((pl) => `
+              <tr${canReorder ? ` data-order-id="${pl.id}" tabindex="0"` : ''}>
+                ${canReorder ? '<td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>' : ''}
+                <td class="row-title">${esc(pl.title)}</td>
+                <td><button class="btn btn-secondary btn-sm" data-videos="${pl.id}">${pl.video_count || 0} videos</button></td>
+                <td>${pl.display_order ?? 0}</td>
                 <td class="row-actions">
-                  <button class="btn btn-secondary btn-sm" data-edit="${p.id}">Edit</button>
-                  <button class="btn btn-danger btn-sm" data-delete-playlist="${p.id}">Delete</button>
+                  <button class="btn btn-secondary btn-sm" data-edit="${pl.id}">Edit</button>
+                  <button class="btn btn-danger btn-sm" data-delete-playlist="${pl.id}">Delete</button>
                 </td>
               </tr>`).join('')}
             </tbody>
           </table>`;
+
+        if (canReorder) bindReorder(content.querySelector('.admin-table tbody'), playlists, '/api/academy/playlists');
       }
 
-      AdminList.bind(acKey, loadAcademy, {
-        countText: acShown.length === (playlists || []).length
-          ? `${(playlists || []).length} shown`
-          : `${acShown.length} of ${(playlists || []).length}`,
+      AdminList.bind(acKey, () => paint(playlists), {
+        reload: loadAcademy,
+        countText: acShown.length === playlists.length ? `${playlists.length} shown` : `${acShown.length} of ${playlists.length}`,
       });
 
       const addBtn = document.getElementById('add-btn');
@@ -3244,7 +3733,7 @@
       addContentListener('click', async (e) => {
         const editId = e.target.dataset.edit;
         if (editId) {
-          const item = (cachedItems.academy || []).find((p) => p.id === editId);
+          const item = (cachedItems.academy || []).find((pl) => pl.id === editId);
           academyPlaylistForm(item || { id: editId });
         }
 
@@ -3253,7 +3742,15 @@
 
         const delId = e.target.dataset.deletePlaylist;
         if (delId) {
-          const ok = await confirmDialog({ title: 'Delete this playlist?', body: 'Every video inside it is removed too.', note: 'This cannot be undone.', verb: 'Delete playlist' });
+          const target = (cachedItems.academy || []).find((pl) => pl.id === delId) || {};
+          const ok = await confirmDialog({
+            title: 'Delete this playlist?',
+            body: target.title
+              ? `"${target.title}" and every video inside it are removed from the site.`
+              : 'Every video inside it is removed too.',
+            note: 'This cannot be undone.',
+            verb: 'Delete playlist',
+          });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/academy/playlists/${delId}`, { method: 'DELETE' });
@@ -3261,10 +3758,6 @@
           } catch (err) { AdminUI.fail(err); }
         }
       });
-    } catch (err) {
-      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `<div class="admin-empty">${esc(AdminUI.friendly(err, 'Playlists could not be loaded.'))}</div>`;
-      const addBtn = document.getElementById('add-btn');
-      if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
     }
   }
 
@@ -3308,7 +3801,7 @@
   async function showPlaylistVideos(playlistId) {
     showLoading();
     try {
-      const playlist = (cachedItems.academy || []).find((p) => p.id === playlistId);
+      const playlist = (cachedItems.academy || []).find((pl) => pl.id === playlistId);
       const data = await AdminAPI.request(`/api/academy/playlists/admin/${playlistId}`);
       const videos = data.videos || [];
 
@@ -3319,63 +3812,54 @@
             <h2 class="form-card-title">Videos${playlist ? ': ' + esc(playlist.title) : ''}</h2>
             <button class="btn btn-primary btn-sm" id="add-video-btn">Add Video</button>
           </div>
+          ${videos.length > 1 ? reorderHint('The order here is the order viewers watch them in.') : ''}
           ${videos.length ? `<table class="admin-table">
-            <thead><tr><th>Title</th><th>Order</th><th></th></tr></thead>
-            <tbody>${videos.map((v, i) => `
-              <tr>
+            <thead><tr>
+              ${videos.length > 1 ? '<th class="col-select" aria-label="Reorder"></th>' : ''}
+              <th>Title</th><th>Order</th><th></th>
+            </tr></thead>
+            <tbody>${videos.map((v) => `
+              <tr${videos.length > 1 ? ` data-order-id="${v.id}" tabindex="0"` : ''}>
+                ${videos.length > 1 ? '<td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>' : ''}
                 <td class="row-title">${esc(v.title)}</td>
                 <td>${v.display_order ?? 0}</td>
                 <td class="row-actions">
-                  <button class="btn btn-secondary btn-sm" data-move-video-up="${v.id}" ${i === 0 ? 'disabled' : ''}>Up</button>
-                  <button class="btn btn-secondary btn-sm" data-move-video-down="${v.id}" ${i === videos.length - 1 ? 'disabled' : ''}>Down</button>
                   <button class="btn btn-secondary btn-sm" data-edit-video="${v.id}">Edit</button>
                   <button class="btn btn-danger btn-sm" data-delete-video="${v.id}">Delete</button>
                 </td>
               </tr>`).join('')}
             </tbody>
-          </table>` : '<div class="admin-empty">No videos yet.</div>'}
+          </table>` : `<div class="admin-empty">
+            <p>No videos in this playlist yet.</p>
+            <button class="btn btn-primary btn-sm" id="empty-add">Add the first video</button>
+          </div>`}
         </div>`;
 
       document.getElementById('back-btn').addEventListener('click', loadAcademy);
       document.getElementById('add-video-btn').addEventListener('click', () => academyVideoForm(null, playlistId));
+      AdminList.bindEmpty(() => academyVideoForm(null, playlistId));
+
+      // the old Up and Down buttons rewrote every row's order on each nudge
+      if (videos.length > 1) {
+        bindReorder(content.querySelector('.admin-table tbody'), videos, '/api/academy/videos');
+      }
 
       const videoMap = {};
       videos.forEach((v) => { videoMap[v.id] = v; });
-
-      async function swapVideoOrder(idxA, idxB) {
-        const reordered = videos.slice();
-        const tmp = reordered[idxA];
-        reordered[idxA] = reordered[idxB];
-        reordered[idxB] = tmp;
-        await Promise.all(reordered.map((v, i) =>
-          AdminAPI.request(`/api/academy/videos/${v.id}`, { method: 'PUT', body: JSON.stringify({ display_order: i }) })
-        ));
-        showPlaylistVideos(playlistId);
-      }
 
       addContentListener('click', async (e) => {
         const editVid = e.target.dataset.editVideo;
         if (editVid && videoMap[editVid]) academyVideoForm(videoMap[editVid], playlistId);
 
-        const upVid = e.target.dataset.moveVideoUp;
-        if (upVid) {
-          const idx = videos.findIndex((v) => v.id === upVid);
-          if (idx > 0) {
-            try { await swapVideoOrder(idx, idx - 1); } catch (err) { AdminUI.fail(err); }
-          }
-        }
-
-        const downVid = e.target.dataset.moveVideoDown;
-        if (downVid) {
-          const idx = videos.findIndex((v) => v.id === downVid);
-          if (idx >= 0 && idx < videos.length - 1) {
-            try { await swapVideoOrder(idx, idx + 1); } catch (err) { AdminUI.fail(err); }
-          }
-        }
-
         const delVid = e.target.dataset.deleteVideo;
         if (delVid) {
-          const ok = await confirmDialog({ title: 'Delete this video?', body: 'It is removed from the playlist on the site.', verb: 'Delete video' });
+          const target = videoMap[delVid] || {};
+          const ok = await confirmDialog({
+            title: 'Delete this video?',
+            body: target.title ? `"${target.title}" is removed from the playlist on the site.` : 'It is removed from the playlist on the site.',
+            note: 'This cannot be undone.',
+            verb: 'Delete video',
+          });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/academy/videos/${delVid}`, { method: 'DELETE' });
@@ -3384,6 +3868,7 @@
         }
       });
     } catch (err) {
+      if (err && err.message === 'Session expired') return;
       content.innerHTML = `<div class="form-card" style="max-width:900px">
         <div class="form-card-header"><button class="btn btn-secondary btn-sm" id="back-btn">Back</button></div>
         <div class="admin-empty">${esc(AdminUI.friendly(err, 'Videos could not be loaded.'))}</div>
@@ -3630,16 +4115,26 @@
 
   async function loadFaqs() {
     showLoading();
+    const faqKey = 'faqs';
     try {
       const faqs = await AdminAPI.request('/api/faqs/admin/all');
-      const faqKey = 'faqs';
-      cachedItems.faqs = faqs;
+      cachedItems.faqs = Array.isArray(faqs) ? faqs : [];
+      paint(cachedItems.faqs);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      showEmpty(esc(AdminUI.friendly(err, 'FAQs could not be loaded.')), 'FAQs');
+    }
 
-      const faqShown = AdminList.apply(faqKey, faqs || [], {
+    function paint(faqs) {
+      const faqShown = AdminList.apply(faqKey, faqs, {
         searchFields: ['question', 'answer'],
         filterFn: (r, f) => (f === 'active' ? r.active : !r.active),
       });
-      content.innerHTML = listHeader('FAQs', 'New FAQ') +
+
+      const st = AdminList.get(faqKey);
+      const canReorder = !st.q && !st.filter && !st.sort && faqShown.length > 1;
+
+      let html = listHeader('FAQs', 'New FAQ') +
         AdminList.toolbar(faqKey, {
           placeholder: 'Search questions and answers',
           filters: [
@@ -3647,29 +4142,34 @@
             { value: 'active', label: 'Active' },
             { value: 'inactive', label: 'Inactive' },
           ],
-        });
-      const canReorder = !AdminList.get(faqKey).q && !AdminList.get(faqKey).sort;
-      if (canReorder && faqShown.length > 1) {
-        content.innerHTML += '<p class="reorder-hint">Drag a row to reorder, or hold Alt and press the arrow keys. The order here is the order on the site.</p>';
-      }
+        }) + AdminList.bulkBar(faqKey, bulkOptions('faqs'));
+
+      if (canReorder) html += reorderHint('The order here is the order on the site.');
+
       if (!faqShown.length) {
-        content.innerHTML += AdminList.empty(
-          (faqs || []).length ? 'No questions match that search.' : 'No FAQs yet.',
-          (faqs || []).length ? '' : 'Add the first question'
+        html += AdminList.empty(
+          faqs.length ? 'No questions match that search.' : 'No FAQs yet.',
+          faqs.length ? '' : 'Add the first question'
         );
+        content.innerHTML = html;
         AdminList.bindEmpty(() => faqForm(null));
       } else {
-        content.innerHTML += `
+        content.innerHTML = html + `
           <table class="admin-table">
-            <thead><tr><th class="col-select" aria-label="Reorder"></th>${AdminList.sortableHead(faqKey, [
-              { label: 'Question', sort: 'question' },
-              { label: 'Status', sort: 'active' },
-              { label: 'Order', sort: 'display_order' },
-              { label: '' },
-            ])}</tr></thead>
+            <thead><tr>
+              ${canReorder ? '<th class="col-select" aria-label="Reorder"></th>' : ''}
+              ${AdminList.selectHead()}
+              ${AdminList.sortableHead(faqKey, [
+                { label: 'Question', sort: 'question' },
+                { label: 'Status', sort: 'active' },
+                { label: 'Order', sort: 'display_order' },
+                { label: '' },
+              ])}
+            </tr></thead>
             <tbody>${faqShown.map((f) => `
-              <tr data-order-id="${f.id}" tabindex="0">
-                <td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>
+              <tr${canReorder ? ` data-order-id="${f.id}" tabindex="0"` : ''}>
+                ${canReorder ? '<td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>' : ''}
+                ${AdminList.selectCell(faqKey, f.id)}
                 <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}${editedBy(f)}</td>
                 <td>
                   <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
@@ -3679,44 +4179,20 @@
                 <td>${f.display_order ?? 0}</td>
                 <td class="row-actions">
                   <button class="btn btn-secondary btn-sm" data-edit-faq="${f.id}">Edit</button>
+                  <button class="btn btn-secondary btn-sm" data-duplicate-faq="${f.id}">Duplicate</button>
                   <button class="btn btn-danger btn-sm" data-delete-faq="${f.id}">Delete</button>
                 </td>
               </tr>`).join('')}
             </tbody>
           </table>`;
+
+        if (canReorder) bindReorder(content.querySelector('.admin-table tbody'), faqs, '/api/faqs');
       }
 
-      const faqBody = content.querySelector('.admin-table tbody');
-      if (faqBody && canReorder && faqShown.length > 1) {
-        AdminReorder.enable(faqBody, {
-          onChange: async (rows) => {
-            // only the rows whose position actually moved are written
-            const changed = rows.filter((r) => {
-              const original = (faqs || []).find((f) => f.id === r.id);
-              return original && (original.display_order ?? 0) !== r.display_order;
-            });
-            if (!changed.length) return;
-            const results = await Promise.allSettled(changed.map((r) =>
-              AdminAPI.request(`/api/faqs/${r.id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ display_order: r.display_order }),
-              })
-            ));
-            const bad = results.filter((x) => x.status === 'rejected').length;
-            if (bad) AdminUI.toast(`${changed.length - bad} reordered, ${bad} failed.`, 'warn');
-            else AdminUI.toast('Order saved.', 'success');
-            changed.forEach((r) => {
-              const original = (faqs || []).find((f) => f.id === r.id);
-              if (original) original.display_order = r.display_order;
-            });
-          },
-        });
-      }
-
-      AdminList.bind(faqKey, loadFaqs, {
-        countText: faqShown.length === (faqs || []).length
-          ? `${(faqs || []).length} shown`
-          : `${faqShown.length} of ${(faqs || []).length}`,
+      AdminList.bind(faqKey, () => paint(faqs), {
+        reload: loadFaqs,
+        countText: faqShown.length === faqs.length ? `${faqs.length} shown` : `${faqShown.length} of ${faqs.length}`,
+        onBulk: (action, ids) => bulkRun('faqs', action, ids, faqKey),
       });
 
       const addBtn = document.getElementById('add-btn');
@@ -3727,6 +4203,22 @@
         if (editId) {
           const item = (cachedItems.faqs || []).find((f) => f.id === editId);
           faqForm(item || { id: editId });
+        }
+
+        const dupId = e.target.dataset.duplicateFaq;
+        if (dupId) {
+          const source = (cachedItems.faqs || []).find((f) => f.id === dupId);
+          if (source) {
+            const copy = Object.assign({}, source);
+            delete copy.id;
+            delete copy.created_at;
+            delete copy.last_edited_by;
+            delete copy.last_edited_at;
+            copy.question = copy.question + ' (copy)';
+            copy.active = false;
+            AdminUI.toast('Opened as a new question, inactive until you save it.', 'info');
+            return faqForm(copy);
+          }
         }
 
         const toggleId = e.target.dataset.toggleFaq;
@@ -3743,7 +4235,13 @@
 
         const delId = e.target.dataset.deleteFaq;
         if (delId) {
-          const ok = await confirmDialog({ title: 'Delete this FAQ?', body: 'It disappears from the homepage immediately.', verb: 'Delete FAQ' });
+          const target = (cachedItems.faqs || []).find((f) => f.id === delId) || {};
+          const ok = await confirmDialog({
+            title: 'Delete this FAQ?',
+            body: target.question ? `"${target.question}" disappears from the homepage immediately.` : 'It disappears from the homepage immediately.',
+            note: 'This cannot be undone.',
+            verb: 'Delete FAQ',
+          });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/faqs/${delId}`, { method: 'DELETE' });
@@ -3751,8 +4249,6 @@
           } catch (err) { AdminUI.fail(err); }
         }
       });
-    } catch {
-      showEmpty('Failed to load FAQs.', 'FAQs');
     }
   }
 

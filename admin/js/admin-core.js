@@ -621,7 +621,9 @@ const AdminList = (() => {
   }
 
   function selectHead() {
-    return '<th class="col-select"><input type="checkbox" id="select-all" aria-label="Select all rows"></th>';
+    /* scoped rather than identified: a grouped list draws one table per
+       group, and a shared id would leave every group but the first dead */
+    return '<th class="col-select"><input type="checkbox" data-select-all aria-label="Select all rows in this table"></th>';
   }
 
   /* wires the toolbar to a redraw, so each module only supplies its data */
@@ -668,15 +670,15 @@ const AdminList = (() => {
       });
     });
 
-    const all = document.getElementById('select-all');
-    if (all) {
-      const boxes = document.querySelectorAll('[data-select]');
-      all.checked = boxes.length > 0 && s.selected.size === boxes.length;
+    document.querySelectorAll('[data-select-all]').forEach((all) => {
+      const scope = all.closest('table') || document;
+      const boxes = Array.from(scope.querySelectorAll('[data-select]'));
+      all.checked = boxes.length > 0 && boxes.every((b) => s.selected.has(b.dataset.select));
       all.addEventListener('change', () => {
         boxes.forEach((b) => { if (all.checked) s.selected.add(b.dataset.select); else s.selected.delete(b.dataset.select); });
         rerender();
       });
-    }
+    });
 
     const bulkClear = document.getElementById('bulk-clear');
     if (bulkClear) bulkClear.addEventListener('click', () => { s.selected.clear(); rerender(); });
