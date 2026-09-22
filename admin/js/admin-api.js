@@ -47,9 +47,15 @@ const AdminAPI = (() => {
   }
 
   async function request(path, opts = {}) {
-    const headers = { 'Content-Type': 'application/json' };
+    // a caller's own headers used to be dropped, because the built set was
+    // spread last. body decides the content type: FormData sets its own.
+    const isForm = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+    const headers = Object.assign(
+      isForm ? {} : { 'Content-Type': 'application/json' },
+      opts.headers || {}
+    );
     const token = getToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token && !headers['Authorization']) headers['Authorization'] = `Bearer ${token}`;
 
     let res = await fetch(`${BASE}${path}`, { ...opts, headers });
 
@@ -60,8 +66,10 @@ const AdminAPI = (() => {
         res = await fetch(`${BASE}${path}`, { ...opts, headers });
       } else {
         clearTokens();
-        window.location.href = 'index.html';
-        return null;
+        // hand this to the panel so unsaved work can be kept and the
+        // reader is told what happened, rather than silently redirected
+        window.dispatchEvent(new CustomEvent('admin:session-expired'));
+        throw new Error('Session expired');
       }
     }
 
@@ -103,7 +111,11 @@ const AdminAPI = (() => {
   }
 
   async function requestRaw(path, opts = {}) {
-    const headers = { 'Content-Type': 'application/json' };
+    const isForm = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+    const headers = Object.assign(
+      isForm ? {} : { 'Content-Type': 'application/json' },
+      opts.headers || {}
+    );
     const res = await fetch(`${BASE}${path}`, { ...opts, headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

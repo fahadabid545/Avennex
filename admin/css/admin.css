@@ -1567,3 +1567,192 @@ body.is-splitting {
   color: var(--danger, #ef4444);
   font-size: 0.8rem;
 }
+
+/* ==========================================================
+   Notices, confirmations, list toolbar
+   ========================================================== */
+
+.toast-stack {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-primary, inherit);
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: auto;
+}
+.toast.is-in { opacity: 1; transform: none; }
+.toast-success { border-left-color: var(--dash-ok, #2F6B46); }
+.toast-error { border-left-color: var(--danger); }
+.toast-warn { border-left-color: var(--dash-warn, #8A5A14); }
+
+.toast-text { flex: 1; min-width: 0; word-break: break-word; }
+
+.toast-action {
+  flex: none;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.toast-close {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted, #888);
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.toast-close:hover { color: inherit; }
+
+.confirm-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.confirm-body {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-secondary, inherit);
+  white-space: pre-line;
+}
+.confirm-note {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+.confirm-box .confirm-actions { margin-top: 20px; }
+
+/* ---------- list toolbar ---------- */
+
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.list-search {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 180px;
+}
+.list-search input {
+  width: 100%;
+  padding: 9px 30px 9px 12px;
+  font: inherit;
+  font-size: 0.88rem;
+  color: inherit;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.list-search input:focus { outline: none; border-color: var(--accent); }
+.list-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  color: var(--text-muted, #888);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.list-filter {
+  font: inherit;
+  font-size: 0.85rem;
+  color: inherit;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  cursor: pointer;
+}
+.list-filter:focus { outline: none; border-color: var(--accent); }
+
+.list-count {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.admin-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.admin-table th.is-sortable:hover { color: var(--accent); }
+.admin-table th .sort-mark {
+  display: inline-block;
+  width: 10px;
+  opacity: 0.45;
+  font-size: 0.7em;
+}
+.admin-table th.is-sorted .sort-mark { opacity: 1; }
+
+.admin-table td.col-select,
+.admin-table th.col-select { width: 34px; text-align: center; }
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--bg-raised, var(--bg-secondary));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+.bulk-bar-count { font-weight: 600; }
+.bulk-bar-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+
+.list-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.list-pager-info {
+  font-size: 0.82rem;
+  color: var(--text-muted, #888);
+}
+.list-pager .btn[disabled] { opacity: 0.4; cursor: default; }
+
+.admin-empty .btn { margin-top: 14px; }

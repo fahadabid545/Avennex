@@ -9,16 +9,26 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = '../js/vendor/pdf.worker.min.js';
   }
 
+  const MODULES = ['dashboard', 'blogs', 'jobs', 'products', 'launchpad', 'academy',
+                   'chat', 'faqs', 'chatbot', 'settings', 'team'];
+
   navLinks.forEach((link) => {
-    link.addEventListener('click', () => {
-      navLinks.forEach((l) => l.classList.remove('active'));
-      link.classList.add('active');
-      currentModule = link.dataset.module;
-      loadModule(currentModule);
+    link.addEventListener('click', async () => {
+      const target = link.dataset.module;
+      if (target === currentModule) return;
+      // a half-written form is not discarded just because a nav item was hit
+      if (!(await AdminUI.guard())) return;
+      AdminUI.Router.go(target);
     });
   });
 
-  function loadModule(mod) {
+  function markNav(mod) {
+    navLinks.forEach((l) => l.classList.toggle('active', l.dataset.module === mod));
+  }
+
+  // the loaders are async, so a rejected promise used to escape the old
+  // try/catch and leave the panel spinning with nothing to read
+  async function loadModule(mod) {
     const loaders = {
       blogs: loadBlogs,
       jobs: loadJobs,
@@ -33,10 +43,20 @@
       team: loadTeam,
     };
     if (!loaders[mod]) return;
+    currentModule = mod;
+    markNav(mod);
+    AdminUI.markClean();
     try {
-      loaders[mod]();
+      await loaders[mod]();
     } catch (err) {
-      content.innerHTML = `<div class="admin-empty">Failed to load this section: ${esc(err.message)}</div>`;
+      if (err && err.message === 'Session expired') return;
+      content.innerHTML = listHeader(mod.charAt(0).toUpperCase() + mod.slice(1)) +
+        `<div class="admin-empty">
+           <p>${esc(AdminUI.friendly(err, 'This section could not be loaded.'))}</p>
+           <button class="btn btn-secondary btn-sm" id="retry-module">Try again</button>
+         </div>`;
+      const retry = document.getElementById('retry-module');
+      if (retry) retry.addEventListener('click', () => loadModule(mod));
     }
   }
 
@@ -108,27 +128,9 @@
     return badge(status, map[status] || 'gray');
   }
 
-  function confirmDialog(msg) {
-    return new Promise((resolve) => {
-      const overlay = document.createElement('div');
-      overlay.className = 'confirm-overlay';
-      overlay.innerHTML = `
-        <div class="confirm-box">
-          <p>${msg}</p>
-          <div class="confirm-actions">
-            <button class="btn btn-secondary btn-sm" data-action="cancel">Cancel</button>
-            <button class="btn btn-danger btn-sm" data-action="confirm">Delete</button>
-          </div>
-        </div>`;
-      document.body.appendChild(overlay);
-      overlay.addEventListener('click', (e) => {
-        const action = e.target.dataset.action;
-        if (action) {
-          document.body.removeChild(overlay);
-          resolve(action === 'confirm');
-        }
-      });
-    });
+  function confirmDialog(msg, opts) {
+    if (typeof msg === 'object' && msg !== null) return AdminUI.confirm(msg);
+    return AdminUI.confirm(Object.assign({ body: msg }, opts || {}));
   }
 
   function listHeader(title, addLabel) {
@@ -574,7 +576,7 @@
     let html = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">${title}</h2>
         </div>
         ${stepIndicator(currentStep, steps.length)}
@@ -605,7 +607,7 @@
 
     html += '<div class="form-actions">';
     if (currentStep > 1) {
-      html += '<button type="button" class="btn btn-secondary" id="prev-step">Back</button>';
+      html += '<button type="button" class="btn btn-secondary" id="prev-step">Previous step</button>';
     }
     if (isLast) {
       html += `<button type="submit" class="btn btn-primary">${item.id ? 'Update' : 'Publish'}</button>`;
@@ -620,10 +622,13 @@
 
     if (step.onMount) step.onMount(config);
 
-    document.getElementById('back-btn').addEventListener('click', () => {
-      if (currentStep === 1) onBack();
-      else renderStepForm({ ...config, currentStep: currentStep - 1 });
+    document.getElementById('back-btn').addEventListener('click', async () => {
+      if (!(await AdminUI.guard())) return;
+      onBack();
     });
+
+    // typing anywhere in the form marks it unsaved
+    document.getElementById('crud-form').addEventListener('input', () => AdminUI.markDirty());
 
     const prevBtn = document.getElementById('prev-step');
     if (prevBtn) {
@@ -754,18 +759,29 @@
       }
       msg.classList.add('form-msg-success');
 
-      if (entityType && slug) {
-        const linkEl = document.createElement('span');
-        linkEl.innerHTML = ' ' + viewOnSiteLink(entityType, result.slug || slug);
-        msg.appendChild(linkEl);
+      const opts = {};
+      if (entityType && (result.slug || slug)) {
+        opts.href = `${SITE_URL}/${entityType}.html?slug=${encodeURIComponent(result.slug || slug)}`;
+        opts.hrefLabel = 'View on site';
       }
+      AdminUI.toast(id ? 'Changes saved.' : 'Created.', 'success', opts);
+      AdminUI.markClean();
+      if (draftKeyFor(basePath, id)) AdminUI.dropDraft(draftKeyFor(basePath, id));
 
-      setTimeout(reloadFn, 1200);
+      setTimeout(reloadFn, 600);
     } catch (err) {
-      msg.textContent = err.message;
+      if (err && err.message === 'Session expired') return;
+      const text = AdminUI.friendly(err);
+      msg.textContent = text;
       msg.classList.add('form-msg-error');
+      AdminUI.toast(text, 'error');
       btn.disabled = false;
     }
+  }
+
+  function draftKeyFor(basePath, id) {
+    if (!basePath) return '';
+    return basePath.replace(/[^a-z]/gi, '') + (id || 'new');
   }
 
   let cachedItems = {};
@@ -789,7 +805,18 @@
       }
 
       if (deleteId) {
-        const ok = await confirmDialog('Are you sure you want to delete this item?');
+        const list = cachedItems[module] || [];
+        const target = list.find((i) => i.id === deleteId) || {};
+        const name = target.title || target.name || target.question || '';
+        const nouns = { blogs: 'post', jobs: 'job', products: 'product', launchpad: 'entry' };
+        const noun = nouns[module] || 'item';
+        const ok = await confirmDialog({
+          title: `Delete this ${noun}?`,
+          body: name ? `"${name}" will be removed from the site immediately.`
+                     : `This ${noun} will be removed from the site immediately.`,
+          note: 'This cannot be undone.',
+          verb: `Delete ${noun}`,
+        });
         if (!ok) return;
         const paths = {
           blogs: '/api/blogs',
@@ -801,7 +828,7 @@
           await AdminAPI.request(`${paths[module]}/${deleteId}`, { method: 'DELETE' });
           loadModule(module);
         } catch (err) {
-          alert(err.message);
+          AdminUI.fail(err);
         }
       }
     });
@@ -811,19 +838,60 @@
 
   async function loadBlogs() {
     showLoading();
+    const key = 'blogs';
     try {
-      const blogs = await AdminAPI.request('/api/blogs/admin/all?limit=50');
-      cachedItems.blogs = blogs;
-      content.innerHTML = listHeader('Blog Posts', 'Add New Blog');
-      if (!blogs || !blogs.length) {
-        content.innerHTML += '<div class="admin-empty">No blog posts yet.</div>';
+      const raw = await AdminAPI.request('/api/blogs/admin/all' + AdminList.query(key));
+      const { rows, hasMore } = AdminList.trim(key, raw);
+      cachedItems.blogs = rows;
+      paint(rows, hasMore);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      showEmpty(esc(AdminUI.friendly(err, 'Blog posts could not be loaded.')), 'Blog Posts');
+    }
+
+    function paint(rows, hasMore) {
+      const shown = AdminList.apply(key, rows, {
+        searchFields: ['title', 'slug', 'author', 'excerpt'],
+        filterFn: (r, f) => r.status === f,
+      });
+
+      let html = listHeader('Blog Posts', 'Add New Blog');
+      html += AdminList.toolbar(key, {
+        placeholder: 'Search posts by title, slug or author',
+        filters: [
+          { value: '', label: 'All statuses' },
+          { value: 'published', label: 'Published' },
+          { value: 'draft', label: 'Draft' },
+        ],
+      });
+      html += AdminList.bulkBar(key, [
+        { id: 'publish', label: 'Publish' },
+        { id: 'draft', label: 'Move to draft' },
+        { id: 'delete', label: 'Delete', danger: true },
+      ]);
+
+      if (!shown.length) {
+        html += AdminList.empty(
+          rows.length ? 'No posts match that search.' : 'No blog posts yet.',
+          rows.length ? '' : 'Write the first one'
+        );
+        content.innerHTML = html;
+        AdminList.bindEmpty(() => blogForm(null));
       } else {
-        content.innerHTML += `
+        html += `
           <table class="admin-table">
-            <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Date</th><th></th></tr></thead>
-            <tbody>${blogs.map((b, i) => `
+            <thead><tr>
+              ${AdminList.selectHead()}
+              ${AdminList.sortableHead(key, [
+                { label: 'Title', sort: 'title' },
+                { label: 'Status', sort: 'status' },
+                { label: 'Date', sort: 'created_at' },
+                { label: '' },
+              ])}
+            </tr></thead>
+            <tbody>${shown.map((b) => `
               <tr>
-                <td>${i + 1}</td>
+                ${AdminList.selectCell(key, b.id)}
                 <td class="row-title">${esc(b.title)}${editedBy(b)}</td>
                 <td>${statusBadge(b.status)}</td>
                 <td>${formatDate(b.created_at)}</td>
@@ -834,11 +902,48 @@
               </tr>`).join('')}
             </tbody>
           </table>`;
+        html += AdminList.pager(key, shown.length, hasMore);
+        content.innerHTML = html;
       }
+
+      AdminList.bind(key, () => paint(rows, hasMore), {
+        reload: loadBlogs,
+        countText: shown.length === rows.length ? `${rows.length} shown` : `${shown.length} of ${rows.length}`,
+        onBulk: (action, ids) => bulkBlogs(action, ids),
+      });
       bindListActions('blogs', blogForm);
-    } catch (err) {
-      showEmpty('Failed to load blogs.', 'Blog Posts');
     }
+  }
+
+  async function bulkBlogs(action, ids) {
+    if (!ids.length) return;
+    const verbs = { publish: 'Publish', draft: 'Move to draft', delete: 'Delete' };
+    const ok = await confirmDialog({
+      title: `${verbs[action]} ${ids.length} post${ids.length > 1 ? 's' : ''}?`,
+      body: action === 'delete'
+        ? 'They are removed from the site immediately.'
+        : `Their status changes to ${action === 'publish' ? 'published' : 'draft'} on the live site.`,
+      note: action === 'delete' ? 'This cannot be undone.' : '',
+      verb: verbs[action],
+      danger: action === 'delete',
+    });
+    if (!ok) return;
+
+    const results = await Promise.allSettled(ids.map((id) => {
+      if (action === 'delete') return AdminAPI.request(`/api/blogs/${id}`, { method: 'DELETE' });
+      const item = (cachedItems.blogs || []).find((b) => b.id === id) || {};
+      return AdminAPI.request(`/api/blogs/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ title: item.title, status: action === 'publish' ? 'published' : 'draft' }),
+      });
+    }));
+
+    // a partial failure names how many, instead of claiming success
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed) AdminUI.toast(`${ids.length - failed} updated, ${failed} failed.`, 'warn');
+    else AdminUI.toast(`${ids.length} post${ids.length > 1 ? 's' : ''} updated.`, 'success');
+    AdminList.get('blogs').selected.clear();
+    loadBlogs();
   }
 
   function blogSlugify(text) {
@@ -929,7 +1034,7 @@
         if (idx !== -1) {
           textarea.value = textarea.value.substring(0, idx) + textarea.value.substring(idx + placeholder.length);
         }
-        alert(err.message);
+        AdminUI.fail(err);
       }
       textarea.dispatchEvent(new Event('input'));
     });
@@ -979,7 +1084,7 @@
         done();
         return;
       } catch (err) {
-        done(err.message);
+        done(AdminUI.friendly(err));
         return;
       }
     });
@@ -1256,19 +1361,19 @@
       msg.textContent = '';
 
       try {
-        await AdminAPI.request(`/api/jobs/${job.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            status: 'open',
-            expires_at: new Date(dateVal).toISOString(),
-            created_at: new Date().toISOString(),
-          }),
+        // POST /repost opens a new posting and leaves the closed one, with
+        // its applicants and its original date, intact. A PUT here used to
+        // overwrite the original and carry last cycle's applicants across.
+        await AdminAPI.request(`/api/jobs/${job.id}/repost`, {
+          method: 'POST',
+          body: JSON.stringify({ expires_at: new Date(dateVal).toISOString() }),
         });
         document.body.removeChild(overlay);
         jobsTab = 'open';
+        AdminUI.toast('Reposted as a new opening. The closed one keeps its applicants.', 'success');
         loadJobs();
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = AdminUI.friendly(err);
         msg.className = 'form-msg form-msg-error';
         btn.disabled = false;
       }
@@ -1278,11 +1383,19 @@
   async function loadJobs() {
     showLoading();
     try {
-      const allJobs = await AdminAPI.request('/api/jobs/admin/all?limit=50');
-      const { open, closed } = splitJobs(allJobs);
-      cachedItems.jobs = allJobs;
+      const key = 'jobs-' + jobsTab;
+      // the closed tab has its own endpoint; deriving it from a capped page
+      // of everything meant older closed roles simply vanished
+      const path = jobsTab === 'closed' ? '/api/jobs/admin/closed' : '/api/jobs/admin/all';
+      const fetched = await AdminAPI.request(path + AdminList.query(key));
+      const { rows, hasMore } = AdminList.trim(key, fetched);
+      cachedItems.jobs = rows;
 
-      const displayJobs = jobsTab === 'closed' ? closed : open;
+      const { open, closed } = splitJobs(rows);
+      const tabRows = jobsTab === 'closed' ? (path.endsWith('closed') ? rows : closed) : open;
+      const displayJobs = AdminList.apply(key, tabRows, {
+        searchFields: ['title', 'slug', 'type', 'commitment', 'location'],
+      });
 
       let appCounts = {};
       if (displayJobs.length) {
@@ -1296,7 +1409,10 @@
 
       let tableHtml = '';
       if (!displayJobs.length) {
-        tableHtml = '<div class="admin-empty">No ' + jobsTab + ' jobs.</div>';
+        tableHtml = AdminList.empty(
+          AdminList.get(key).q ? 'No roles match that search.' : `No ${jobsTab} jobs.`,
+          (jobsTab === 'open' && !AdminList.get(key).q) ? 'Post a role' : ''
+        );
       } else if (jobsTab === 'open') {
         const groups = groupJobsByDate(displayJobs);
         tableHtml = groups.map(([dateKey, jobs]) => `
@@ -1317,10 +1433,18 @@
 
       content.innerHTML = listHeader('Job Listings', 'New Job') + `
         <div class="tab-bar">
-          <button class="tab-btn ${jobsTab === 'open' ? 'active' : ''}" data-tab="open">Open (${open.length})</button>
-          <button class="tab-btn ${jobsTab === 'closed' ? 'active' : ''}" data-tab="closed">Closed (${closed.length})</button>
-        </div>` + tableHtml;
+          <button class="tab-btn ${jobsTab === 'open' ? 'active' : ''}" data-tab="open">Open</button>
+          <button class="tab-btn ${jobsTab === 'closed' ? 'active' : ''}" data-tab="closed">Closed</button>
+        </div>` +
+        AdminList.toolbar(key, { placeholder: 'Search roles by title, type or location' }) +
+        tableHtml + AdminList.pager(key, displayJobs.length, hasMore);
 
+      AdminList.bind(key, loadJobs, {
+        reload: loadJobs,
+        countText: displayJobs.length === tabRows.length
+          ? `${tabRows.length} shown`
+          : `${displayJobs.length} of ${tabRows.length}`,
+      });
       bindListActions('jobs', jobForm);
 
       addContentListener('click', async (e) => {
@@ -1386,13 +1510,13 @@
 
         const delAppId = e.target.dataset.deleteApp;
         if (delAppId) {
-          const ok = await confirmDialog('Delete this application?');
+          const ok = await confirmDialog({ title: 'Delete this application?', body: 'The applicant\u2019s submission and any uploaded resume will be removed.', note: 'This cannot be undone.', verb: 'Delete application' });
           if (!ok) return;
           try {
             const result = await AdminAPI.request(`/api/jobs/applications/${delAppId}`, { method: 'DELETE' });
-            if (result && result.warnings && result.warnings.length) alert(result.warnings.join('\n'));
+            if (result && result.warnings && result.warnings.length) AdminUI.toast(result.warnings.join(' '), 'warn');
             showApplications(jobId);
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
       });
     } catch {
@@ -1478,7 +1602,7 @@
 
     document.getElementById('download-application-btn').addEventListener('click', () => {
       const w = window.open('', '_blank');
-      if (!w) { alert('Please allow popups to download the application.'); return; }
+      if (!w) { AdminUI.toast('Allow pop-ups for this site to download the application.', 'warn'); return; }
       w.document.write(buildApplicationPrintHtml(app, job));
       w.document.close();
       w.onload = () => w.print();
@@ -1499,7 +1623,7 @@
           a.remove();
           URL.revokeObjectURL(url);
         } catch (err) {
-          alert(err.message || 'Failed to download resume');
+          AdminUI.fail(err, 'Could not download that resume.');
         } finally {
           downloadResumeBtn.disabled = false;
         }
@@ -1808,7 +1932,7 @@
   async function loadProducts() {
     showLoading();
     try {
-      const products = await AdminAPI.request('/api/products/admin/all?limit=50');
+      const products = await AdminAPI.request('/api/products/admin/all' + AdminList.query('products'));
       cachedItems.products = products;
 
       let chatCounts = {};
@@ -1820,17 +1944,42 @@
         } catch {}
       }
 
-      content.innerHTML = listHeader('Products', 'New Product');
+      const key = 'products';
+      const shown = AdminList.apply(key, products, {
+        searchFields: ['name', 'slug', 'tagline'],
+        filterFn: (r, f) => r.status === f,
+      });
 
-      if (!products || !products.length) {
-        content.innerHTML += '<div class="admin-empty">No products yet.</div>';
+      let html = listHeader('Products', 'New Product');
+      html += AdminList.toolbar(key, {
+        placeholder: 'Search products by name or slug',
+        filters: [
+          { value: '', label: 'All statuses' },
+          { value: 'in-development', label: 'In development' },
+          { value: 'launched', label: 'Launched' },
+          { value: 'paused', label: 'Paused' },
+        ],
+      });
+
+      if (!shown.length) {
+        html += AdminList.empty(
+          products.length ? 'No products match that search.' : 'No products yet.',
+          products.length ? '' : 'Add the first product'
+        );
+        content.innerHTML = html;
+        AdminList.bindEmpty(() => productForm(null));
       } else {
-        content.innerHTML += `
+        content.innerHTML = html + `
           <table class="admin-table">
-            <thead><tr><th>#</th><th>Name</th><th>Status</th><th>Progress</th><th>Chat</th><th></th></tr></thead>
-            <tbody>${products.map((p, i) => `
+            <thead><tr>${AdminList.sortableHead(key, [
+              { label: 'Name', sort: 'name' },
+              { label: 'Status', sort: 'status' },
+              { label: 'Progress', sort: 'progress' },
+              { label: 'Chat' },
+              { label: '' },
+            ])}</tr></thead>
+            <tbody>${shown.map((p) => `
               <tr>
-                <td>${i + 1}</td>
                 <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
                 <td>${statusBadge(p.status)}</td>
                 <td>${p.progress ?? 0}%</td>
@@ -1848,6 +1997,9 @@
             </tbody>
           </table>`;
       }
+      AdminList.bind(key, loadProducts, {
+        countText: shown.length === products.length ? `${products.length} shown` : `${shown.length} of ${products.length}`,
+      });
       bindListActions('products', productForm);
 
       addContentListener('click', async (e) => {
@@ -1860,7 +2012,7 @@
               body: JSON.stringify({ chat_enabled: !isOn }),
             });
             loadProducts();
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
 
         const chatId = e.target.dataset.productChat;
@@ -1913,12 +2065,12 @@
 
         const delId = e.target.dataset.pchatDelete;
         if (delId) {
-          const ok = await confirmDialog('Delete this message and its replies?');
+          const ok = await confirmDialog({ title: 'Delete this message?', body: 'The message and every reply under it are removed from the public board.', note: 'This cannot be undone.', verb: 'Delete message' });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/products/${product.slug}/chat/${delId}`, { method: 'DELETE' });
             showProductChat(product);
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
       });
     } catch {
@@ -1931,7 +2083,7 @@
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">Reply to ${msg ? esc(msg.author_name) : 'message'}</h2>
         </div>
         ${msg ? `<div class="comment-item" style="margin-bottom:16px"><p class="comment-body">${esc(msg.message)}</p></div>` : ''}
@@ -1966,7 +2118,7 @@
         formMsg.classList.add(warn ? 'form-msg-error' : 'form-msg-success');
         setTimeout(() => showProductChat(product), 800);
       } catch (err) {
-        formMsg.textContent = err.message;
+        formMsg.textContent = AdminUI.friendly(err);
         formMsg.classList.add('form-msg-error');
         btn.disabled = false;
       }
@@ -2301,7 +2453,7 @@
                 msg.textContent = 'Uploaded.';
                 msg.classList.add('form-msg-success');
               } catch (err) {
-                msg.textContent = err.message;
+                msg.textContent = AdminUI.friendly(err);
                 msg.classList.add('form-msg-error');
               }
               e.target.value = '';
@@ -2400,12 +2552,14 @@
   async function loadLaunchpad() {
     showLoading();
     try {
-      const entries = await AdminAPI.request('/api/launchpad/admin/all?limit=50');
+      const entries = await AdminAPI.request('/api/launchpad/admin/all' + AdminList.query('launchpad'));
       cachedItems.launchpad = entries;
       if (!entries || !entries.length) {
-        content.innerHTML = listHeader('Launchpad', 'New Entry') + '<div class="admin-empty">No launchpad entries yet.</div>';
+        content.innerHTML = listHeader('Launchpad', 'New Entry') +
+          AdminList.empty('No launchpad entries yet.', 'Publish the first idea');
         const addBtn = document.getElementById('add-btn');
         if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
+        AdminList.bindEmpty(() => launchpadForm(null));
         return;
       }
 
@@ -2435,12 +2589,33 @@
           <span class="admin-stat-chip">${totalComments} comments</span>
         </div>`;
 
-      content.innerHTML = listHeader('Launchpad', 'New Entry') + statsHtml + `
+      const lpKey = 'launchpad';
+      const lpShown = AdminList.apply(lpKey, entries, {
+        searchFields: ['title', 'slug', 'tagline'],
+        filterFn: (r, f) => r.stage === f,
+      });
+      content.innerHTML = listHeader('Launchpad', 'New Entry') + statsHtml +
+        AdminList.toolbar(lpKey, {
+          placeholder: 'Search ideas by title or tagline',
+          filters: [
+            { value: '', label: 'All stages' },
+            { value: 'concept', label: 'Concept' },
+            { value: 'planning', label: 'Planning' },
+            { value: 'open-for-feedback', label: 'Open for feedback' },
+            { value: 'building', label: 'Building' },
+          ],
+        }) + `
         <table class="admin-table">
-          <thead><tr><th>#</th><th>Title</th><th>Stage</th><th>Status</th><th>Comments</th><th>Created</th><th></th></tr></thead>
-          <tbody>${entries.map((e, i) => `
+          <thead><tr>${AdminList.sortableHead(lpKey, [
+            { label: 'Title', sort: 'title' },
+            { label: 'Stage', sort: 'stage' },
+            { label: 'Status', sort: 'status' },
+            { label: 'Comments' },
+            { label: 'Created', sort: 'created_at' },
+            { label: '' },
+          ])}</tr></thead>
+          <tbody>${lpShown.map((e) => `
             <tr>
-              <td>${i + 1}</td>
               <td class="row-title">${esc(e.title)}${editedBy(e)}</td>
               <td>${statusBadge(e.stage)}</td>
               <td>${statusBadge(e.status)}</td>
@@ -2453,6 +2628,9 @@
             </tr>`).join('')}
           </tbody>
         </table>`;
+      AdminList.bind(lpKey, loadLaunchpad, {
+        countText: lpShown.length === entries.length ? `${entries.length} shown` : `${lpShown.length} of ${entries.length}`,
+      });
       bindListActions('launchpad', launchpadForm);
 
       addContentListener('click', (e) => {
@@ -2460,7 +2638,7 @@
         if (commentsId) showLaunchpadComments(commentsId);
       });
     } catch (err) {
-      content.innerHTML = listHeader('Launchpad', 'New Entry') + `<div class="admin-empty">Failed to load launchpad entries: ${esc(err.message)}</div>`;
+      content.innerHTML = listHeader('Launchpad', 'New Entry') + `<div class="admin-empty">${esc(AdminUI.friendly(err, 'Launchpad entries could not be loaded.'))}</div>`;
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => launchpadForm(null));
     }
@@ -2497,13 +2675,13 @@
       addContentListener('click', async (e) => {
         const commentId = e.target.dataset.deleteComment;
         if (commentId) {
-          const ok = await confirmDialog('Delete this comment?');
+          const ok = await confirmDialog({ title: 'Delete this comment?', body: 'It is removed from the public launchpad page.', verb: 'Delete comment' });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/launchpad/comments/${commentId}`, { method: 'DELETE' });
             showLaunchpadComments(entryId);
           } catch (err) {
-            alert(err.message);
+            AdminUI.fail(err);
           }
         }
       });
@@ -2809,14 +2987,27 @@
       const playlists = await AdminAPI.request('/api/academy/playlists/admin/all');
       cachedItems.academy = playlists;
 
-      content.innerHTML = listHeader('Academy Playlists', 'New Playlist');
-      if (!playlists || !playlists.length) {
-        content.innerHTML += '<div class="admin-empty">No playlists yet.</div>';
+      const acKey = 'academy';
+      const acShown = AdminList.apply(acKey, playlists || [], { searchFields: ['title', 'slug', 'description'] });
+
+      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') +
+        AdminList.toolbar(acKey, { placeholder: 'Search playlists' });
+      if (!acShown.length) {
+        content.innerHTML += AdminList.empty(
+          (playlists || []).length ? 'No playlists match that search.' : 'No playlists yet.',
+          (playlists || []).length ? '' : 'Create the first playlist'
+        );
+        AdminList.bindEmpty(() => academyPlaylistForm(null));
       } else {
         content.innerHTML += `
           <table class="admin-table">
-            <thead><tr><th>Title</th><th>Videos</th><th>Order</th><th></th></tr></thead>
-            <tbody>${playlists.map((p) => `
+            <thead><tr>${AdminList.sortableHead(acKey, [
+              { label: 'Title', sort: 'title' },
+              { label: 'Videos' },
+              { label: 'Order', sort: 'display_order' },
+              { label: '' },
+            ])}</tr></thead>
+            <tbody>${acShown.map((p) => `
               <tr>
                 <td class="row-title">${esc(p.title)}</td>
                 <td><button class="btn btn-secondary btn-sm" data-videos="${p.id}">${p.video_count || 0} videos</button></td>
@@ -2829,6 +3020,12 @@
             </tbody>
           </table>`;
       }
+
+      AdminList.bind(acKey, loadAcademy, {
+        countText: acShown.length === (playlists || []).length
+          ? `${(playlists || []).length} shown`
+          : `${acShown.length} of ${(playlists || []).length}`,
+      });
 
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
@@ -2845,16 +3042,16 @@
 
         const delId = e.target.dataset.deletePlaylist;
         if (delId) {
-          const ok = await confirmDialog('Delete this playlist and all its videos?');
+          const ok = await confirmDialog({ title: 'Delete this playlist?', body: 'Every video inside it is removed too.', note: 'This cannot be undone.', verb: 'Delete playlist' });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/academy/playlists/${delId}`, { method: 'DELETE' });
             loadAcademy();
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
       });
     } catch (err) {
-      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `<div class="admin-empty">Failed to load playlists: ${esc(err.message)}</div>`;
+      content.innerHTML = listHeader('Academy Playlists', 'New Playlist') + `<div class="admin-empty">${esc(AdminUI.friendly(err, 'Playlists could not be loaded.'))}</div>`;
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => academyPlaylistForm(null));
     }
@@ -2953,7 +3150,7 @@
         if (upVid) {
           const idx = videos.findIndex((v) => v.id === upVid);
           if (idx > 0) {
-            try { await swapVideoOrder(idx, idx - 1); } catch (err) { alert(err.message); }
+            try { await swapVideoOrder(idx, idx - 1); } catch (err) { AdminUI.fail(err); }
           }
         }
 
@@ -2961,24 +3158,24 @@
         if (downVid) {
           const idx = videos.findIndex((v) => v.id === downVid);
           if (idx >= 0 && idx < videos.length - 1) {
-            try { await swapVideoOrder(idx, idx + 1); } catch (err) { alert(err.message); }
+            try { await swapVideoOrder(idx, idx + 1); } catch (err) { AdminUI.fail(err); }
           }
         }
 
         const delVid = e.target.dataset.deleteVideo;
         if (delVid) {
-          const ok = await confirmDialog('Delete this video?');
+          const ok = await confirmDialog({ title: 'Delete this video?', body: 'It is removed from the playlist on the site.', verb: 'Delete video' });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/academy/videos/${delVid}`, { method: 'DELETE' });
             showPlaylistVideos(playlistId);
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
       });
     } catch (err) {
       content.innerHTML = `<div class="form-card" style="max-width:900px">
         <div class="form-card-header"><button class="btn btn-secondary btn-sm" id="back-btn">Back</button></div>
-        <div class="admin-empty">Failed to load videos: ${esc(err.message)}</div>
+        <div class="admin-empty">${esc(AdminUI.friendly(err, 'Videos could not be loaded.'))}</div>
       </div>`;
       document.getElementById('back-btn').addEventListener('click', loadAcademy);
     }
@@ -2989,7 +3186,7 @@
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">${v.id ? 'Edit Video' : 'Add Video'}</h2>
         </div>
         <form id="crud-form">
@@ -3069,7 +3266,7 @@
         msg.classList.add('form-msg-success');
         setTimeout(() => showPlaylistVideos(playlistId), 800);
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = AdminUI.friendly(err);
         msg.classList.add('form-msg-error');
         btn.disabled = false;
       }
@@ -3113,12 +3310,12 @@
 
         const delId = e.target.dataset.deleteChat;
         if (delId) {
-          const ok = await confirmDialog('Delete this message and its replies?');
+          const ok = await confirmDialog({ title: 'Delete this message?', body: 'The message and every reply under it are removed from the public board.', note: 'This cannot be undone.', verb: 'Delete message' });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/chat/${delId}`, { method: 'DELETE' });
             loadChat();
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
       });
     } catch {
@@ -3131,7 +3328,7 @@
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">Reply to ${msg ? esc(msg.author_name) : 'message'}</h2>
         </div>
         ${msg ? `<div class="comment-item" style="margin-bottom:16px"><p class="comment-body">${esc(msg.message)}</p></div>` : ''}
@@ -3166,7 +3363,7 @@
         formMsg.classList.add(warn ? 'form-msg-error' : 'form-msg-success');
         setTimeout(loadChat, 800);
       } catch (err) {
-        formMsg.textContent = err.message;
+        formMsg.textContent = AdminUI.friendly(err);
         formMsg.classList.add('form-msg-error');
         btn.disabled = false;
       }
@@ -3179,7 +3376,7 @@
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">Edit message</h2>
         </div>
         <form id="crud-form">
@@ -3211,7 +3408,7 @@
         formMsg.classList.add('form-msg-success');
         setTimeout(loadChat, 800);
       } catch (err) {
-        formMsg.textContent = err.message;
+        formMsg.textContent = AdminUI.friendly(err);
         formMsg.classList.add('form-msg-error');
         btn.disabled = false;
       }
@@ -3224,18 +3421,39 @@
     showLoading();
     try {
       const faqs = await AdminAPI.request('/api/faqs/admin/all');
+      const faqKey = 'faqs';
       cachedItems.faqs = faqs;
 
-      content.innerHTML = listHeader('FAQs', 'New FAQ');
-      if (!faqs || !faqs.length) {
-        content.innerHTML += '<div class="admin-empty">No FAQs yet.</div>';
+      const faqShown = AdminList.apply(faqKey, faqs || [], {
+        searchFields: ['question', 'answer'],
+        filterFn: (r, f) => (f === 'active' ? r.active : !r.active),
+      });
+      content.innerHTML = listHeader('FAQs', 'New FAQ') +
+        AdminList.toolbar(faqKey, {
+          placeholder: 'Search questions and answers',
+          filters: [
+            { value: '', label: 'All' },
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' },
+          ],
+        });
+      if (!faqShown.length) {
+        content.innerHTML += AdminList.empty(
+          (faqs || []).length ? 'No questions match that search.' : 'No FAQs yet.',
+          (faqs || []).length ? '' : 'Add the first question'
+        );
+        AdminList.bindEmpty(() => faqForm(null));
       } else {
         content.innerHTML += `
           <table class="admin-table">
-            <thead><tr><th>#</th><th>Question</th><th>Status</th><th>Order</th><th></th></tr></thead>
-            <tbody>${faqs.map((f, i) => `
+            <thead><tr>${AdminList.sortableHead(faqKey, [
+              { label: 'Question', sort: 'question' },
+              { label: 'Status', sort: 'active' },
+              { label: 'Order', sort: 'display_order' },
+              { label: '' },
+            ])}</tr></thead>
+            <tbody>${faqShown.map((f) => `
               <tr>
-                <td>${i + 1}</td>
                 <td class="row-title">${esc(f.question.length > 60 ? f.question.slice(0, 60) + '...' : f.question)}${editedBy(f)}</td>
                 <td>
                   <button class="btn btn-sm ${f.active ? 'btn-primary' : 'btn-secondary'}" data-toggle-faq="${f.id}" data-active="${f.active}">
@@ -3251,6 +3469,12 @@
             </tbody>
           </table>`;
       }
+
+      AdminList.bind(faqKey, loadFaqs, {
+        countText: faqShown.length === (faqs || []).length
+          ? `${(faqs || []).length} shown`
+          : `${faqShown.length} of ${(faqs || []).length}`,
+      });
 
       const addBtn = document.getElementById('add-btn');
       if (addBtn) addBtn.addEventListener('click', () => faqForm(null));
@@ -3271,17 +3495,17 @@
               body: JSON.stringify({ active: !isActive }),
             });
             loadFaqs();
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
 
         const delId = e.target.dataset.deleteFaq;
         if (delId) {
-          const ok = await confirmDialog('Delete this FAQ?');
+          const ok = await confirmDialog({ title: 'Delete this FAQ?', body: 'It disappears from the homepage immediately.', verb: 'Delete FAQ' });
           if (!ok) return;
           try {
             await AdminAPI.request(`/api/faqs/${delId}`, { method: 'DELETE' });
             loadFaqs();
-          } catch (err) { alert(err.message); }
+          } catch (err) { AdminUI.fail(err); }
         }
       });
     } catch {
@@ -3529,7 +3753,7 @@
         msg.className = 'form-msg form-msg-success';
         setTimeout(() => { msg.textContent = ''; }, 2000);
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = AdminUI.friendly(err);
         msg.className = 'form-msg form-msg-error';
         cb.checked = !cb.checked;
       }
@@ -3565,7 +3789,7 @@
         msg.textContent = 'Settings saved.';
         msg.classList.add('form-msg-success');
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = AdminUI.friendly(err);
         msg.classList.add('form-msg-error');
       }
       btn.disabled = false;
@@ -3617,7 +3841,7 @@
         statusEl.innerHTML = '<span class="form-msg form-msg-success">Document uploaded and indexed.</span>';
         loadDocuments();
       } catch (err) {
-        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(err.message)}</span>`;
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(AdminUI.friendly(err))}</span>`;
       }
     }
 
@@ -3649,13 +3873,13 @@
 
         body.querySelectorAll('[data-delete-doc]').forEach((btn) => {
           btn.addEventListener('click', async () => {
-            const ok = await confirmDialog('Delete this document? Its vectors will be removed from the index.');
+            const ok = await confirmDialog({ title: 'Delete this document?', body: 'The chatbot stops using it to answer questions.', note: 'Its vectors are removed from the index.', verb: 'Delete document' });
             if (!ok) return;
             try {
               await AdminAPI.request(`/api/chatbot/documents/${btn.dataset.deleteDoc}`, { method: 'DELETE' });
               loadDocuments();
             } catch (err) {
-              alert(err.message);
+              AdminUI.fail(err);
             }
           });
         });
@@ -3679,7 +3903,7 @@
           body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
         });
       } catch (err) {
-        alert(err.message);
+        AdminUI.fail(err);
         cb.checked = !cb.checked;
       }
       cb.disabled = false;
@@ -3695,13 +3919,13 @@
         statusEl.innerHTML = '<span class="form-msg form-msg-success">Backup created.</span>';
         loadBackupStatus();
       } catch (err) {
-        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(err.message)}</span>`;
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(AdminUI.friendly(err))}</span>`;
       }
       btn.disabled = false;
     });
 
     document.getElementById('cb-backup-delete').addEventListener('click', async () => {
-      const ok = await confirmDialog('Delete the backup? This cannot be undone.');
+      const ok = await confirmDialog({ title: 'Delete the backup?', body: 'The stored copy of the chatbot index is removed.', note: 'This cannot be undone.', verb: 'Delete backup' });
       if (!ok) return;
       const btn = document.getElementById('cb-backup-delete');
       const statusEl = document.getElementById('cb-backup-status');
@@ -3711,7 +3935,7 @@
         statusEl.innerHTML = '<span class="form-msg form-msg-success">Backup deleted.</span>';
         loadBackupStatus();
       } catch (err) {
-        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(err.message)}</span>`;
+        statusEl.innerHTML = `<span class="form-msg form-msg-error">${esc(AdminUI.friendly(err))}</span>`;
       }
       btn.disabled = false;
     });
@@ -4183,7 +4407,7 @@
             body: JSON.stringify({ value: cb.checked ? 'true' : 'false' }),
           });
         } catch (err) {
-          showMsg(cb.id, err.message, false);
+          showMsg(cb.id, AdminUI.friendly(err), false);
           cb.checked = !cb.checked;
         }
         cb.disabled = false;
@@ -4225,7 +4449,7 @@
         showMsg('s-blog-status', 'Saved', true);
         showMsg('s-job-expiry', 'Saved', true);
       } catch (err) {
-        showMsg('s-blog-status', err.message, false);
+        showMsg('s-blog-status', AdminUI.friendly(err), false);
       }
       btn.disabled = false;
     });
@@ -4271,7 +4495,7 @@
             await AdminAPI.request(`/api/admin/users/${removeId}`, { method: 'DELETE' });
             loadTeam();
           } catch (err) {
-            alert(err.message);
+            AdminUI.fail(err);
           }
         }
 
@@ -4289,7 +4513,7 @@
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">Edit Admin</h2>
         </div>
         <form id="crud-form">
@@ -4322,7 +4546,7 @@
         msg.classList.add('form-msg-success');
         setTimeout(loadTeam, 800);
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = AdminUI.friendly(err);
         msg.classList.add('form-msg-error');
         btn.disabled = false;
       }
@@ -4333,7 +4557,7 @@
     content.innerHTML = `
       <div class="form-card">
         <div class="form-card-header">
-          <button class="btn btn-secondary btn-sm" id="back-btn">Back</button>
+          <button class="btn btn-secondary btn-sm" id="back-btn" type="button">Close</button>
           <h2 class="form-card-title">Add Admin</h2>
         </div>
         <form id="crud-form">
@@ -4379,12 +4603,14 @@
         msg.classList.add('form-msg-success');
         setTimeout(loadTeam, 800);
       } catch (err) {
-        msg.textContent = err.message;
+        msg.textContent = AdminUI.friendly(err);
         msg.classList.add('form-msg-error');
         btn.disabled = false;
       }
     });
   }
 
-  loadModule(currentModule);
+  // the panel remembers where you were: each module has its own URL, so a
+  // refresh, a bookmark and the browser's Back button all behave
+  AdminUI.Router.start(MODULES, loadModule, 'dashboard');
 })();
