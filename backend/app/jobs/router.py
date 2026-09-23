@@ -222,6 +222,9 @@ async def apply_to_job(
             logger.error("Resume upload failed for application by %s: %s", email, resume_error)
 
     application = service.store_application(job["id"], app_data)
+    if not application:
+        logger.error("Application by %s for %s was not stored", email, slug)
+        raise HTTPException(status_code=500, detail="Your application could not be saved. Please try again.")
 
     if job.get("max_applications") is not None:
         new_count = service.count_applications(job["id"])

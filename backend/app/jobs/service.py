@@ -97,9 +97,15 @@ def get_by_id(job_id: str):
 
 
 def store_application(job_id: str, data: dict):
+    """Returns None if the application could not be stored. The real error
+    stays in the log. Nothing about the database reaches the applicant."""
     db = get_supabase()
     data["job_id"] = job_id
-    result = db.table("job_applications").insert(data).execute()
+    try:
+        result = db.table("job_applications").insert(data).execute()
+    except Exception as e:
+        logger.error("Failed to store application for job %s: %s", job_id, e)
+        return None
     return result.data[0] if result.data else None
 
 
