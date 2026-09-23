@@ -96,9 +96,15 @@ def delete(entry_id: str):
 
 
 def add_comment(entry_id: str, data: dict):
+    """Returns None if the comment could not be stored. The real error stays
+    in the log. Nothing about the database reaches the visitor."""
     db = get_supabase()
     data["entry_id"] = entry_id
-    result = db.table("launchpad_comments").insert(data).execute()
+    try:
+        result = db.table("launchpad_comments").insert(data).execute()
+    except Exception as e:
+        logger.error("Failed to store comment on entry %s: %s", entry_id, e)
+        return None
     return result.data[0] if result.data else None
 
 

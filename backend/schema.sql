@@ -141,7 +141,9 @@ create table if not exists launchpad_entries (
   progress_history jsonb default '[]'::jsonb,
   metrics jsonb default '[]'::jsonb,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  last_edited_by text,
+  last_edited_at timestamptz
 );
 
 alter table launchpad_entries disable row level security;

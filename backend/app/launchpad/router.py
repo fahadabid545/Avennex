@@ -140,7 +140,11 @@ def add_comment(slug: str, body: CommentCreate, request: Request):
     entry = service.get_by_slug(slug)
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
-    return service.add_comment(entry["id"], body.model_dump())
+    comment = service.add_comment(entry["id"], body.model_dump())
+    if not comment:
+        logger.error("Comment by %s on entry %s was not stored", body.author_email, slug)
+        raise HTTPException(status_code=500, detail="Your comment could not be posted. Please try again.")
+    return comment
 
 
 @router.delete("/comments/{id}", status_code=status.HTTP_204_NO_CONTENT)

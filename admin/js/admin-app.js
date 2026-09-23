@@ -1587,6 +1587,8 @@
     const chatEl = document.getElementById('f-chat-enabled');
     if (chatEl) config.formData.chat_enabled = chatEl.checked;
     if (typeof productFeatures !== 'undefined') config.formData.features = [...productFeatures];
+    const lpDescEl = document.getElementById('f-lp-description');
+    if (lpDescEl) config.formData.description = lpDescEl.value.trim();
     const lpContentEl = document.getElementById('f-lp-content');
     if (lpContentEl) config.formData.content = lpContentEl.value.trim();
     const lpTimelineEl = document.getElementById('f-lp-timeline');
@@ -4054,7 +4056,13 @@
 
             wrap.innerHTML = `
               <div class="field">
-                <label for="f-lp-content">Description</label>
+                <label for="f-lp-description">Listing Description</label>
+                <span class="field-hint">Plain text under the title on the launchpad page. Blank line between paragraphs. This is the only body text the cards show.</span>
+                <textarea id="f-lp-description" rows="4">${esc(config.formData.description)}</textarea>
+              </div>
+              <div class="field">
+                <label for="f-lp-content">Full Content</label>
+                <span class="field-hint">The rich body of the entry page. The cards never show this.</span>
                 <div class="blog-toolbar">
                   <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
                   <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
@@ -4071,7 +4079,7 @@
                 <textarea id="f-lp-content" class="blog-content-editor" rows="10">${esc(config.formData.content)}</textarea>
               </div>
               <div class="field">
-                <label>Description Preview</label>
+                <label>Full Content Preview</label>
                 <div class="blog-preview" id="lp-content-preview"></div>
               </div>
               <div class="field">
@@ -4163,6 +4171,7 @@
               ['Title', d.title],
               ['Slug', d.slug],
               ['Tagline', d.tagline],
+              ['Listing Description', d.description],
               ['Stage', d.stage],
               ['Status', d.status],
               ['Timeline', d.timeline],
@@ -4176,7 +4185,7 @@
             });
             html += '</div>';
             if (d.content) {
-              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + richText(d.content) + '</div></div>';
+              html += '<div class="field" style="margin-top:20px"><label>Full Content Preview</label><div class="blog-preview">' + richText(d.content) + '</div></div>';
             }
             if (d.collaboration_details) {
               html += '<div class="field" style="margin-top:20px"><label>Collaboration Details Preview</label><div class="blog-preview">' + richText(d.collaboration_details) + '</div></div>';
@@ -4194,6 +4203,8 @@
         },
       ],
       onSubmit: (d) => {
+        const descEl = document.getElementById('f-lp-description');
+        if (descEl) d.description = descEl.value.trim();
         const contentEl = document.getElementById('f-lp-content');
         if (contentEl) d.content = contentEl.value.trim();
         const tlEl = document.getElementById('f-lp-timeline');
