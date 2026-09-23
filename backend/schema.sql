@@ -10,11 +10,6 @@
 -- columns says nothing about foreign keys, unique constraints or indexes,
 -- so those lines are the intended design rather than a confirmed reading
 -- of production.
---
--- A few commented alter statements sit next to the tables that need them.
--- Each one marks a column the backend writes that the live table does not
--- have. They are commented out on purpose. Read the note above each before
--- running it.
 
 -- Admins
 create table if not exists admins (
@@ -205,16 +200,11 @@ create unique index if not exists media_remote_path_idx on media (remote_path) w
 alter table media disable row level security;
 
 -- FAQs
--- is_active is a legacy unused column left over from an earlier iteration.
--- Nothing in the codebase reads or writes it. The column the code uses is
--- active. Kept here so this file matches the live table, not because it
--- serves a purpose.
 create table if not exists faqs (
   id uuid primary key default gen_random_uuid(),
   question text not null,
   answer text not null,
   display_order integer default 0,
-  is_active boolean default true,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   last_edited_by text,
@@ -238,13 +228,9 @@ create table if not exists job_applications (
   cover_letter text,
   created_at timestamptz default now(),
   resume_url text,
-  email_status text
+  email_status text,
+  custom_answers jsonb
 );
-
--- The apply endpoint writes custom_answers when a role carries custom
--- questions, and the live table has no such column, so those applications
--- are rejected outright. Run this to close the gap.
--- alter table job_applications add column if not exists custom_answers jsonb;
 
 create index if not exists job_applications_job_idx on job_applications (job_id);
 
@@ -261,12 +247,9 @@ create table if not exists chat_messages (
   parent_id uuid references chat_messages(id) on delete cascade,
   is_admin boolean default false,
   created_at timestamptz default now(),
-  email_status text
+  email_status text,
+  updated_at timestamptz default now()
 );
-
--- update_message stamps updated_at, which the live table does not have,
--- so editing an admin reply fails.
--- alter table chat_messages add column if not exists updated_at timestamptz default now();
 
 create index if not exists chat_messages_parent_idx on chat_messages (parent_id);
 
@@ -296,29 +279,23 @@ create table if not exists videos (
   created_at timestamptz default now()
 );
 
--- create_video always stamps thumbnail_url and update_video stamps
--- updated_at. Neither column exists live, so adding or editing a video
--- fails. The public playlist page fills thumbnail_url at read time from
--- youtube_url, so it can stay derived, but the write has to stop sending
--- it either way.
--- alter table videos add column if not exists thumbnail_url text;
--- alter table videos add column if not exists updated_at timestamptz default now();
+-- No thumbnail_url column on purpose. Playlist reads derive it from
+-- youtube_url, so storing it would only be a second copy to keep in step.
 
 create index if not exists videos_playlist_idx on videos (playlist_id, display_order);
 
 alter table videos disable row level security;
 
--- Admin activity log. entity_id is a uuid, so the two callers that pass
--- something else, the jobs cleanup with an empty string and a settings
--- update with the setting key, never make it into the log. The insert is
--- wrapped in try/except, so nothing breaks, the entry just goes missing.
+-- Admin activity log. entity_id is text, not uuid, because not every
+-- logged action points at a row. The jobs cleanup passes an empty string
+-- and a settings update passes the setting key.
 create table if not exists activity_log (
   id uuid primary key default gen_random_uuid(),
   admin_id uuid,
   admin_email text not null,
   action text not null,
   entity_type text not null,
-  entity_id uuid,
+  entity_id text,
   entity_title text,
   created_at timestamptz default now()
 );

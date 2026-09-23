@@ -165,18 +165,16 @@ def delete_playlist(playlist_id: str):
     return bool(result.data)
 
 
+# thumbnail_url is derived from youtube_url every time a playlist is read,
+# so there is nothing to store. The videos table has no column for it.
 def create_video(data: dict):
     db = get_supabase()
-    data["thumbnail_url"] = get_thumbnail(data.get("youtube_url", ""))
     result = db.table("videos").insert(data).execute()
     return result.data[0] if result.data else None
 
 
 def update_video(video_id: str, data: dict):
     db = get_supabase()
-    data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    if "youtube_url" in data:
-        data["thumbnail_url"] = get_thumbnail(data["youtube_url"])
     result = db.table("videos").update(data).eq("id", video_id).execute()
     return result.data[0] if result.data else None
 
