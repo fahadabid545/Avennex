@@ -118,3 +118,39 @@ def list_comments(entry_id: str):
         .execute()
     )
     return result.data
+
+
+def count_comments_for(entry_ids: list = None) -> dict:
+    """The counts for a whole page in one query, rather than one request
+    per entry that fetches every comment to measure its length."""
+    db = get_supabase()
+    query = db.table("launchpad_comments").select("entry_id")
+    if entry_ids is not None:
+        if not entry_ids:
+            return {}
+        query = query.in_("entry_id", entry_ids)
+
+    counts = {}
+    for row in (query.execute().data or []):
+        key = row.get("entry_id")
+        if key:
+            counts[key] = counts.get(key, 0) + 1
+    if entry_ids is not None:
+        for key in entry_ids:
+            counts.setdefault(key, 0)
+    return counts
+
+
+def list_comments_for(entry_ids: list = None, limit: int = 200):
+    """Comments across several entries at once, newest first, for the
+    moderation inbox."""
+    db = get_supabase()
+    query = db.table("launchpad_comments").select(
+        "id, entry_id, author_name, author_email, content, created_at"
+    )
+    if entry_ids is not None:
+        if not entry_ids:
+            return []
+        query = query.in_("entry_id", entry_ids)
+    result = query.order("created_at", desc=True).limit(limit).execute()
+    return result.data or []

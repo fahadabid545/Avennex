@@ -1118,6 +1118,27 @@
   }
 
 
+  /* Counts for a page of rows in one request. A count that cannot be read
+     stays null rather than showing as zero, because a failed fetch and an
+     empty list are not the same thing to whoever is reading the table. */
+  async function countsFor(path, rows) {
+    const ids = rows.map((r) => r.id).filter(Boolean);
+    if (!ids.length) return {};
+    const blank = {};
+    ids.forEach((id) => { blank[id] = null; });
+    try {
+      const res = await AdminAPI.request(`${path}?ids=${encodeURIComponent(ids.join(','))}`);
+      if (!res || res.success === false || !res.data) return blank;
+      const counts = {};
+      ids.forEach((id) => {
+        counts[id] = typeof res.data[id] === 'number' ? res.data[id] : 0;
+      });
+      return counts;
+    } catch {
+      return blank;
+    }
+  }
+
   // ── Media library ──
 
   const MEDIA_CONTEXTS = [
@@ -1815,23 +1836,33 @@
       link: `${SITE_URL}/product-detail.html?slug=${encodeURIComponent(p.slug)}`,
     })));
 
-    const lpComments = await Promise.all((entries || []).map((e) =>
-      AdminAPI.request(`/api/launchpad/${e.id}/comments`)
-        .then((cs) => ({ e, cs: cs || [] }))
-        .catch(() => ({ e, cs: [] }))
-    ));
-    lpComments.forEach(({ e, cs }) => cs.forEach((c) => items.push({
-      source: 'launchpad',
-      sourceLabel: 'Launchpad',
-      id: c.id,
-      author: c.author_name,
-      email: c.author_email,
-      text: c.content || c.message,
-      at: c.created_at,
-      replies: 0,
-      where: e.title,
-      link: `${SITE_URL}/launchpad-detail.html?slug=${encodeURIComponent(e.slug)}`,
-    })));
+    // one request for every entry's comments, rather than one per entry
+    const entryById = {};
+    (entries || []).forEach((e) => { entryById[e.id] = e; });
+    const lpIds = Object.keys(entryById);
+    let lpComments = [];
+    if (lpIds.length) {
+      const res = await AdminAPI.request(
+        `/api/launchpad/admin/comments?ids=${encodeURIComponent(lpIds.join(','))}`
+      ).catch(() => null);
+      lpComments = (res && res.data) || [];
+    }
+    lpComments.forEach((c) => {
+      const e = entryById[c.entry_id];
+      if (!e) return;
+      items.push({
+        source: 'launchpad',
+        sourceLabel: 'Launchpad',
+        id: c.id,
+        author: c.author_name,
+        email: c.author_email,
+        text: c.content || c.message,
+        at: c.created_at,
+        replies: 0,
+        where: e.title,
+        link: `${SITE_URL}/launchpad-detail.html?slug=${encodeURIComponent(e.slug)}`,
+      });
+    });
 
     items.sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
     cachedItems.moderation = items;
@@ -2555,15 +2586,12 @@
       const { open, closed } = splitJobs(rows);
       const tabRows = jobsTab === 'closed' ? (path.endsWith('closed') ? rows : closed) : open;
 
-      // counted once per load: searching or sorting must not re-run this
-      const appCounts = {};
+      // one request for the whole page. it used to be one per role, and
+      // each of those pulled every applicant's name, email and cover letter
+      // into the browser just to arrive at a number
+      let appCounts = {};
       if (tabRows.length) {
-        const counted = await Promise.all(tabRows.map((j) =>
-          AdminAPI.request(`/api/jobs/${j.id}/applications`)
-            .then((apps) => ({ id: j.id, count: Array.isArray(apps) ? apps.length : 0 }))
-            .catch(() => ({ id: j.id, count: null }))
-        ));
-        counted.forEach((a) => { appCounts[a.id] = a.count; });
+        appCounts = await countsFor('/api/jobs/admin/application-counts', tabRows);
       }
 
       paint(tabRows, appCounts, hasMore);
@@ -3767,18 +3795,10 @@
         return;
       }
 
-      // counted once per load, not once per keystroke
-      const commentCounts = {};
+      // one request for the whole page, not one per entry
+      const commentCounts = await countsFor('/api/launchpad/admin/comment-counts', entries);
       let totalComments = 0;
-      const counted = await Promise.all(entries.map((e) =>
-        AdminAPI.request(`/api/launchpad/${e.id}/comments`)
-          .then((c) => ({ id: e.id, count: Array.isArray(c) ? c.length : 0 }))
-          .catch(() => ({ id: e.id, count: null }))
-      ));
-      counted.forEach((c) => {
-        commentCounts[c.id] = c.count;
-        if (c.count) totalComments += c.count;
-      });
+      Object.keys(commentCounts).forEach((id) => { totalComments += commentCounts[id] || 0; });
 
       paint(entries, commentCounts, totalComments, hasMore);
     } catch (err) {

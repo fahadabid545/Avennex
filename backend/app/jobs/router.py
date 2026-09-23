@@ -21,6 +21,12 @@ from app.storage import ftp_service
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
+
+
+def _id_list(raw: Optional[str]) -> Optional[list]:
+    if raw is None:
+        return None
+    return [part.strip() for part in raw.split(",") if part.strip()]
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -45,6 +51,19 @@ def list_closed_jobs(
     _user: dict = Depends(get_current_user),
 ):
     return service.list_closed(page, limit)
+
+
+@router.get("/admin/application-counts")
+def application_counts(
+    ids: Optional[str] = Query(None, description="Comma separated job ids"),
+    _user: dict = Depends(get_current_user),
+):
+    wanted = _id_list(ids)
+    try:
+        return {"success": True, "data": service.count_applications_for(wanted)}
+    except Exception as e:
+        logger.error("Application counts failed: %s", e)
+        return {"success": False, "data": {}, "warnings": ["Application counts could not be loaded"]}
 
 
 @router.delete("/admin/cleanup")

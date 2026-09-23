@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from slowapi import Limiter
@@ -21,6 +22,12 @@ from app.launchpad.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/launchpad", tags=["launchpad"])
+
+
+def _id_list(raw: Optional[str]) -> Optional[list]:
+    if raw is None:
+        return None
+    return [part.strip() for part in raw.split(",") if part.strip()]
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -40,6 +47,35 @@ def list_all_entries(
     except Exception as e:
         logger.error("Failed to list admin launchpad entries: %s", e)
         raise HTTPException(status_code=500, detail="Failed to load launchpad entries")
+
+
+# these two sit above /{slug} and /{id}/comments on purpose: routes match in
+# the order they are declared, and "admin" would otherwise be read as an id
+@router.get("/admin/comment-counts")
+def comment_counts(
+    ids: Optional[str] = Query(None, description="Comma separated entry ids"),
+    _user: dict = Depends(get_current_user),
+):
+    wanted = _id_list(ids)
+    try:
+        return {"success": True, "data": service.count_comments_for(wanted)}
+    except Exception as e:
+        logger.error("Comment counts failed: %s", e)
+        return {"success": False, "data": {}, "warnings": ["Comment counts could not be loaded"]}
+
+
+@router.get("/admin/comments")
+def all_comments(
+    ids: Optional[str] = Query(None, description="Comma separated entry ids"),
+    limit: int = Query(200, ge=1, le=500),
+    _user: dict = Depends(get_current_user),
+):
+    wanted = _id_list(ids)
+    try:
+        return {"success": True, "data": service.list_comments_for(wanted, limit)}
+    except Exception as e:
+        logger.error("Comment fetch failed: %s", e)
+        return {"success": False, "data": [], "warnings": ["Comments could not be loaded"]}
 
 
 @router.get("/{slug}", response_model=LaunchpadDetailResponse)

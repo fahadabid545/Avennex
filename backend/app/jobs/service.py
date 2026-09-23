@@ -126,6 +126,28 @@ def count_applications(job_id: str) -> int:
     return len(result.data) if result.data else 0
 
 
+def count_applications_for(job_ids: list = None) -> dict:
+    """One query for a whole page of roles. Counting them one role at a
+    time pulled every applicant's details into the browser to arrive at a
+    number, which is both slow and more than the panel needs to know."""
+    db = get_supabase()
+    query = db.table("job_applications").select("job_id")
+    if job_ids is not None:
+        if not job_ids:
+            return {}
+        query = query.in_("job_id", job_ids)
+
+    counts = {}
+    for row in (query.execute().data or []):
+        key = row.get("job_id")
+        if key:
+            counts[key] = counts.get(key, 0) + 1
+    if job_ids is not None:
+        for key in job_ids:
+            counts.setdefault(key, 0)
+    return counts
+
+
 def get_application_by_id(app_id: str):
     db = get_supabase()
     result = db.table("job_applications").select("*").eq("id", app_id).execute()
