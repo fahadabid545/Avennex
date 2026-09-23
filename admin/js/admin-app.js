@@ -3519,7 +3519,13 @@
             const chatChecked = config.formData.chat_enabled ? 'checked' : '';
             wrap.innerHTML = `
               <div class="field">
-                <label for="f-content">Description</label>
+                <label for="f-description">Listing Description</label>
+                <span class="field-hint">Plain text under the product name on the products page. Blank line between paragraphs. This is the only body text the listing shows.</span>
+                <textarea id="f-description" rows="4">${esc(config.formData.description)}</textarea>
+              </div>
+              <div class="field">
+                <label for="f-content">Full Content</label>
+                <span class="field-hint">The rich body of the product page. The listing page never shows this.</span>
                 <div class="blog-toolbar">
                   <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
                   <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
@@ -3536,7 +3542,7 @@
                 <textarea id="f-content" class="blog-content-editor" rows="12">${esc(config.formData.content)}</textarea>
               </div>
               <div class="field">
-                <label>Description Preview</label>
+                <label>Full Content Preview</label>
                 <div class="blog-preview" id="content-preview"></div>
               </div>
               <div class="field">
@@ -3702,6 +3708,7 @@
               ['Name', d.name],
               ['Slug', d.slug],
               ['Tagline', d.tagline],
+              ['Listing Description', d.description],
               ['Status', d.status],
               ['Progress', (d.progress ?? 0) + '%'],
               ['Display Order', d.display_order],
@@ -3721,13 +3728,15 @@
             });
             html += '</div>';
             if (d.content) {
-              html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + richText(d.content) + '</div></div>';
+              html += '<div class="field" style="margin-top:20px"><label>Full Content Preview</label><div class="blog-preview">' + richText(d.content) + '</div></div>';
             }
             wrap.innerHTML = html;
           },
         },
       ],
       onSubmit: (d) => {
+        const descEl = document.getElementById('f-description');
+        if (descEl) d.description = descEl.value.trim();
         const contentEl = document.getElementById('f-content');
         if (contentEl) d.content = contentEl.value.trim();
         const tsEl = document.getElementById('f-techstack');

@@ -94,6 +94,12 @@ create table if not exists products (
   updated_at timestamptz default now()
 );
 
+-- The live table also carries a dashboard jsonb column, added by
+-- schema-update.sql and read or written by nothing since start_date,
+-- target_date, milestones and metrics replaced it. Left in place rather
+-- than dropped, and left out of the create above so a fresh build does
+-- not repeat it.
+
 alter table products disable row level security;
 
 -- Product chat messages

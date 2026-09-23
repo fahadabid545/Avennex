@@ -39,7 +39,11 @@ def create(data: dict):
     if not data.get("slug"):
         data["slug"] = slugify(data["name"])
     stamp_progress(data)
-    result = db.table("products").insert(data).execute()
+    try:
+        result = db.table("products").insert(data).execute()
+    except Exception as e:
+        logger.error("Failed to create product %s: %s", data.get("slug"), e)
+        raise
     return result.data[0] if result.data else None
 
 
@@ -50,7 +54,11 @@ def update(product_id: str, data: dict):
         stamp_progress(data, get_by_id(product_id))
     except Exception as e:
         logger.warning("Progress history lookup failed for product %s: %s", product_id, e)
-    result = db.table("products").update(data).eq("id", product_id).execute()
+    try:
+        result = db.table("products").update(data).eq("id", product_id).execute()
+    except Exception as e:
+        logger.error("Failed to update product %s: %s", product_id, e)
+        raise
     return result.data[0] if result.data else None
 
 

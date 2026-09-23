@@ -46,7 +46,13 @@ def create_product(body: ProductCreate, _user: dict = Depends(get_current_user))
     data = body.model_dump(exclude_none=True)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
-    result = service.create(data)
+    try:
+        result = service.create(data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The product could not be saved. The reason is in the server log.")
+    if not result:
+        logger.error("Product insert for %s reported no row", data.get("slug"))
+        raise HTTPException(status_code=500, detail="The product could not be saved. The reason is in the server log.")
     log_activity(_user["email"], "create", "product", result["id"], result["name"])
     return result
 
@@ -59,7 +65,12 @@ def update_product(id: str, body: ProductUpdate, _user: dict = Depends(get_curre
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     revisions.record_before("product", id, service.get_by_id, _user["email"], data)
-    result = service.update(id, data)
+    # a raised error is the database refusing the write, an empty result is
+    # simply no row with that id, and the two deserve different answers
+    try:
+        result = service.update(id, data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The changes could not be saved. The reason is in the server log.")
     if not result:
         raise HTTPException(status_code=404, detail="Product not found")
     log_activity(_user["email"], "update", "product", result["id"], result["name"])
