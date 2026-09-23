@@ -2,11 +2,19 @@
 -- Run this in Supabase SQL Editor. Every statement is guarded, so it is
 -- safe against a database that already holds some of these tables.
 --
--- Column types for faqs, job_applications, chat_messages, playlists,
--- videos, activity_log and chatbot_documents were read back from the code
--- that writes them, not from the live database, because those tables were
--- created by hand and never written down here. Check them against
--- information_schema before trusting this file to rebuild production.
+-- faqs, job_applications, chat_messages, playlists, videos, activity_log
+-- and chatbot_documents were created by hand and never written down here.
+-- Their columns, types, nullability and defaults below were reconciled
+-- against information_schema on the live database, so they match what is
+-- actually there. Constraints are a different story. information_schema
+-- columns says nothing about foreign keys, unique constraints or indexes,
+-- so those lines are the intended design rather than a confirmed reading
+-- of production.
+--
+-- A few commented alter statements sit next to the tables that need them.
+-- Each one marks a column the backend writes that the live table does not
+-- have. They are commented out on purpose. Read the note above each before
+-- running it.
 
 -- Admins
 create table if not exists admins (
@@ -197,16 +205,21 @@ create unique index if not exists media_remote_path_idx on media (remote_path) w
 alter table media disable row level security;
 
 -- FAQs
+-- is_active is a legacy unused column left over from an earlier iteration.
+-- Nothing in the codebase reads or writes it. The column the code uses is
+-- active. Kept here so this file matches the live table, not because it
+-- serves a purpose.
 create table if not exists faqs (
   id uuid primary key default gen_random_uuid(),
   question text not null,
   answer text not null,
   display_order integer default 0,
-  active boolean default true,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
   last_edited_by text,
   last_edited_at timestamptz,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  active boolean default true
 );
 
 -- the public list and the panel both sort on display_order, which defaults
@@ -218,16 +231,20 @@ alter table faqs disable row level security;
 -- Job applications
 create table if not exists job_applications (
   id uuid primary key default gen_random_uuid(),
-  job_id uuid references jobs(id) on delete cascade,
+  job_id uuid not null references jobs(id) on delete cascade,
   name text not null,
   email text not null,
   resume_text text,
   cover_letter text,
-  custom_answers jsonb,
+  created_at timestamptz default now(),
   resume_url text,
-  email_status text,
-  created_at timestamptz default now()
+  email_status text
 );
+
+-- The apply endpoint writes custom_answers when a role carries custom
+-- questions, and the live table has no such column, so those applications
+-- are rejected outright. Run this to close the gap.
+-- alter table job_applications add column if not exists custom_answers jsonb;
 
 create index if not exists job_applications_job_idx on job_applications (job_id);
 
@@ -236,17 +253,20 @@ alter table job_applications disable row level security;
 -- Home board messages. A reply points at the message it answers.
 create table if not exists chat_messages (
   id uuid primary key default gen_random_uuid(),
-  author_name text,
+  author_name text not null,
   author_email text,
   author_profession text,
   author_company text,
   message text not null,
-  is_admin boolean default false,
   parent_id uuid references chat_messages(id) on delete cascade,
-  email_status text,
+  is_admin boolean default false,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  email_status text
 );
+
+-- update_message stamps updated_at, which the live table does not have,
+-- so editing an admin reply fails.
+-- alter table chat_messages add column if not exists updated_at timestamptz default now();
 
 create index if not exists chat_messages_parent_idx on chat_messages (parent_id);
 
@@ -268,28 +288,37 @@ alter table playlists disable row level security;
 -- Academy videos
 create table if not exists videos (
   id uuid primary key default gen_random_uuid(),
-  playlist_id uuid references playlists(id) on delete cascade,
+  playlist_id uuid not null references playlists(id) on delete cascade,
   title text not null,
   description text,
   youtube_url text not null,
-  thumbnail_url text,
   display_order integer default 0,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz default now()
 );
+
+-- create_video always stamps thumbnail_url and update_video stamps
+-- updated_at. Neither column exists live, so adding or editing a video
+-- fails. The public playlist page fills thumbnail_url at read time from
+-- youtube_url, so it can stay derived, but the write has to stop sending
+-- it either way.
+-- alter table videos add column if not exists thumbnail_url text;
+-- alter table videos add column if not exists updated_at timestamptz default now();
 
 create index if not exists videos_playlist_idx on videos (playlist_id, display_order);
 
 alter table videos disable row level security;
 
--- Admin activity log. entity_id is text because the log also records
--- actions on records that carry no id.
+-- Admin activity log. entity_id is a uuid, so the two callers that pass
+-- something else, the jobs cleanup with an empty string and a settings
+-- update with the setting key, never make it into the log. The insert is
+-- wrapped in try/except, so nothing breaks, the entry just goes missing.
 create table if not exists activity_log (
   id uuid primary key default gen_random_uuid(),
-  admin_email text,
-  action text,
-  entity_type text,
-  entity_id text,
+  admin_id uuid,
+  admin_email text not null,
+  action text not null,
+  entity_type text not null,
+  entity_id uuid,
   entity_title text,
   created_at timestamptz default now()
 );
@@ -301,12 +330,12 @@ alter table activity_log disable row level security;
 -- Chatbot source documents
 create table if not exists chatbot_documents (
   id uuid primary key default gen_random_uuid(),
-  filename text,
-  file_type text,
+  filename text not null,
+  file_type text not null,
   chunk_count integer default 0,
   status text default 'processing',
-  error text,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  error text
 );
 
 alter table chatbot_documents disable row level security;
