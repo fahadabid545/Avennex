@@ -9,9 +9,9 @@ class BlogCreate(BaseModel):
     content: Optional[str] = None
     excerpt: Optional[str] = None
     meta_description: Optional[str] = None
+    cover_image: Optional[str] = None
     author: Optional[str] = None
     status: Optional[str] = "draft"
-    cover_image: Optional[str] = None
     publish_at: Optional[datetime] = None
 
 
@@ -21,9 +21,9 @@ class BlogUpdate(BaseModel):
     content: Optional[str] = None
     excerpt: Optional[str] = None
     meta_description: Optional[str] = None
+    cover_image: Optional[str] = None
     author: Optional[str] = None
     status: Optional[str] = None
-    cover_image: Optional[str] = None
     publish_at: Optional[datetime] = None
 
 
@@ -34,6 +34,7 @@ class BlogResponse(BaseModel):
     content: Optional[str] = None
     excerpt: Optional[str] = None
     meta_description: Optional[str] = None
+    cover_image: Optional[str] = None
     author: Optional[str] = None
     status: str
     created_at: datetime

@@ -31,3 +31,6 @@ alter table launchpad_entries add column if not exists progress integer default 
 alter table launchpad_entries add column if not exists progress_history jsonb default '[]'::jsonb;
 alter table launchpad_entries add column if not exists metrics jsonb default '[]'::jsonb;
 alter table products add column if not exists metrics jsonb default '[]'::jsonb;
+
+-- Blog cover image
+alter table blogs add column if not exists cover_image text;
