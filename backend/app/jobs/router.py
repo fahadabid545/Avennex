@@ -88,7 +88,13 @@ def create_job(body: JobCreate, _user: dict = Depends(get_current_user)):
     data = body.model_dump(exclude_none=True)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
-    result = service.create(data)
+    try:
+        result = service.create(data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The job could not be saved. The reason is in the server log.")
+    if not result:
+        logger.error("Job insert for %s reported no row", data.get("slug"))
+        raise HTTPException(status_code=500, detail="The job could not be saved. The reason is in the server log.")
     log_activity(_user["email"], "create", "job", result["id"], result["title"])
     return result
 
@@ -101,7 +107,12 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     revisions.record_before("job", id, service.get_by_id, _user["email"], data)
-    result = service.update(id, data)
+    # a raised error is the database refusing the write, an empty result is
+    # simply no row with that id, and the two deserve different answers
+    try:
+        result = service.update(id, data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The changes could not be saved. The reason is in the server log.")
     if not result:
         raise HTTPException(status_code=404, detail="Job not found")
     log_activity(_user["email"], "update", "job", result["id"], result["title"])
@@ -263,7 +274,10 @@ async def apply_to_job(
     """
 
     try:
-        send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html, email_type="careers")
+        notified = send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html, email_type="careers")
+        if not notified:
+            logger.error("Admin notification for the application by %s was not delivered", email)
+            warnings.append("Admin notification email failed")
     except Exception as e:
         logger.error("Admin notification email failed: %s", e)
         warnings.append("Admin notification email failed")
@@ -276,6 +290,11 @@ async def apply_to_job(
         """
         sent = send_email(email, f"Application received for {job['title']} at Avennex", applicant_html, email_type="careers")
         email_status = "sent" if sent else "failed"
+        # a false return is a delivery failure the same as a raised one,
+        # and the applicant's confirmation is worth a warning either way
+        if not sent:
+            logger.error("Applicant confirmation to %s was not delivered", email)
+            warnings.append("Confirmation email failed")
     except Exception as e:
         logger.error("Applicant confirmation email failed: %s", e)
         email_status = "failed"

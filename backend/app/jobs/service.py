@@ -71,7 +71,11 @@ def create(data: dict):
         data["slug"] = slugify(data["title"])
     if data.get("expires_at"):
         data["expires_at"] = data["expires_at"].isoformat() if hasattr(data["expires_at"], "isoformat") else data["expires_at"]
-    result = db.table("jobs").insert(data).execute()
+    try:
+        result = db.table("jobs").insert(data).execute()
+    except Exception as e:
+        logger.error("Failed to create job %s: %s", data.get("slug"), e)
+        raise
     return result.data[0] if result.data else None
 
 
@@ -80,7 +84,11 @@ def update(job_id: str, data: dict):
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
     if data.get("expires_at") and hasattr(data["expires_at"], "isoformat"):
         data["expires_at"] = data["expires_at"].isoformat()
-    result = db.table("jobs").update(data).eq("id", job_id).execute()
+    try:
+        result = db.table("jobs").update(data).eq("id", job_id).execute()
+    except Exception as e:
+        logger.error("Failed to update job %s: %s", job_id, e)
+        raise
     return result.data[0] if result.data else None
 
 

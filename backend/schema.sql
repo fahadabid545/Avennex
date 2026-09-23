@@ -65,7 +65,9 @@ create table if not exists jobs (
   custom_questions jsonb,
   max_applications integer,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  last_edited_by text,
+  last_edited_at timestamptz
 );
 
 alter table jobs disable row level security;
