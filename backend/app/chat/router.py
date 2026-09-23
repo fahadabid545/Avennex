@@ -83,16 +83,23 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
                 """
                 sent = send_email(original["author_email"], "Avennex replied to your message", html)
                 email_status = "sent" if sent else "failed"
+                # a false return is a delivery failure the same as a raised one,
+                # and the admin hears about it either way
+                if not sent:
+                    logger.error("Reply email to %s was not delivered", original["author_email"])
+                    warnings.append("Email notification failed: the message was not delivered.")
             except Exception as e:
                 logger.error("Failed to send reply email: %s", e)
                 email_status = "failed"
                 warnings.append(f"Email notification failed: {e}")
         service.clear_personal_data(id)
 
+    # the status belongs on the message that was replied to, because that is
+    # the row the admin list draws the indicator beside
     try:
         from app.database import get_supabase
         db = get_supabase()
-        db.table("chat_messages").update({"email_status": email_status}).eq("id", result["id"]).execute()
+        db.table("chat_messages").update({"email_status": email_status}).eq("id", id).execute()
     except Exception:
         pass
 
@@ -120,6 +127,12 @@ def update_message(id: str, body: ChatMessageUpdate, _user: dict = Depends(get_c
     data = body.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    result = service.update_message(id, data)
+    try:
+        result = service.update_message(id, data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The message could not be updated. The reason is in the server log.")
+    if not result:
+        logger.error("Update of chat message %s reported no row", id)
+        raise HTTPException(status_code=500, detail="The message could not be updated. The reason is in the server log.")
     log_activity(_user["email"], "update", "chat", id, msg.get("author_name", "admin reply"))
     return result

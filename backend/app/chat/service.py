@@ -1,6 +1,9 @@
+import logging
 from datetime import datetime, timezone
 
 from app.database import get_supabase
+
+logger = logging.getLogger(__name__)
 
 
 def create_message(data: dict):
@@ -82,12 +85,11 @@ def create_reply(parent_id: str, message: str):
 
 
 def clear_personal_data(message_id: str):
+    """Drops the sender's email once it has been used to reach them. Profession
+    and company stay, because the public board shows them when the
+    chat_show_details setting is on and a reply should not empty that out."""
     db = get_supabase()
-    db.table("chat_messages").update({
-        "author_email": None,
-        "author_profession": None,
-        "author_company": None,
-    }).eq("id", message_id).execute()
+    db.table("chat_messages").update({"author_email": None}).eq("id", message_id).execute()
 
 
 def delete_message(message_id: str):
@@ -100,5 +102,9 @@ def delete_message(message_id: str):
 def update_message(message_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    result = db.table("chat_messages").update(data).eq("id", message_id).execute()
+    try:
+        result = db.table("chat_messages").update(data).eq("id", message_id).execute()
+    except Exception as e:
+        logger.error("Failed to update chat message %s: %s", message_id, e)
+        raise
     return result.data[0] if result.data else None
