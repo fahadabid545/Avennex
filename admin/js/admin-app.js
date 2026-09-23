@@ -2779,7 +2779,7 @@
 
         <div class="app-detail-actions" style="display:flex;gap:8px;margin-bottom:20px">
           <button class="btn btn-secondary btn-sm" id="download-application-btn">Download Application</button>
-          ${app.resume_url ? '<button class="btn btn-secondary btn-sm" id="download-resume-btn">Download Resume</button>' : ''}
+          ${app.resume_path ? '<button class="btn btn-secondary btn-sm" id="download-resume-btn">Download Resume</button>' : ''}
         </div>
 
         ${job ? `
@@ -2797,7 +2797,7 @@
         ${app.cover_letter ? `<div class="review-row"><span class="review-label">Cover Letter</span><span class="review-value">${esc(app.cover_letter)}</span></div>` : ''}
         ${answers.map(([q, a]) => `<div class="review-row"><span class="review-label">${esc(q)}</span><span class="review-value">${esc(a)}</span></div>`).join('')}
 
-        ${app.resume_url ? `
+        ${app.resume_path ? `
         <h3 class="review-section-title">Resume</h3>
         <div class="pdf-viewer-wrap">
           <div class="pdf-viewer is-active" id="resume-pdf-viewer">
@@ -2840,7 +2840,7 @@
       });
     }
 
-    if (app.resume_url) {
+    if (app.resume_path) {
       const track = document.getElementById('resume-pdf-track');
       fetchResumeBlob(app.id).then((blob) => {
         const url = URL.createObjectURL(blob);
@@ -5761,33 +5761,85 @@
 
     const storageOut = document.getElementById('s-storage-out');
 
+    function storageRows(pairs) {
+      const kept = pairs.filter(([, v]) => v !== undefined && v !== null && v !== '');
+      if (!kept.length) return '';
+      return `<dl class="storage-rows">${kept.map(([k, v]) =>
+        `<div><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`).join('')}</dl>`;
+    }
+
     function renderStorage(title, res) {
       const data = (res && res.data) || {};
       const warnings = (res && res.warnings) || [];
-      const good = !!(res && res.success);
-      const rows = [];
-      const names = {
-        host: 'Host', user: 'User', base_dir: 'Base directory',
-        remote_path: 'Wrote', public_url: 'Reachable at', stage: 'Failed at',
-      };
-      Object.keys(names).forEach((k) => { if (data[k]) rows.push([names[k], data[k]]); });
+      const layout = data.layout;
+      // the two roots being the same means there is nowhere above the web root
+      // to put private files, so resumes sit where Apache can serve them
+      const exposed = !!layout && layout.web_root === layout.private_root;
+      const good = !!(res && res.success) && !exposed;
+      const blocks = [];
 
-      if (Array.isArray(data.dirs)) {
-        data.dirs.forEach((d) => {
-          if (typeof d === 'string') { rows.push([d, 'checked']); return; }
-          const name = d.path || d.dir || d.name;
-          if (name) rows.push([name, d.ok === false ? 'missing' : 'ok']);
-        });
+      if (layout) {
+        blocks.push(`
+          <div class="storage-verdict ${exposed ? 'is-exposed' : 'is-safe'}">
+            <strong>${exposed
+              ? 'Private uploads may be publicly accessible.'
+              : 'Private uploads are correctly isolated from the public web root.'}</strong>
+            ${exposed
+              ? '<span>Resumes and other private files could be reachable via direct URL.</span>'
+              : '<span>Resumes sit outside the folder the website is served from.</span>'}
+          </div>`);
+        blocks.push(storageRows([
+          ['Signed in at', layout.login_dir],
+          ['Website folder', layout.web_root],
+          ['Private folder', layout.private_root],
+        ]));
+      }
+
+      if (Array.isArray(data.directories) && data.directories.length) {
+        blocks.push(`
+          <h4 class="storage-subhead">Upload folders</h4>
+          <div class="storage-dirs">
+            ${data.directories.map((d) => `
+              <div class="storage-dir">
+                <span class="storage-dir-name">${esc(d.path || '')}</span>
+                <span class="storage-dir-state ${d.exists ? 'is-ok' : 'is-missing'}">${d.exists ? 'ready' : 'not created yet'}</span>
+                <span class="storage-dir-where">${esc(d.resolved || '')}</span>
+                <span class="storage-dir-url">${d.public_url
+                  ? `public at ${esc(d.public_url)}`
+                  : (exposed
+                    ? 'inside the website folder, blocked by its .htaccess'
+                    : 'not served over the web')}</span>
+              </div>`).join('')}
+          </div>`);
+      }
+
+      if (Array.isArray(data.login_dir_entries) && data.login_dir_entries.length) {
+        blocks.push(`
+          <h4 class="storage-subhead">What is in the folder the server signs in to</h4>
+          <p class="storage-entries">${data.login_dir_entries.map((n) =>
+            `<span>${esc(String(n))}</span>`).join('')}</p>`);
+      }
+
+      // the write test reports on one file rather than the whole layout
+      const testRows = storageRows([
+        ['Wrote', data.remote_path],
+        ['Reachable at', data.url],
+        ['Failed at', data.stage],
+      ]);
+      if (testRows) blocks.push(testRows);
+
+      if (!blocks.length && !warnings.length) {
+        blocks.push('<p class="storage-entries"><span>Nothing to report.</span></p>');
       }
 
       storageOut.innerHTML = `
         <div class="storage-result ${good ? 'is-ok' : 'is-bad'}">
           <div class="storage-result-head">${esc(title)}: ${good ? 'working' : 'a problem'}</div>
-          ${rows.length ? `<dl class="storage-rows">${rows.map(([k, v]) =>
-            `<div><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`).join('')}</dl>` : ''}
+          ${blocks.join('')}
           ${warnings.length ? `<ul class="storage-warnings">${warnings.map((w) =>
             `<li>${esc(String(w))}</li>`).join('')}</ul>` : ''}
         </div>`;
+      return good;
     }
 
     function wireStorage(btnId, path, method, title) {
@@ -5798,9 +5850,9 @@
         storageOut.innerHTML = '<div class="admin-loading"><div class="admin-spinner"></div></div>';
         try {
           const res = await AdminAPI.request(path, method === 'POST' ? { method: 'POST' } : {});
-          renderStorage(title, res);
-          AdminUI.toast(res && res.success ? `${title} passed.` : `${title} found a problem.`,
-                        res && res.success ? 'success' : 'warn');
+          const good = renderStorage(title, res);
+          AdminUI.toast(good ? `${title} passed.` : `${title} found a problem.`,
+                        good ? 'success' : 'warn');
         } catch (err) {
           storageOut.innerHTML = `<div class="storage-result is-bad">
             <div class="storage-result-head">${esc(title)}: could not run</div>

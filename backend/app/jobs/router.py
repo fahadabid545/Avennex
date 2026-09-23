@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
+RESUME_FAILED_MESSAGE = "Your resume could not be uploaded right now. Please try again or contact us."
+
 
 def _id_list(raw: Optional[str]) -> Optional[list]:
     if raw is None:
@@ -151,10 +153,10 @@ def delete_application(id: str, _user: dict = Depends(require_manager)):
 @router.get("/applications/{id}/resume")
 def get_application_resume(id: str, _user: dict = Depends(get_current_user)):
     application = service.get_application_by_id(id)
-    if not application or not application.get("resume_url"):
+    if not application or not application.get("resume_path"):
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    content, error = ftp_service.read_file(application["resume_url"])
+    content, error = ftp_service.read_file(application["resume_path"])
     if content is None:
         logger.error("Resume fetch failed for application %s: %s", id, error)
         raise HTTPException(status_code=502, detail=error or "Failed to retrieve resume")
@@ -207,7 +209,7 @@ async def apply_to_job(
         except (json.JSONDecodeError, TypeError):
             pass
 
-    resume_url = None
+    resume_path = None
     resume_uploaded = False
     resume_error = None
     if resume:
@@ -227,9 +229,9 @@ async def apply_to_job(
 
         remote_path, resume_error = ftp_service.store_file(content, remote_dir, filename)
         if remote_path:
-            resume_url = remote_path
+            resume_path = remote_path
             resume_uploaded = True
-            app_data["resume_url"] = resume_url
+            app_data["resume_path"] = resume_path
         else:
             logger.error("Resume upload failed for application by %s: %s", email, resume_error)
 
@@ -244,8 +246,10 @@ async def apply_to_job(
             service.update(job["id"], {"status": "closed"})
 
     warnings = []
+    # the real reason is already in the log, and an applicant should not be
+    # reading connection errors off a careers page
     if resume_error:
-        warnings.append("Resume file could not be stored: " + resume_error)
+        warnings.append(RESUME_FAILED_MESSAGE)
     email_status = "skipped"
 
     if not is_email_enabled():
@@ -257,7 +261,7 @@ async def apply_to_job(
             pass
         response = {"success": True, "message": "Application submitted"}
         if resume_error:
-            response["warnings"] = ["Resume file could not be stored: " + resume_error]
+            response["warnings"] = [RESUME_FAILED_MESSAGE]
         return response
 
     settings = get_settings()

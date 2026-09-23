@@ -177,8 +177,8 @@ def delete_application(app_id: str):
     db.table("job_applications").delete().eq("id", app_id).execute()
 
     warnings = []
-    if app_data.get("resume_url"):
-        if not ftp_service.delete_file(app_data["resume_url"]):
+    if app_data.get("resume_path"):
+        if not ftp_service.delete_file(app_data["resume_path"]):
             warnings.append("Application deleted, but the resume file could not be removed from storage.")
 
     return app_data, warnings
@@ -241,13 +241,13 @@ def cleanup_old_closed_jobs():
             try:
                 apps = (
                     db.table("job_applications")
-                    .select("id, resume_url")
+                    .select("id, resume_path")
                     .eq("job_id", job_id)
                     .execute()
                 )
                 for app in (apps.data or []):
-                    if app.get("resume_url"):
-                        if not ftp_service.delete_file(app["resume_url"]):
+                    if app.get("resume_path"):
+                        if not ftp_service.delete_file(app["resume_path"]):
                             warnings.append(f"Failed to delete resume for app {app['id']}")
 
                 db.table("job_applications").delete().eq("job_id", job_id).execute()

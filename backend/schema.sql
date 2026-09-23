@@ -237,7 +237,7 @@ create table if not exists job_applications (
   resume_text text,
   cover_letter text,
   created_at timestamptz default now(),
-  resume_url text,
+  resume_path text,
   email_status text,
   custom_answers jsonb
 );

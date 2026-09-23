@@ -10,6 +10,25 @@ logger = logging.getLogger(__name__)
 
 PUBLIC_BASE_URL = "https://avennex.com"
 WEB_ROOT_NAME = "public_html"
+PRIVATE_ROOT_NAME = "private_uploads"
+
+GUARD_NAME = ".htaccess"
+
+# Written into every private directory as it is used. On accounts where the
+# FTP login lands inside the web root there is nowhere above it to put private
+# files, so they sit under public_html and Apache would serve them. The two
+# module guards matter: Require all denied is 2.4 only, and Order/Deny raises
+# a 500 on a 2.4 server without mod_access_compat.
+GUARD_BODY = (
+    b"# Avennex private uploads. Nothing here is meant to be reachable over the web.\n"
+    b"<IfModule mod_authz_core.c>\n"
+    b"  Require all denied\n"
+    b"</IfModule>\n"
+    b"<IfModule !mod_authz_core.c>\n"
+    b"  Order Deny,Allow\n"
+    b"  Deny from all\n"
+    b"</IfModule>\n"
+)
 
 
 class FTPStorageError(Exception):
@@ -177,6 +196,39 @@ def _ensure_dir(ftp: FTP, absolute_dir: str):
             raise FTPStorageError(f"Created {path} but could not open it: {e}") from e
 
 
+def _guard_exists(ftp: FTP, absolute_dir: str) -> bool:
+    try:
+        return ftp.size(_join(absolute_dir, GUARD_NAME)) is not None
+    except Exception:
+        pass
+    try:
+        return GUARD_NAME in {n.rsplit("/", 1)[-1] for n in ftp.nlst(absolute_dir)}
+    except Exception:
+        return False
+
+
+def protect_private_dirs(ftp: FTP, parts: list):
+    """Drops a deny-all .htaccess at every level of a private path.
+
+    A missing guard is logged and never raised. Losing the upload it belongs
+    to would be the worse outcome, and the layout warning already says when
+    the directory is somewhere Apache can see.
+    """
+    if not parts or parts[0] != PRIVATE_ROOT_NAME:
+        return
+
+    path = _get_layout(ftp).private_root.rstrip("/") or "/"
+    for part in parts:
+        path = _join(path, part)
+        try:
+            if _guard_exists(ftp, path):
+                continue
+            ftp.storbinary(f"STOR {_join(path, GUARD_NAME)}", io.BytesIO(GUARD_BODY))
+            logger.info("Wrote %s into %s", GUARD_NAME, path)
+        except Exception as e:
+            logger.warning("Could not protect %s with %s: %s", path, GUARD_NAME, e)
+
+
 def _verify_written(ftp: FTP, filename: str, expected: int, absolute_dir: str):
     size = None
     try:
@@ -223,6 +275,8 @@ def store_file(file_bytes: bytes, remote_dir: str, filename: str) -> tuple[Optio
     try:
         absolute_dir = _resolve(ftp, remote_dir)
         _ensure_dir(ftp, absolute_dir)
+        protect_private_dirs(ftp, parts)
+        ftp.cwd(absolute_dir)
         ftp.storbinary(f"STOR {filename}", io.BytesIO(file_bytes))
         _verify_written(ftp, filename, len(file_bytes), absolute_dir)
         logger.info("Stored %s/%s (%d bytes)", absolute_dir, filename, len(file_bytes))
@@ -343,7 +397,7 @@ def list_dir(remote_dir: str, extensions: tuple = ()) -> tuple[list, Optional[st
 
 
 def diagnostics(probe_dirs: list[str]) -> dict:
-    report = {"connected": False, "layout": None, "directories": [], "round_trip": None, "errors": []}
+    report = {"connected": False, "layout": None, "directories": [], "errors": []}
 
     try:
         ftp = _connect()

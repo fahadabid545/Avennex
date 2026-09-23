@@ -1792,6 +1792,58 @@ body.is-splitting {
 }
 .storage-warnings li { list-style: disc; }
 
+.storage-verdict {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+.storage-verdict.is-safe { background: rgba(47, 107, 70, 0.14); }
+.storage-verdict.is-exposed { background: rgba(239, 68, 68, 0.14); }
+.storage-verdict.is-exposed strong { color: var(--danger); }
+.storage-verdict span { color: var(--text-muted, #888); font-size: 0.82rem; }
+
+.storage-subhead {
+  margin: 16px 0 8px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #888);
+}
+
+.storage-dirs { display: grid; gap: 10px; }
+.storage-dir {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.storage-dirs .storage-dir:last-child { border-bottom: 0; padding-bottom: 0; }
+.storage-dir-name { font-weight: 600; }
+.storage-dir-state { font-size: 0.78rem; text-align: right; }
+.storage-dir-state.is-ok { color: var(--dash-ok, #2F6B46); }
+.storage-dir-state.is-missing { color: var(--text-muted, #888); }
+.storage-dir-where,
+.storage-dir-url {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  word-break: break-all;
+}
+
+.storage-entries { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.storage-entries span {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+}
+
 /* ---------- step indicator as navigation ---------- */
 
 .step-indicator .step-dot {

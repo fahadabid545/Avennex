@@ -1,7 +1,7 @@
 # Migrations
 
 Run these in the Supabase SQL Editor, in order. Each one is safe to run
-twice. `run_all.sql` is the five files joined together if you would rather
+twice. `run_all.sql` is the six files joined together if you would rather
 paste one block.
 
 | File | What it adds |
@@ -11,6 +11,7 @@ paste one block.
 | `003_blog_scheduling.sql` | `blogs.publish_at` and the `scheduled` status |
 | `004_media_library.sql` | `media`, the uploaded file library |
 | `005_jobs_missing_columns.sql` | `jobs.location`, `jobs.good_to_have`, `jobs.last_edited_by`, `jobs.last_edited_at` |
+| `006_resume_path_rename.sql` | renames `job_applications.resume_url` to `resume_path` |
 
 Existing admin accounts become owners, so nobody loses access. Accounts
 added after that start as editors and you raise them in the panel.
