@@ -639,6 +639,7 @@
 .academy-player { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--col), minmax(0, 1fr)); column-gap: var(--gutter); }
 .academy-player > #player-wrap { grid-column: 1 / 9; }
 .academy-player iframe { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--rule); }
+.academy-empty { grid-column: 1 / -1; font-size: 0.96rem; color: var(--ink-3); }
 .academy-video-list { grid-column: 9 / -1; border-top: 1px solid var(--rule); max-height: 520px; overflow-y: auto; }
 .academy-video-item {
   display: grid;

@@ -124,6 +124,8 @@
         }
         html += '</div></div>';
         html += '</div>';
+      } else {
+        html += '<p class="academy-empty">No videos in this playlist yet.</p>';
       }
 
       html += '</div>';

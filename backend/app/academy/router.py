@@ -68,10 +68,14 @@ def create_playlist(body: PlaylistCreate, _user: dict = Depends(get_current_user
 
 @router.put("/playlists/{id}")
 def update_playlist(id: str, body: PlaylistUpdate, _user: dict = Depends(get_current_user)):
-    data = body.model_dump(exclude_none=True)
+    # exclude_unset, not exclude_none, so an explicit null clears the field
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    result = service.update_playlist(id, data)
+    try:
+        result = service.update_playlist(id, data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The playlist could not be updated. The reason is in the server log.")
     if not result:
         raise HTTPException(status_code=404, detail="Playlist not found")
     log_activity(_user["email"], "update", "playlist", result["id"], result["title"])
@@ -101,10 +105,13 @@ def create_video(body: VideoCreate, _user: dict = Depends(get_current_user)):
 
 @router.put("/videos/{id}")
 def update_video(id: str, body: VideoUpdate, _user: dict = Depends(get_current_user)):
-    data = body.model_dump(exclude_none=True)
+    data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    result = service.update_video(id, data)
+    try:
+        result = service.update_video(id, data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="The video could not be updated. The reason is in the server log.")
     if not result:
         raise HTTPException(status_code=404, detail="Video not found")
     log_activity(_user["email"], "update", "video", result["id"], result["title"])

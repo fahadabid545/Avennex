@@ -1,8 +1,11 @@
+import logging
 import re
 from datetime import datetime, timezone
 
 from app.database import get_supabase
 from app.blogs.service import slugify
+
+logger = logging.getLogger(__name__)
 
 
 def extract_youtube_id(url: str) -> str:
@@ -154,7 +157,11 @@ def create_playlist(data: dict):
 def update_playlist(playlist_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    result = db.table("playlists").update(data).eq("id", playlist_id).execute()
+    try:
+        result = db.table("playlists").update(data).eq("id", playlist_id).execute()
+    except Exception as e:
+        logger.error("Failed to update playlist %s: %s", playlist_id, e)
+        raise
     return result.data[0] if result.data else None
 
 
@@ -175,7 +182,11 @@ def create_video(data: dict):
 
 def update_video(video_id: str, data: dict):
     db = get_supabase()
-    result = db.table("videos").update(data).eq("id", video_id).execute()
+    try:
+        result = db.table("videos").update(data).eq("id", video_id).execute()
+    except Exception as e:
+        logger.error("Failed to update video %s: %s", video_id, e)
+        raise
     return result.data[0] if result.data else None
 
 
