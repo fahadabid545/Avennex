@@ -2,6 +2,11 @@ from datetime import datetime, timezone
 
 from app.database import get_supabase
 
+# display_order defaults to 0, so a set of questions nobody has dragged is
+# all ties. ordering on that column alone leaves Postgres free to return
+# them in any order, and a different one each time, so the site and the
+# panel could disagree. created_at settles the ties.
+
 
 def list_active():
     db = get_supabase()
@@ -10,6 +15,7 @@ def list_active():
         .select("*")
         .eq("active", True)
         .order("display_order")
+        .order("created_at")
         .execute()
     )
     return result.data
@@ -21,6 +27,7 @@ def list_all():
         db.table("faqs")
         .select("*")
         .order("display_order")
+        .order("created_at")
         .execute()
     )
     return result.data

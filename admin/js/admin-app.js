@@ -4709,7 +4709,7 @@
           ],
         }) + AdminList.bulkBar(faqKey, bulkOptions('faqs'));
 
-      if (canReorder) html += reorderHint('The order here is the order on the site.');
+      if (canReorder) html += reorderHint('Dragging sets the order the site uses. Questions you never drag sit in the order they were added.');
 
       if (!faqShown.length) {
         html += AdminList.empty(
