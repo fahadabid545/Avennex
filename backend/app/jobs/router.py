@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime, timezone
 from html import escape as html_escape
@@ -273,8 +274,12 @@ async def apply_to_job(
     <p>{html_escape(cover)}</p>
     """
 
+    # send_email blocks on an HTTP call, and this endpoint is async, so a slow
+    # provider would stall every other request this worker is serving
     try:
-        notified = send_email(settings.smtp_from_email, f"Job Application: {job['title']} - {name}", admin_html, email_type="careers")
+        notified = await asyncio.to_thread(
+            send_email, settings.notification_recipient, f"Job Application: {job['title']} - {name}", admin_html, "careers"
+        )
         if not notified:
             logger.error("Admin notification for the application by %s was not delivered", email)
             warnings.append("Admin notification email failed")
@@ -288,7 +293,9 @@ async def apply_to_job(
         <p>Your application for <strong>{html_escape(job['title'])}</strong> at Avennex has been received.</p>
         <p>We'll review it and get back to you if there's a fit.</p>
         """
-        sent = send_email(email, f"Application received for {job['title']} at Avennex", applicant_html, email_type="careers")
+        sent = await asyncio.to_thread(
+            send_email, email, f"Application received for {job['title']} at Avennex", applicant_html, "careers"
+        )
         email_status = "sent" if sent else "failed"
         # a false return is a delivery failure the same as a raised one,
         # and the applicant's confirmation is worth a warning either way

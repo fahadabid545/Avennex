@@ -30,3 +30,11 @@ services:
         sync: false
       - key: SMTP_FROM_EMAIL
         sync: false
+      - key: SMTP_FROM_GENERAL
+        sync: false
+      - key: SMTP_FROM_CAREERS
+        sync: false
+      - key: ADMIN_NOTIFICATION_EMAIL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false

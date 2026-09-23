@@ -142,6 +142,9 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 
+# The emails_enabled setting is deliberately not consulted here. It governs
+# visitor notifications, and an admin locked out of the panel still needs a
+# way back in. Every other send in the codebase checks it. This one must not.
 @router.post("/forgot-password")
 @limiter.limit("3/hour")
 def forgot_password(body: ForgotPasswordRequest, request: Request):
@@ -175,9 +178,9 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
             """
             sent = send_email(admin["email"], "Reset your Avennex admin password", html)
             if not sent:
-                logger.warning("Password reset for %s, email not configured. Token: %s", admin["email"], token)
+                logger.warning("Password reset email for %s was not delivered", admin["email"])
         except Exception as e:
-            logger.error("Password reset email failed for %s: %s. Token: %s", admin["email"], e, token)
+            logger.error("Password reset email failed for %s: %s", admin["email"], e)
 
     return {"success": True, "message": "If this email is registered, you'll receive a reset link shortly."}
 

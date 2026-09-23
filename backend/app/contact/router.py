@@ -36,7 +36,7 @@ def contact(body: ContactRequest, request: Request):
     <p>{html_escape(body.message)}</p>
     """
     try:
-        sent = send_email(settings.smtp_from_email, f"Contact: {body.name}", html)
+        sent = send_email(settings.notification_recipient, f"Contact: {body.name}", html)
         if sent:
             return {"success": True, "message": "Message sent"}
         return {"success": False, "message": "Email service not configured"}

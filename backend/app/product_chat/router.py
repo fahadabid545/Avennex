@@ -122,15 +122,22 @@ def reply_to_message(slug: str, id: str, body: ProductChatReply, _user: dict = D
                 """
                 sent = send_email(original["author_email"], f"Avennex replied on {product['name']}", html)
                 email_status = "sent" if sent else "failed"
+                # a false return is a delivery failure the same as a raised one,
+                # and the admin hears about it either way
+                if not sent:
+                    logger.error("Reply email to %s was not delivered", original["author_email"])
+                    warnings.append("Email notification failed: the message was not delivered.")
             except Exception as e:
                 logger.error("Failed to send product chat reply email: %s", e)
                 email_status = "failed"
                 warnings.append(f"Email notification failed: {e}")
 
+    # the status belongs on the message that was replied to, because that is
+    # the row the admin list draws the indicator beside
     try:
         from app.database import get_supabase
         db = get_supabase()
-        db.table("product_chat_messages").update({"email_status": email_status}).eq("id", result["id"]).execute()
+        db.table("product_chat_messages").update({"email_status": email_status}).eq("id", id).execute()
     except Exception:
         pass
 

@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from_email: str = ""
 
+    # where internal notifications land, kept apart from the from-address
+    # settings above so a mail sender is never doubled up as a recipient
+    admin_notification_email: str = ""
+
     openai_api_key: str = ""
     chatbot_jwt_secret: str = ""
 
@@ -44,6 +48,10 @@ class Settings(BaseSettings):
     @property
     def chatbot_jwt_secret_effective(self) -> str:
         return self.chatbot_jwt_secret or self.jwt_secret
+
+    @property
+    def notification_recipient(self) -> str:
+        return self.admin_notification_email or "hello@avennex.com"
 
 
 @lru_cache

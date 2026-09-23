@@ -3284,7 +3284,7 @@
                     ${m.author_email ? `<span style="color:var(--text-muted);font-size:0.78rem">${esc(m.author_email)}</span>` : ''}
                   </div>
                   <p class="comment-body">${esc(m.message)}</p>
-                  ${m.has_reply ? `<span style="font-size:0.75rem;color:var(--accent)">Replied</span>` : ''}
+                  ${m.has_reply ? `<span style="font-size:0.75rem;color:var(--accent)">Replied</span>${m.email_status ? ` <span class="email-status email-status-${m.email_status}"></span><span style="font-size:0.72rem;color:var(--text-muted)">${m.email_status}</span>` : ''}` : ''}
                   <div style="margin-top:8px;display:flex;gap:6px">
                     ${!m.has_reply ? `<button class="btn btn-primary btn-sm" data-pchat-reply="${m.id}">Reply</button>` : ''}
                     ${delBtn(`data-pchat-delete="${m.id}"`)}
@@ -5650,7 +5650,7 @@
         <p class="settings-group-note">What visitors can see and use on the public site.</p>
         ${toggleRow('s-product-chat', 'Product discussion boards', 'product_chat_enabled', 'false', 'The comment board under each product')}
         ${toggleRow('s-chat-details', 'Profession and company on the message board', 'chat_show_details', 'false')}
-        ${toggleRow('s-emails', 'Email notifications', 'emails_enabled', 'false', 'Applications, contact messages and replies')}
+        ${toggleRow('s-emails', 'Email notifications', 'emails_enabled', 'true', 'Applications, contact messages and replies')}
         ${toggleRow('s-animations', 'Scroll animations', 'animations_enabled', 'true', 'Sections fade in as they come into view')}
       </div>
 
