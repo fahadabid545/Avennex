@@ -57,14 +57,14 @@
   function render() {
     trigger = document.createElement('button');
     trigger.className = 'chatbot-trigger';
-    trigger.setAttribute('aria-label', 'Ask a question');
+    trigger.setAttribute('aria-label', 'Ask AI about Avennex');
     trigger.innerHTML =
       '<span class="glyph" aria-hidden="true">' +
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" ' +
-        'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">' +
-        '<path d="M4 4h16v11H9l-5 4V4z"/></svg>' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">' +
+        '<path d="M10 2l1.9 5.6L17.5 9.5l-5.6 1.9L10 17l-1.9-5.6L2.5 9.5l5.6-1.9z"/>' +
+        '<path d="M18.5 13l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg>' +
       '</span>' +
-      '<span>Ask</span>';
+      '<span>Ask AI</span>';
     document.body.appendChild(trigger);
 
     showGreeting();
@@ -138,6 +138,8 @@
     });
   }
 
+  var GREETING_MS = 5000;
+
   function showGreeting() {
     var dismissed;
     try {
@@ -151,7 +153,7 @@
     greeting.className = 'chatbot-greeting';
     greeting.setAttribute('role', 'status');
     greeting.innerHTML =
-      '<p class="chatbot-greeting-text">Hi, I\'m Nex. Ask me anything about Avennex.</p>' +
+      '<p class="chatbot-greeting-text">Ask Nex anything about Avennex.</p>' +
       '<button type="button" class="chatbot-greeting-close" aria-label="Dismiss message">' +
         '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
       '</button>';
@@ -162,7 +164,7 @@
     }, 1400);
 
     greeting.querySelector('.chatbot-greeting-close').addEventListener('click', dismissGreeting);
-    setTimeout(dismissGreeting, 14000);
+    setTimeout(dismissGreeting, 1400 + GREETING_MS);
   }
 
   function dismissGreeting() {

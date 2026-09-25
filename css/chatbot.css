@@ -172,9 +172,9 @@
   align-items: flex-start;
   gap: 12px;
   padding: 14px 15px;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  box-shadow: 0 14px 38px rgba(16, 18, 22, 0.16);
+  background: var(--paper-2);
+  border: 1px solid rgba(182, 156, 255, 0.4);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.4);
   opacity: 0;
   transform: translateY(7px);
   transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease-out);
