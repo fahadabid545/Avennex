@@ -60,9 +60,9 @@
     trigger.setAttribute('aria-label', 'Ask AI about Avennex');
     trigger.innerHTML =
       '<span class="glyph" aria-hidden="true">' +
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">' +
-        '<path d="M10 2l1.9 5.6L17.5 9.5l-5.6 1.9L10 17l-1.9-5.6L2.5 9.5l5.6-1.9z"/>' +
-        '<path d="M18.5 13l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg>' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" ' +
+        'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">' +
+        '<path d="M4 4h16v11H9l-5 4V4z"/></svg>' +
       '</span>' +
       '<span>Ask AI</span>';
     document.body.appendChild(trigger);
