@@ -75,7 +75,50 @@
     return [Math.cos(a) * r, BASE + t * RISE + (dy || 0), Math.sin(a) * r];
   }
 
-  function hue(t) { return mix(LILAC, AMBER, clamp(t / TURNS, 0, 1)); }
+  // ---------- colour ramp: violet, magenta, rose, amber, blended in OKLCH ----------
+
+  var RAMP = [[139, 92, 246], [217, 70, 239], [251, 113, 133], AMBER];
+  var RAMP_STEPS = 96;
+
+  function lin(v) { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function gam(v) { v = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return clamp(v * 255, 0, 255); }
+
+  function toLch(c) {
+    var r = lin(c[0]), g = lin(c[1]), b = lin(c[2]);
+    var l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    var m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    var s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    var A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+    var B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+    return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, Math.hypot(A, B), Math.atan2(B, A)];
+  }
+
+  function fromLch(L, C, H) {
+    var A = C * Math.cos(H), B = C * Math.sin(H);
+    var l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3);
+    var m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3);
+    var s = Math.pow(L - 0.0894841775 * A - 1.291485548 * B, 3);
+    return [
+      gam(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+      gam(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+      gam(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+    ];
+  }
+
+  var ramp = [];
+  (function () {
+    var lch = RAMP.map(toLch);
+    for (var i = 0; i <= RAMP_STEPS; i++) {
+      var u = i / RAMP_STEPS * (lch.length - 1);
+      var k = Math.min(lch.length - 2, Math.floor(u)), f = u - k;
+      var p = lch[k], q = lch[k + 1], dh = q[2] - p[2];
+      if (dh > Math.PI) dh -= TAU;
+      if (dh < -Math.PI) dh += TAU;
+      ramp.push(fromLch(p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f, p[2] + dh * f));
+    }
+  })();
+
+  function hue(t) { return ramp[Math.round(clamp(t / TURNS, 0, 1) * RAMP_STEPS)]; }
 
   // ---------- sprites: one soft dot per colour step, sharp and out of focus ----------
 
