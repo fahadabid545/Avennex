@@ -43,7 +43,7 @@
     }
 
     var html = '<article class="product-article">';
-    html += '<a href="launchpad.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All ideas</a>';
+    html += '<a href="launchpad.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All launches</a>';
 
     html += '<div class="product-article-header">';
     html += stageBadge(entry.stage);

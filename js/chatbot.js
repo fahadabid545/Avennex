@@ -61,7 +61,7 @@
     trigger.innerHTML =
       '<span class="glyph" aria-hidden="true">' +
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" ' +
-        'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">' +
+        'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">' +
         '<path d="M4 4h16v11H9l-5 4V4z"/></svg>' +
       '</span>' +
       '<span>Ask AI</span>';

@@ -441,20 +441,6 @@
   border-top: 1px solid var(--rule);
   padding-top: 20px;
 }
-.step-icon {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--ink-3);
-  margin-bottom: 18px;
-}
-.step-icon::before {
-  content: '0' counter(step);
-  font-family: var(--label);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-}
 .step-title {
   font-family: var(--display);
   font-size: 1.12rem;
@@ -473,7 +459,6 @@
   gap: var(--gutter);
 }
 .value-card { border-top: 1px solid var(--rule); padding-top: 20px; }
-.value-icon { color: var(--ink-3); margin-bottom: 18px; }
 .value-title {
   font-family: var(--display);
   font-size: 1.12rem;
