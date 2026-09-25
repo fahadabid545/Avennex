@@ -22,6 +22,7 @@ IMAGE_CONTEXT_DIRS = {
     "blog": "public_html/img/blog",
     "product": "public_html/img/products",
     "launchpad": "public_html/img/launchpad",
+    "team": "public_html/img/team",
 }
 
 IMAGE_SIGNATURES = [

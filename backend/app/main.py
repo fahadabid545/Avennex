@@ -21,6 +21,7 @@ from app.chatbot.router import router as chatbot_router
 from app.product_chat.router import router as product_chat_router
 from app.uploads.router import router as uploads_router
 from app.revisions.router import router as revisions_router
+from app.team.router import router as team_router
 
 settings = get_settings()
 
@@ -54,6 +55,7 @@ app.include_router(chatbot_router)
 app.include_router(product_chat_router)
 app.include_router(uploads_router)
 app.include_router(revisions_router)
+app.include_router(team_router)
 
 
 @app.on_event("startup")

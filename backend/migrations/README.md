@@ -1,7 +1,7 @@
 # Migrations
 
 Run these in the Supabase SQL Editor, in order. Each one is safe to run
-twice. `run_all.sql` is the eight files joined together if you would rather
+twice. `run_all.sql` is the nine files joined together if you would rather
 paste one block.
 
 | File | What it adds |
@@ -14,6 +14,7 @@ paste one block.
 | `006_resume_path_rename.sql` | renames `job_applications.resume_url` to `resume_path` |
 | `007_document_sections.sql` | `documents`, `documents_heading`, `documents_body` on products and launchpad ideas |
 | `008_project_report.sql` | `report` on products and launchpad ideas, the data behind the project report |
+| `009_team_members.sql` | `team_members`, the people on the About page, seeded with the current five |
 
 Existing admin accounts become owners, so nobody loses access. Accounts
 added after that start as editors and you raise them in the panel.

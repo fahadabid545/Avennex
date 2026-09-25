@@ -26,7 +26,7 @@
 
   <link rel="stylesheet" href="css/base.css?v=202609270200">
   <link rel="stylesheet" href="css/chrome.css?v=202609270700">
-  <link rel="stylesheet" href="css/ui.css?v=202609270700">
+  <link rel="stylesheet" href="css/ui.css?v=202609270800">
   <link rel="stylesheet" href="css/pages.css?v=202609270700">
   <link rel="stylesheet" href="css/chatbot.css?v=202609270700">
   <link rel="stylesheet" href="css/polish.css?v=202609270700">
@@ -105,7 +105,7 @@
       </div>
     </section>
 
-    <section class="section panel team-section">
+    <section class="section panel team-section" id="team-section" hidden>
       <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
         <div class="grid">
@@ -116,33 +116,7 @@
             </div>
           </div>
 
-          <div class="team-grid m-in m-stagger">
-            <div class="team-card">
-              <div class="team-photo" aria-hidden="true" data-initial="F"></div>
-              <h3 class="team-name">Faizan</h3>
-              <p class="team-role">Founder</p>
-            </div>
-            <div class="team-card">
-              <div class="team-photo" aria-hidden="true" data-initial="F"></div>
-              <h3 class="team-name">Fahad</h3>
-              <p class="team-role">Co-founder</p>
-            </div>
-            <div class="team-card">
-              <div class="team-photo" aria-hidden="true" data-initial="A"></div>
-              <h3 class="team-name">Ahsan</h3>
-              <p class="team-role">Engineering</p>
-            </div>
-            <div class="team-card">
-              <div class="team-photo" aria-hidden="true" data-initial="R"></div>
-              <h3 class="team-name">Rafay</h3>
-              <p class="team-role">Engineering</p>
-            </div>
-            <div class="team-card">
-              <div class="team-photo" aria-hidden="true" data-initial="S"></div>
-              <h3 class="team-name">Saad</h3>
-              <p class="team-role">Engineering</p>
-            </div>
-          </div>
+          <div class="team-grid m-in m-stagger" id="team-grid"></div>
         </div>
       </div>
     </section>
@@ -234,7 +208,8 @@
   <script src="js/nav-feed.js?v=202609270400" defer></script>
   <script src="js/motion.js?v=202609270200" defer></script>
   <script src="js/polish.js?v=202609270200" defer></script>
-  <script src="js/schema.js?v=202609270200" defer></script>
+  <script src="js/team.js?v=202609270800" defer></script>
+  <script src="js/schema.js?v=202609270800" defer></script>
 
 </body>
 </html>

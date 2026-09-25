@@ -236,6 +236,24 @@ create index if not exists faqs_order_idx on faqs (display_order, created_at);
 
 alter table faqs disable row level security;
 
+-- Team members on the About page, five at most
+create table if not exists team_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  role text not null default '',
+  photo_url text,
+  linkedin_url text,
+  display_order integer not null default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  last_edited_by text,
+  last_edited_at timestamptz
+);
+
+create index if not exists team_members_order_idx on team_members (display_order, created_at);
+
+alter table team_members disable row level security;
+
 -- Job applications
 create table if not exists job_applications (
   id uuid primary key default gen_random_uuid(),

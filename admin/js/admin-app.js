@@ -10,7 +10,7 @@
   }
 
   const MODULES = ['dashboard', 'blogs', 'jobs', 'products', 'launchpad', 'academy',
-                   'media', 'moderation', 'chat', 'faqs', 'chatbot', 'settings', 'team'];
+                   'media', 'moderation', 'chat', 'faqs', 'people', 'chatbot', 'settings', 'team'];
 
   // each module says what it takes to open it. the sidebar drops the rest
   // rather than leaving links that answer with a refusal
@@ -58,6 +58,7 @@
       chat: loadChat,
       moderation: loadModeration,
       faqs: loadFaqs,
+      people: loadPeople,
       chatbot: loadChatbot,
       dashboard: loadDashboard,
       settings: loadSettings,
@@ -4987,6 +4988,144 @@
         };
       },
       onBack: loadFaqs,
+    });
+  }
+
+  // ── Team page ──
+
+  const TEAM_MAX = 5;
+
+  async function loadPeople() {
+    showLoading();
+    try {
+      const people = await AdminAPI.request('/api/team/admin/all');
+      cachedItems.people = Array.isArray(people) ? people : [];
+      paint(cachedItems.people);
+    } catch (err) {
+      if (err && err.message === 'Session expired') return;
+      showEmpty(esc(AdminUI.friendly(err, 'The team could not be loaded.')), 'Team');
+    }
+
+    function paint(people) {
+      const full = people.length >= TEAM_MAX;
+      let html = listHeader('Team', full ? '' : 'Add person') +
+        `<p class="reorder-hint">The people on the About page, ${TEAM_MAX} at most. ${full ? 'The list is full. Remove someone to add another.' : `${TEAM_MAX - people.length} of ${TEAM_MAX} places left.`}</p>`;
+
+      if (people.length > 1) html += reorderHint('The About page shows them in this order.');
+
+      if (!people.length) {
+        html += AdminList.empty('Nobody on the team page yet. The section stays hidden until you add someone.', 'Add the first person');
+        content.innerHTML = html;
+        AdminList.bindEmpty(() => personForm(null));
+        return;
+      }
+
+      content.innerHTML = html + `
+        <table class="admin-table">
+          <thead><tr>
+            ${people.length > 1 ? '<th class="col-select" aria-label="Reorder"></th>' : ''}
+            <th>Photo</th><th>Name</th><th>Role</th><th>LinkedIn</th><th></th>
+          </tr></thead>
+          <tbody>${people.map((p) => `
+            <tr${people.length > 1 ? ` data-order-id="${p.id}" tabindex="0"` : ''}>
+              ${people.length > 1 ? '<td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>' : ''}
+              <td><span class="team-thumb" data-initial="${esc((p.name || '?').charAt(0).toUpperCase())}">${p.photo_url ? `<img src="${esc(assetUrl(p.photo_url))}" alt="" onerror="this.remove()">` : ''}</span></td>
+              <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
+              <td>${p.role ? esc(p.role) : '<span class="text-muted">Not set</span>'}</td>
+              <td>${p.linkedin_url ? `<a href="${esc(p.linkedin_url)}" target="_blank" rel="noopener">Open</a>` : '<span class="text-muted">Not set</span>'}</td>
+              <td class="row-actions">
+                <button class="btn btn-secondary btn-sm" data-edit-person="${p.id}">Edit</button>
+                ${delBtn(`data-delete-person="${p.id}"`)}
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+
+      if (people.length > 1) bindReorder(content.querySelector('.admin-table tbody'), people, '/api/team');
+
+      const addBtn = document.getElementById('add-btn');
+      if (addBtn) addBtn.addEventListener('click', () => personForm(null));
+
+      addContentListener('click', async (e) => {
+        const editId = e.target.dataset.editPerson;
+        if (editId) {
+          const item = (cachedItems.people || []).find((p) => p.id === editId);
+          personForm(item || { id: editId });
+        }
+
+        const delId = e.target.dataset.deletePerson;
+        if (delId) {
+          const target = (cachedItems.people || []).find((p) => p.id === delId) || {};
+          const ok = await confirmDialog({
+            title: 'Remove this person?',
+            body: target.name ? `${target.name} comes off the About page immediately.` : 'They come off the About page immediately.',
+            note: 'Their photo stays in the media library.',
+            verb: 'Remove',
+          });
+          if (!ok) return;
+          try {
+            await AdminAPI.request(`/api/team/${delId}`, { method: 'DELETE' });
+            AdminUI.toast('Removed.', 'success');
+            loadPeople();
+          } catch (err) { AdminUI.fail(err); }
+        }
+      });
+    }
+  }
+
+  function personForm(item) {
+    const p = item || {};
+    const formData = {
+      name: p.name || '',
+      role: p.role || '',
+      photo_url: p.photo_url || '',
+      linkedin_url: p.linkedin_url || '',
+    };
+
+    renderStepForm({
+      title: p.id ? 'Edit person' : 'Add person',
+      item: p,
+      formData,
+      currentStep: 1,
+      entityType: 'team_member',
+      apiPath: '/api/team',
+      reloadFn: loadPeople,
+      steps: [
+        {
+          fields: [
+            { name: 'name', id: 'f-person-name', label: 'Name', type: 'text', required: true },
+            { name: 'role', id: 'f-person-role', label: 'Role', type: 'text', placeholder: 'Founder, Engineering, Design', hint: 'The short line under the name.' },
+            { name: 'photo_url', id: 'f-person-photo', label: 'Photo', placeholder: 'https://... or upload', hint: 'A portrait, 3:4. Without one, the card shows the first letter of the name.' },
+            { name: 'linkedin_url', id: 'f-person-linkedin', label: 'LinkedIn', type: 'url', placeholder: 'https://www.linkedin.com/in/...' },
+          ],
+          onMount() {
+            [['f-person-name', 60], ['f-person-role', 80]].forEach(([id, max]) => {
+              const el = document.getElementById(id);
+              if (!el) return;
+              el.setAttribute('maxlength', String(max));
+              const counter = document.createElement('span');
+              counter.className = 'field-char-count';
+              const tick = () => {
+                counter.textContent = `${el.value.length}/${max}`;
+                counter.classList.toggle('field-char-warn', el.value.length > max - 8);
+              };
+              el.parentNode.appendChild(counter);
+              el.addEventListener('input', tick);
+              tick();
+            });
+            mountCoverField('f-person-photo', 'team');
+          },
+        },
+      ],
+      onSubmit(data) {
+        return {
+          name: (data.name || '').trim(),
+          role: (data.role || '').trim(),
+          photo_url: (data.photo_url || '').trim() || null,
+          linkedin_url: (data.linkedin_url || '').trim() || null,
+        };
+      },
+      onBack: loadPeople,
     });
   }
 

@@ -209,22 +209,33 @@
   }
 
   if (page === 'about.html') {
-    var members = [];
-    var cards = document.querySelectorAll('.team-card');
-    cards.forEach(function (card) {
-      var name = card.querySelector('.team-name');
-      var role = card.querySelector('.team-role');
-      if (name) {
-        members.push({
-          '@type': 'Person',
-          name: name.textContent.trim(),
-          jobTitle: role ? role.textContent.trim() : ''
-        });
-      }
-    });
-    var aboutOrg = Object.assign({}, org);
-    if (members.length) aboutOrg.member = members;
-    inject(aboutOrg);
+    var injectAbout = function () {
+      var members = [];
+      document.querySelectorAll('.team-card').forEach(function (card) {
+        var name = card.querySelector('.team-name');
+        var role = card.querySelector('.team-role');
+        var link = card.querySelector('.team-link');
+        if (!name) return;
+        var person = { '@type': 'Person', name: name.textContent.trim(), jobTitle: role ? role.textContent.trim() : '' };
+        if (link) person.sameAs = link.href;
+        members.push(person);
+      });
+      var aboutOrg = Object.assign({}, org);
+      if (members.length) aboutOrg.member = members;
+      inject(aboutOrg);
+    };
+    // the team arrives from the API, so wait for team.js to finish either way
+    var teamGrid = document.getElementById('team-grid');
+    if (!teamGrid || teamGrid.hasAttribute('data-loaded')) {
+      injectAbout();
+    } else {
+      var teamObserver = new MutationObserver(function () {
+        if (!teamGrid.hasAttribute('data-loaded')) return;
+        teamObserver.disconnect();
+        injectAbout();
+      });
+      teamObserver.observe(teamGrid, { attributes: true, attributeFilter: ['data-loaded'] });
+    }
   }
 
   if (page === 'services.html') {
