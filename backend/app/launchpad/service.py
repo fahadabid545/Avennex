@@ -5,6 +5,7 @@ from app.database import get_supabase
 from app.blogs.service import slugify
 from app.progress_history import stamp as stamp_progress
 from app.storage import ftp_service
+from app.uploads import documents
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,12 @@ def delete(entry_id: str):
             remote_path = ftp_service.remote_path_from_url(url) if url else None
             if remote_path and not ftp_service.delete_file(remote_path):
                 logger.warning("Failed to delete diagram %s for launchpad entry %s", url, entry_id)
+
+    if entry:
+        for url in documents.file_urls(entry.get("documents")):
+            remote_path = ftp_service.remote_path_from_url(url)
+            if remote_path and not ftp_service.delete_file(remote_path):
+                logger.warning("Failed to delete document %s for launchpad entry %s", url, entry_id)
 
     return bool(result.data)
 

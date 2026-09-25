@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -10,6 +10,7 @@ from app.auth.dependencies import get_current_user, require_manager
 from app.launchpad import service
 from app.admin.service import log_activity
 from app.revisions import service as revisions
+from app.uploads import documents
 from app.launchpad.schemas import (
     LaunchpadCreate,
     LaunchpadUpdate,
@@ -119,6 +120,18 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
         raise HTTPException(status_code=404, detail="Entry not found")
     log_activity(_user["email"], "update", "launchpad", result["id"], result["title"])
     return result
+
+
+@router.post("/{id}/upload-document")
+async def upload_document(
+    id: str,
+    file: UploadFile = File(...),
+    preview: UploadFile | None = File(None),
+    _user: dict = Depends(get_current_user),
+):
+    content = await file.read()
+    preview_bytes = await preview.read() if preview else None
+    return documents.store("launchpad", id, file.filename, content, preview_bytes, _user["email"])
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

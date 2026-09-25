@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, field_validator, EmailStr
 from datetime import datetime
+from app.uploads.documents import validate_list
 from typing import Any, Optional
 
 
@@ -22,6 +23,14 @@ class LaunchpadCreate(BaseModel):
     target_date: Optional[str] = None
     milestones: Optional[Any] = None
     metrics: Optional[Any] = None
+    documents: Optional[Any] = None
+    documents_heading: Optional[str] = None
+    documents_body: Optional[str] = None
+
+    @field_validator("documents")
+    @classmethod
+    def _at_most_five(cls, v):
+        return validate_list(v)
 
 
 class LaunchpadUpdate(BaseModel):
@@ -43,6 +52,14 @@ class LaunchpadUpdate(BaseModel):
     target_date: Optional[str] = None
     milestones: Optional[Any] = None
     metrics: Optional[Any] = None
+    documents: Optional[Any] = None
+    documents_heading: Optional[str] = None
+    documents_body: Optional[str] = None
+
+    @field_validator("documents")
+    @classmethod
+    def _at_most_five(cls, v):
+        return validate_list(v)
 
 
 class LaunchpadResponse(BaseModel):
@@ -70,6 +87,10 @@ class LaunchpadResponse(BaseModel):
     updated_at: datetime
     last_edited_by: Optional[str] = None
     last_edited_at: Optional[datetime] = None
+    documents: Optional[Any] = []
+    documents_heading: Optional[str] = None
+    documents_body: Optional[str] = None
+
 
 
 class LaunchpadDetailResponse(LaunchpadResponse):

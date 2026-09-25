@@ -92,6 +92,9 @@ create table if not exists products (
   target_date date,
   milestones jsonb default '[]'::jsonb,
   progress_history jsonb default '[]'::jsonb,
+  documents jsonb default '[]'::jsonb,
+  documents_heading text,
+  documents_body text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -142,6 +145,9 @@ create table if not exists launchpad_entries (
   milestones jsonb default '[]'::jsonb,
   progress_history jsonb default '[]'::jsonb,
   metrics jsonb default '[]'::jsonb,
+  documents jsonb default '[]'::jsonb,
+  documents_heading text,
+  documents_body text,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   last_edited_by text,

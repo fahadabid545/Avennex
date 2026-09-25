@@ -5,6 +5,7 @@ from app.database import get_supabase
 from app.blogs.service import slugify
 from app.progress_history import stamp as stamp_progress
 from app.storage import ftp_service
+from app.uploads import documents
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ def delete(product_id: str):
         if product.get("cover_image"):
             urls.append(product["cover_image"])
         urls.extend(product.get("gallery") or [])
-        urls.extend(doc.get("url") for doc in (product.get("documents") or []) if doc.get("url"))
+        urls.extend(documents.file_urls(product.get("documents")))
         for url in urls:
             remote_path = ftp_service.remote_path_from_url(url)
             if remote_path and not ftp_service.delete_file(remote_path):

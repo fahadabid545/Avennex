@@ -1610,7 +1610,6 @@
     if (videoUrlEl) config.formData.video_url = videoUrlEl.value.trim();
     if (typeof productGallery !== 'undefined') config.formData.gallery = [...productGallery];
     if (typeof productLinks !== 'undefined') config.formData.external_links = [...productLinks];
-    if (typeof productDocuments !== 'undefined') config.formData.documents = [...productDocuments];
   }
 
   function renderField(f, data) {
@@ -1720,6 +1719,9 @@
           const copy = Object.assign({}, source);
           ['id', 'slug', 'created_at', 'updated_at', 'published_at',
            'last_edited_by', 'last_edited_at', 'progress_history'].forEach((f) => { delete copy[f]; });
+          // attached files belong to the record they were uploaded to, and
+          // deleting either record would take them away from both
+          delete copy.documents;
           if (copy.title) copy.title = copy.title + ' (copy)';
           if (copy.name) copy.name = copy.name + ' (copy)';
           if (quiet[module]) copy.status = quiet[module];
@@ -3136,7 +3138,6 @@
   let productFeatures = [];
   let productGallery = [];
   let productLinks = [];
-  let productDocuments = [];
   let productMetrics = [];
 
   async function loadProducts() {
@@ -3398,16 +3399,6 @@
       </div>`).join('');
   }
 
-  function renderProductDocuments() {
-    const list = document.getElementById('documents-list');
-    if (!list) return;
-    list.innerHTML = productDocuments.map((d, i) => `
-      <div class="feature-row">
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.name)}</span>
-        <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
-      </div>`).join('');
-  }
-
   function productForm(item) {
     const p = item || {};
     productFeatures = (Array.isArray(p.features) ? p.features : []).map((f) => ({
@@ -3415,7 +3406,6 @@
     }));
     productGallery = Array.isArray(p.gallery) ? [...p.gallery] : [];
     productLinks = Array.isArray(p.external_links) ? [...p.external_links] : [];
-    productDocuments = Array.isArray(p.documents) ? [...p.documents] : [];
     productMetrics = Array.isArray(p.metrics) ? [...p.metrics] : [];
 
     const formData = {
@@ -3437,6 +3427,9 @@
       target_date: (p.target_date || '').slice(0, 10),
       milestones: Array.isArray(p.milestones) ? [...p.milestones] : [],
       metrics: productMetrics,
+      documents: Array.isArray(p.documents) ? p.documents.map((doc) => ({ ...doc })) : [],
+      documents_heading: p.documents_heading || '',
+      documents_body: p.documents_body || '',
     };
 
     renderStepForm({
@@ -3628,14 +3621,7 @@
                 <div id="links-list"></div>
                 <button type="button" class="btn btn-secondary btn-sm" id="add-link" style="margin-top:8px">Add Link</button>
               </div>
-              <div class="field">
-                <label>Documentation (PDF) <span class="field-opt">Optional</span></label>
-                <span class="field-hint">Uploaded PDFs show as a scrollable document viewer on the product page</span>
-                <div id="documents-list"></div>
-                <input type="file" id="doc-upload-input" accept="application/pdf" style="display:none">
-                <button type="button" class="btn btn-secondary btn-sm" id="add-document" style="margin-top:8px">Upload PDF</button>
-                <span class="form-msg" id="doc-upload-msg"></span>
-              </div>
+              ${AdminDocs.field('p', config.formData)}
 `;
 
             renderProductGallery();
@@ -3665,34 +3651,9 @@
               if (idx !== undefined && field) productLinks[Number(idx)][field] = e.target.value;
             });
 
-            renderProductDocuments();
-            document.getElementById('add-document').addEventListener('click', () => {
-              document.getElementById('doc-upload-input').click();
-            });
-            document.getElementById('doc-upload-input').addEventListener('change', async (e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-              const msg = document.getElementById('doc-upload-msg');
-              msg.textContent = 'Uploading...';
-              msg.className = 'form-msg';
-              try {
-                if (!config.item.id) throw new Error('Save the product once before uploading a document.');
-                const result = await AdminUpload.send(file, 'document', {
-                  path: `/api/products/${config.item.id}/upload-document`,
-                });
-                productDocuments.push({ name: result.name, url: resolveUploadUrl(result) });
-                renderProductDocuments();
-                msg.textContent = 'Uploaded.';
-                msg.classList.add('form-msg-success');
-              } catch (err) {
-                msg.textContent = AdminUI.friendly(err);
-                msg.classList.add('form-msg-error');
-              }
-              e.target.value = '';
-            });
-            document.getElementById('documents-list').addEventListener('click', (e) => {
-              const rm = e.target.dataset.remove;
-              if (rm !== undefined) { productDocuments.splice(Number(rm), 1); renderProductDocuments(); }
+            AdminDocs.mount('p', config.formData, () => {
+              if (!config.item.id) throw new Error('Save the product once before uploading a document.');
+              return `/api/products/${config.item.id}/upload-document`;
             });
 
           },
@@ -3722,7 +3683,7 @@
               ['Video URL', d.video_url],
               ['Gallery Images', productGallery.filter(Boolean).length],
               ['External Links', productLinks.filter((l) => l.label && l.url).length],
-              ['Documents', productDocuments.length],
+              ['Documents', `${(d.documents || []).length} attached${d.documents_heading ? ` under "${d.documents_heading}"` : ''}`],
               ['Dashboard data', dashboardSummary(d)],
               ['Features built', productFeatures.filter((f) => f.done).length + ' of ' + productFeatures.filter((f) => f.text).length],
             ].forEach(([label, v]) => {
@@ -3767,7 +3728,9 @@
           video_url: d.video_url || null,
           gallery: productGallery.filter(Boolean),
           external_links: productLinks.filter((l) => l.label && l.url),
-          documents: productDocuments,
+          documents: d.documents || [],
+          documents_heading: (d.documents_heading || '').trim() || null,
+          documents_body: (d.documents_body || '').trim() || null,
           metrics: Array.isArray(d.metrics) ? d.metrics.filter((m) => m.name) : [],
           start_date: d.start_date || null,
           target_date: d.target_date || null,
@@ -3981,6 +3944,9 @@
       target_date: (lp.target_date || '').slice(0, 10),
       milestones: Array.isArray(lp.milestones) ? [...lp.milestones] : [],
       metrics: Array.isArray(lp.metrics) ? [...lp.metrics] : [],
+      documents: Array.isArray(lp.documents) ? lp.documents.map((doc) => ({ ...doc })) : [],
+      documents_heading: lp.documents_heading || '',
+      documents_body: lp.documents_body || '',
     };
 
     renderStepForm({
@@ -4122,7 +4088,8 @@
                 <span class="field-hint">Upload architecture or flow diagram images</span>
                 <div id="lp-diagrams-list"></div>
                 <button type="button" class="btn btn-secondary btn-sm" id="add-diagram" style="margin-top:8px">Add Diagram</button>
-              </div>`;
+              </div>
+              ${AdminDocs.field('lp', config.formData)}`;
 
             const contentTextarea = document.getElementById('f-lp-content');
             const contentPreview = document.getElementById('lp-content-preview');
@@ -4156,6 +4123,11 @@
                 renderLaunchpadDiagrams();
               }
             });
+
+            AdminDocs.mount('lp', config.formData, () => {
+              if (!config.item.id) throw new Error('Save the idea once before uploading a document.');
+              return `/api/launchpad/${config.item.id}/upload-document`;
+            });
           },
         },
         dashboardStep('launchpad', 'Dates, milestones and your own metrics for this idea. The roadmap counts down live from these.'),
@@ -4179,6 +4151,7 @@
               ['Team Needed', d.team_needed],
               ['Tech Stack', d.tech_stack],
               ['Progress', (d.progress ?? 0) + '%'],
+              ['Documents', `${(d.documents || []).length} attached${d.documents_heading ? ` under "${d.documents_heading}"` : ''}`],
               ['Dashboard data', dashboardSummary(d)],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
@@ -4239,6 +4212,9 @@
           start_date: d.start_date || null,
           target_date: d.target_date || null,
           milestones: Array.isArray(d.milestones) ? d.milestones.filter((m) => m.label) : [],
+          documents: d.documents || [],
+          documents_heading: (d.documents_heading || '').trim() || null,
+          documents_body: (d.documents_body || '').trim() || null,
         };
       },
       onBack: loadLaunchpad,

@@ -72,6 +72,12 @@
       html += '</div></div>';
     }
 
+    html += DocViewer.html({
+      heading: entry.documents_heading,
+      body: entry.documents_body,
+      documents: entry.documents,
+    });
+
     if (entry.timeline) {
       html += buildTimelineSection(entry.timeline);
     }
@@ -103,6 +109,7 @@
 
     html += '</article>';
     content.innerHTML = html;
+    DocViewer.init(content, entry.documents);
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 

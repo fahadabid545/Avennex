@@ -1,6 +1,4 @@
 import logging
-import time
-import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
@@ -10,13 +8,11 @@ from app.products import service
 from app.products.schemas import ProductCreate, ProductUpdate, ProductResponse
 from app.admin.service import log_activity
 from app.revisions import service as revisions
-from app.storage import ftp_service
+from app.uploads import documents
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/products", tags=["products"])
-
-MAX_DOC_SIZE = 10 * 1024 * 1024
 
 
 @router.get("", response_model=list[ProductResponse])
@@ -108,25 +104,12 @@ def product_chat_stats(_user: dict = Depends(get_current_user)):
 async def upload_document(
     id: str,
     file: UploadFile = File(...),
+    preview: UploadFile | None = File(None),
     _user: dict = Depends(get_current_user),
 ):
     content = await file.read()
-    if len(content) > MAX_DOC_SIZE:
-        raise HTTPException(status_code=400, detail="File must be under 10MB")
-
-    if not content[:5].startswith(b"%PDF-"):
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
-
-    filename = file.filename or "document.pdf"
-    remote_filename = f"{uuid.uuid4().hex[:8]}-{int(time.time())}-{filename}"
-    remote_dir = f"public_html/docs/products/{id}"
-
-    remote_path, error = ftp_service.store_file(content, remote_dir, remote_filename)
-    if not remote_path:
-        logger.error("Product document upload failed for %s: %s", id, error)
-        raise HTTPException(status_code=502, detail=error or "Failed to upload document")
-
-    return {"success": True, "name": filename, "url": ftp_service.public_url(remote_path)}
+    preview_bytes = await preview.read() if preview else None
+    return documents.store("product", id, file.filename, content, preview_bytes, _user["email"])
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

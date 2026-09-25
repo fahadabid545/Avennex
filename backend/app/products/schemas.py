@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
+from app.uploads.documents import validate_list
 from typing import Optional, Any
 
 
@@ -25,6 +26,13 @@ class ProductCreate(BaseModel):
     start_date: Optional[str] = None
     target_date: Optional[str] = None
     milestones: Optional[Any] = None
+    documents_heading: Optional[str] = None
+    documents_body: Optional[str] = None
+
+    @field_validator("documents")
+    @classmethod
+    def _at_most_five(cls, v):
+        return validate_list(v)
 
 
 class ProductUpdate(BaseModel):
@@ -49,6 +57,13 @@ class ProductUpdate(BaseModel):
     start_date: Optional[str] = None
     target_date: Optional[str] = None
     milestones: Optional[Any] = None
+    documents_heading: Optional[str] = None
+    documents_body: Optional[str] = None
+
+    @field_validator("documents")
+    @classmethod
+    def _at_most_five(cls, v):
+        return validate_list(v)
 
 
 class ProductResponse(BaseModel):
@@ -79,3 +94,5 @@ class ProductResponse(BaseModel):
     target_date: Optional[str] = None
     milestones: Optional[Any] = []
     progress_history: Optional[Any] = []
+    documents_heading: Optional[str] = None
+    documents_body: Optional[str] = None

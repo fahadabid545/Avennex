@@ -2,10 +2,6 @@
   var content = document.getElementById('product-content');
   if (!content) return;
 
-  if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
-  }
-
   var params = new URLSearchParams(window.location.search);
   var slug = params.get('slug');
   if (!slug) {
@@ -111,9 +107,11 @@
       html += '</div>';
     }
 
-    if (product.documents && product.documents.length) {
-      html += buildDocumentsSection(product.documents);
-    }
+    html += DocViewer.html({
+      heading: product.documents_heading,
+      body: product.documents_body,
+      documents: product.documents,
+    });
 
     if (product.external_links && product.external_links.length) {
       html += buildLinksSection(product.external_links);
@@ -141,7 +139,7 @@
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     mountDashboard(product);
-    if (product.documents && product.documents.length) initDocumentViewer(product.documents);
+    DocViewer.init(content, product.documents);
 
     initChat(product);
   }).catch(function (err) {
@@ -177,86 +175,6 @@
           .then(function (res) { return res && res.daily ? res.daily : []; })
           .catch(function () { return []; });
       },
-    });
-  }
-
-  function buildDocumentsSection(documents) {
-    var html = '<div class="product-article-section">';
-    html += '<h2>Documentation</h2>';
-    if (documents.length > 1) {
-      html += '<div class="pdf-doc-tabs">';
-      for (var i = 0; i < documents.length; i++) {
-        html += '<button type="button" class="pdf-doc-tab' + (i === 0 ? ' is-active' : '') + '" data-doc-idx="' + i + '">' + API.escHtml(documents[i].name) + '</button>';
-      }
-      html += '</div>';
-    }
-    html += '<div class="pdf-viewer-wrap">';
-    for (var j = 0; j < documents.length; j++) {
-      html += '<div class="pdf-viewer' + (j === 0 ? ' is-active' : '') + '" id="pdf-viewer-' + j + '">';
-      html += '<div class="pdf-track" id="pdf-track-' + j + '"></div>';
-      html += '<button type="button" class="pdf-nav pdf-prev" data-target="' + j + '" aria-label="Previous page">&#8249;</button>';
-      html += '<button type="button" class="pdf-nav pdf-next" data-target="' + j + '" aria-label="Next page">&#8250;</button>';
-      html += '</div>';
-    }
-    html += '</div></div>';
-    return html;
-  }
-
-  function initDocumentViewer(documents) {
-    var rendered = {};
-
-    function renderDoc(idx) {
-      if (rendered[idx] || typeof pdfjsLib === 'undefined') return;
-      rendered[idx] = true;
-      var track = document.getElementById('pdf-track-' + idx);
-      if (!track) return;
-      track.innerHTML = '<p class="text-muted">Loading document...</p>';
-      pdfjsLib.getDocument(API.assetUrl(documents[idx].url)).promise.then(function (pdf) {
-        track.innerHTML = '';
-        var chain = Promise.resolve();
-        var renderPage = function (n) {
-          chain = chain.then(function () {
-            return pdf.getPage(n).then(function (page) {
-              var viewport = page.getViewport({ scale: 1.4 });
-              var canvas = document.createElement('canvas');
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              canvas.className = 'pdf-page';
-              var ctx = canvas.getContext('2d');
-              return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
-                track.appendChild(canvas);
-              });
-            });
-          });
-        };
-        for (var n = 1; n <= pdf.numPages; n++) renderPage(n);
-      }).catch(function () {
-        track.innerHTML = '<p class="text-muted">Could not load this document.</p>';
-      });
-    }
-
-    renderDoc(0);
-
-    document.querySelectorAll('.pdf-doc-tab').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        var idx = tab.dataset.docIdx;
-        document.querySelectorAll('.pdf-doc-tab').forEach(function (t) { t.classList.remove('is-active'); });
-        tab.classList.add('is-active');
-        document.querySelectorAll('.pdf-viewer').forEach(function (v) { v.classList.remove('is-active'); });
-        var viewer = document.getElementById('pdf-viewer-' + idx);
-        if (viewer) viewer.classList.add('is-active');
-        renderDoc(Number(idx));
-      });
-    });
-
-    document.querySelectorAll('.pdf-prev, .pdf-next').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var idx = btn.dataset.target;
-        var track = document.getElementById('pdf-track-' + idx);
-        if (!track) return;
-        var dir = btn.classList.contains('pdf-next') ? 1 : -1;
-        track.scrollBy({ left: dir * track.clientWidth, behavior: 'smooth' });
-      });
     });
   }
 

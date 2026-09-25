@@ -461,6 +461,72 @@ a {
   color: var(--danger);
 }
 
+.form-msg-warning {
+  color: var(--warning, #b7791f);
+}
+
+/* Documents on products and launchpad ideas */
+
+.docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.docs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.docs-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+.docs-type {
+  flex-shrink: 0;
+  width: 86px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.docs-meta {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.docs-row .btn-icon,
+.docs-row .btn-remove {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.docs-row .btn-icon:disabled { opacity: 0.35; cursor: default; }
+.docs-row .btn-remove:hover { color: var(--danger); border-color: var(--danger); }
+.docs-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.docs-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* Features editor (products) */
 
 .features-list {

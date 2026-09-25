@@ -804,8 +804,95 @@
   transition: border-color var(--t-fast) var(--ease);
 }
 .pdf-nav:hover { border-color: var(--ink); }
+.pdf-nav:disabled { opacity: 0.3; cursor: default; }
 .pdf-prev { left: 12px; }
 .pdf-next { right: 12px; }
+
+.doc-intro { margin-bottom: 26px; }
+/* a page sits inside a fixed box, the way a document post reads, rather
+   than stretching a tall page down the screen */
+.doc-section .pdf-page {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: var(--paper-3);
+}
+.doc-section .pdf-page canvas {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(76vh, 860px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.doc-panel { display: none; }
+.doc-panel.is-active { display: block; }
+.doc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+  background: var(--paper-2);
+}
+.doc-badge {
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  color: var(--mark-ink);
+  background: var(--mark);
+}
+.doc-badge-doc, .doc-badge-docx { background: #6FA8FF; }
+.doc-badge-xls, .doc-badge-xlsx, .doc-badge-csv { background: #5CCB8F; }
+.doc-badge-ppt, .doc-badge-pptx { background: #F2766B; }
+.doc-badge-txt { background: var(--royal-lit); }
+.doc-name { flex: 1 1 auto; font-weight: 700; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.doc-size, .doc-count { font-size: 0.85rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.doc-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mark);
+  border: 1px solid rgba(246, 184, 75, 0.55);
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.doc-download:hover { background: var(--mark); color: var(--mark-ink); }
+.doc-progress { height: 3px; background: var(--hair); }
+.doc-progress span { display: block; height: 100%; width: 0; background: var(--mark); transition: width var(--t-base) var(--ease); }
+.doc-note { padding: 60px 20px; text-align: center; color: var(--ink-3); flex: 0 0 100%; }
+.doc-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 22px;
+  padding: 34px 24px;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.doc-card-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 78px;
+  font-family: var(--label);
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--mark-ink);
+  background: var(--mark);
+  clip-path: polygon(0 0, 72% 0, 100% 22%, 100% 100%, 0 100%);
+}
+.doc-card-text { flex: 1 1 220px; color: var(--ink-2); }
 
 /* ---------- launchpad detail ---------- */
 
