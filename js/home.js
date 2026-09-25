@@ -3,7 +3,6 @@
     { key: 'game_enabled', el: document.getElementById('hero-game') },
     { key: 'ai_brain_enabled', el: document.getElementById('brain-section') },
     { key: 'pipeline_enabled', el: document.getElementById('pipeline-section') },
-    { key: 'stats_enabled', el: document.getElementById('stats-section') },
     { key: 'home_chat_enabled', el: document.getElementById('chat-section') }
   ];
 

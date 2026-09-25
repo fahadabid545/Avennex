@@ -317,7 +317,7 @@ body::after {
 .quiet { color: var(--ink-3); }
 .text-muted { color: var(--ink-3); }
 
-/* ---------- the record header: every section is a numbered entry ---------- */
+/* ---------- the section header ---------- */
 
 .record {
   grid-column: 1 / -1;
@@ -329,31 +329,9 @@ body::after {
   border-bottom: 1px solid var(--rule);
   margin-bottom: 60px;
 }
-.record-no {
-  grid-column: 1 / 2;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-  padding-top: 0.42em;
-}
-.record-head { grid-column: 2 / 10; }
+.record-head { grid-column: 1 / -1; }
 .record-head .section-eyebrow { margin-bottom: 14px; }
 .record-head .section-subtext { margin-top: 18px; }
-.record-state {
-  grid-column: 10 / -1;
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 0.5em;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.record-state .dot,
 .dot {
   width: 5px;
   height: 5px;
@@ -440,8 +418,6 @@ body::after {
 
 @media (max-width: 1180px) {
   :root { --margin: 30px; --gutter: 20px; --sect-y: 104px; --sect-y-loose: 124px; }
-  .record-head { grid-column: 2 / -1; }
-  .record-state { display: none; }
 }
 
 @media (max-width: 720px) {
@@ -456,11 +432,5 @@ body::after {
   .rules > span:nth-child(n+5) { display: none; }
   .rules > span:nth-child(4) { border-right: 1px solid var(--hair); }
   .record { margin-bottom: 40px; }
-  .record-no {
-    grid-column: 1 / -1;
-    padding-top: 0;
-    margin-bottom: 12px;
-  }
-  .record-head { grid-column: 1 / -1; }
   .pull, .callout { max-width: none; }
 }

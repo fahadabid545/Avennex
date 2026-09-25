@@ -50,6 +50,11 @@
 
   var FOV = 3.2;
   var MAX_PULSES = 220;
+
+  // kept slow on purpose: a signal should be easy to follow across the field
+  var FIRE_EVERY = 2400;
+  var FIRE_EVERY_SMALL = 3200;
+  var PULSE_SPEED = 0.008;
   var sweep = -1;
 
   function isSmall() {
@@ -151,7 +156,7 @@
       var link = n.links[i];
       if (link.to === cameFrom) continue;
       if (Math.random() > 0.55) continue;
-      emit(node, link.to, link.edge, hops - 1, 0.02 + Math.random() * 0.02);
+      emit(node, link.to, link.edge, hops - 1, PULSE_SPEED + Math.random() * PULSE_SPEED);
       fanout++;
       if (fanout >= 3) break;
     }
@@ -202,7 +207,7 @@
 
     spin += dt * 0.00012;
     if (sweep >= 0) {
-      sweep += dt * 0.00055;
+      sweep += dt * 0.00026;
       if (sweep > 1.35) sweep = -1;
     }
     tiltX += (tiltTarget - tiltX) * 0.04;
@@ -222,7 +227,7 @@
         if (dx * dx + dy * dy < 13000) target = 1;
       }
       n.lift += (target - n.lift) * 0.09;
-      n.heat *= 0.94;
+      n.heat *= 0.972;
 
       if (sweep >= 0) {
         // depth maps to 0..1, the crest lights whatever it is passing through
@@ -234,7 +239,7 @@
     // edges, dimmed by depth and warmed by recent traffic
     for (i = 0; i < edges.length; i++) {
       var e = edges[i];
-      e.heat *= 0.93;
+      e.heat *= 0.968;
       var a = nodes[e.a];
       var b = nodes[e.b];
       var depth = (a.s + b.s) * 0.5;
@@ -249,10 +254,10 @@
       ctx.stroke();
     }
 
-    if (time - lastFire > (isSmall() ? 1500 : 900)) {
+    if (time - lastFire > (isSmall() ? FIRE_EVERY_SMALL : FIRE_EVERY)) {
       lastFire = time;
       fire();
-      if (sweep < 0 && Math.random() < 0.3) sweep = 0;
+      if (sweep < 0 && Math.random() < 0.2) sweep = 0;
     }
 
     // travelling signals

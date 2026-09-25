@@ -84,78 +84,6 @@
 }
 .hero-link:hover .hero-link-arrow { transform: translateX(7px); color: var(--mark-lit); }
 
-/* ---------- the run log: the run is instrumented, not decorative ---------- */
-
-.hero-aside {
-  grid-column: 10 / -1;
-  align-self: start;
-  position: relative;
-  z-index: 2;
-  padding-top: 0.5em;
-}
-.log-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--panel-rule);
-}
-.log-live {
-  width: 5px;
-  height: 5px;
-  background: var(--mark-lit);
-  flex: none;
-  animation: blip 1.8s steps(1) infinite;
-}
-@keyframes blip { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.18; } }
-@media (prefers-reduced-motion: reduce) { .log-live { animation: none; } }
-
-.log-rows { display: grid; gap: 9px; }
-.log-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-family: var(--mono);
-  font-size: 11px;
-}
-.log-row dt {
-  font-size: 9.5px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--panel-ink-2);
-}
-.log-row dd {
-  color: var(--panel-ink);
-  font-variant-numeric: tabular-nums;
-}
-.log-note {
-  margin-top: 18px;
-  padding-top: 13px;
-  border-top: 1px solid var(--panel-hair);
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--panel-ink-2);
-  max-width: 34ch;
-}
-
-.hero-index { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--panel-hair); }
-.hero-index a {
-  display: grid;
-  grid-template-columns: 26px 1fr;
-  gap: 10px;
-  padding-block: 7px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--panel-ink-2);
-  transition: color var(--t-fast) var(--ease);
-}
-.hero-index a:hover { color: var(--panel-ink); }
-.hero-index a span:first-child { color: rgba(236, 237, 234, 0.28); }
-
 /* ---------- the stage ---------- */
 
 /* the ground line is a structural rule of the page, not a canvas edge */
@@ -195,48 +123,26 @@
   color: rgba(236, 237, 234, 0.3);
 }
 
-/* ---------- subpage masthead ---------- */
-
-.page-hero {
-  position: relative;
-  padding-top: 168px;
-  padding-bottom: var(--sect-y);
-}
-.page-hero .section-inner > .section-eyebrow { margin-bottom: 22px; }
-.page-hero h1 { max-width: 20ch; }
-.page-hero-subtext { margin-top: 26px; }
 
 /* ---------- responsive ---------- */
 
 @media (max-width: 1180px) {
   .hero-content { grid-column: 1 / 10; }
-  .hero-aside { grid-column: 1 / 9; margin-top: 48px; }
   .hero-body { padding-top: 100px; }
-  .page-hero { padding-top: 138px; }
 }
 
 @media (max-width: 720px) {
-  /* the run has to stay inside the first screen, so the aside collapses to a
-     strip and the index moves to the footer */
   .hero { min-height: 100svh; }
   .hero-body { padding-top: 84px; padding-bottom: 26px; }
-  .hero-content, .hero-aside { grid-column: 1 / -1; }
+  .hero-content { grid-column: 1 / -1; }
   .hero-headline { font-size: clamp(1.85rem, 8.4vw, 2.5rem); }
   .hero-subtext { margin-top: 20px; font-size: 0.95rem; }
   .hero-links { margin-top: 26px; }
   .hero-link { padding-block: 12px; grid-template-columns: 24px 1fr auto; gap: 12px; }
   .hero-link-label { font-size: 0.92rem; }
-  .hero-aside { margin-top: 30px; padding-top: 0; }
-  .log-head { padding-bottom: 10px; margin-bottom: 12px; }
-  .log-rows { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 14px; }
-  .log-row { flex-direction: column; align-items: flex-start; gap: 3px; }
-  .log-row dd { font-size: 12px; }
-  .log-row:nth-child(4) { display: none; }
-  .log-note, .hero-index { display: none; }
   .hero-game { height: 152px; }
   .hero-game-meta { bottom: 10px; }
   .hero-game-meta span:first-child { display: none; }
-  .page-hero { padding-top: 116px; }
 }
 
 @media (max-width: 400px) {
@@ -245,6 +151,5 @@
   .hero-subtext { margin-top: 17px; }
   .hero-links { margin-top: 22px; }
   .hero-link { padding-block: 10px; }
-  .hero-aside { margin-top: 24px; }
   .hero-game { height: 138px; }
 }

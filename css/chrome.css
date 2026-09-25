@@ -27,13 +27,14 @@ body:not([data-header-transparent="true"]) .site-header .logo,
 body:not([data-header-transparent="true"]) .site-header .nav-links a.active { color: var(--ink); }
 body:not([data-header-transparent="true"]) .site-header .nav-links a { color: var(--ink-3); }
 body:not([data-header-transparent="true"]) .site-header .nav-links a:hover { color: var(--ink); }
+/* .nav-cta sets its colour with !important, so the paper bar has to as well */
 body:not([data-header-transparent="true"]) .site-header .nav-cta {
-  color: var(--ink);
+  color: var(--ink) !important;
   border-color: var(--rule);
 }
 body:not([data-header-transparent="true"]) .site-header .nav-cta:hover {
   background: var(--ink);
-  color: var(--paper);
+  color: var(--paper) !important;
   border-color: var(--ink);
 }
 body:not([data-header-transparent="true"]) .menu-toggle { color: var(--ink); }
@@ -103,7 +104,11 @@ body:not([data-header-transparent="true"]) .logo::after { background: var(--mark
   transition: color var(--t-fast) var(--ease);
 }
 .nav-links a:hover { color: var(--panel-ink); }
-.nav-links a.active { color: var(--panel-ink); }
+.nav-links a.active {
+  color: var(--panel-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
 
 /* the current page carries a mark, not an underline */
 .nav-links a.active::before {
@@ -261,13 +266,8 @@ body:not([data-header-transparent="true"]) .nav-links a.active::before { backgro
 
 .footer-bottom {
   border-top: 1px solid var(--panel-hair);
-}
-.footer-bottom p,
-.footer-bottom {
   max-width: var(--maxw);
   margin-inline: auto;
-}
-.footer-bottom {
   padding: 22px var(--margin);
   display: flex;
   align-items: center;
