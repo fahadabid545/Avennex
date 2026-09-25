@@ -86,46 +86,6 @@
 }
 .hero-link:hover .hero-link-arrow { transform: translateX(7px); color: var(--mark-lit); }
 
-/* ---------- the stage ---------- */
-
-/* the ground line is a structural rule of the page, not a canvas edge */
-.hero-horizon {
-  position: relative;
-  z-index: 1;
-  height: 1px;
-  background: var(--panel-rule);
-}
-
-.hero-game {
-  position: relative;
-  height: 196px;
-  flex: none;
-  pointer-events: none;
-}
-.hero-game canvas { width: 100%; height: 100%; }
-
-.hero-game-meta {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 14px;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  max-width: var(--maxw);
-  margin-inline: auto;
-  padding-inline: var(--margin);
-  pointer-events: none;
-}
-.hero-game-meta span {
-  font-family: var(--label);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-
 /* ---------- responsive ---------- */
 
 @media (max-width: 1180px) {
@@ -142,9 +102,6 @@
   .hero-links { margin-top: 26px; }
   .hero-link { padding-block: 12px; grid-template-columns: 24px 1fr auto; gap: 12px; }
   .hero-link-label { font-size: 0.92rem; }
-  .hero-game { height: 152px; }
-  .hero-game-meta { bottom: 10px; }
-  .hero-game-meta span:first-child { display: none; }
 }
 
 @media (max-width: 400px) {
@@ -153,5 +110,4 @@
   .hero-subtext { margin-top: 17px; }
   .hero-links { margin-top: 22px; }
   .hero-link { padding-block: 10px; }
-  .hero-game { height: 138px; }
 }

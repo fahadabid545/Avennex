@@ -1770,15 +1770,11 @@
     chatbot_visible: 'Assistant visible on the site',
     default_blog_status: 'Default blog status',
     default_job_expiry_days: 'Default job expiry',
-    team_size: 'Team size',
     product_chat_enabled: 'Product discussion',
     chat_show_details: 'Show author details',
     emails_enabled: 'Email notifications',
     animations_enabled: 'Animations',
-    game_enabled: 'Hero run',
     ai_brain_enabled: 'Signal field',
-    pipeline_enabled: 'Workflow panel',
-    stats_enabled: 'Studio figures',
     home_chat_enabled: 'Public board',
     faq_enabled: 'FAQs',
   });
@@ -5587,8 +5583,8 @@
     const keys = [
       'product_chat_enabled', 'chat_show_details', 'emails_enabled',
       'animations_enabled',
-      'game_enabled', 'ai_brain_enabled', 'pipeline_enabled', 'stats_enabled', 'home_chat_enabled', 'faq_enabled',
-      'default_blog_status', 'default_job_expiry_days', 'team_size',
+      'ai_brain_enabled', 'home_chat_enabled', 'faq_enabled',
+      'default_blog_status', 'default_job_expiry_days',
     ];
 
     const vals = {};
@@ -5633,10 +5629,7 @@
       <div class="settings-group">
         <h3 class="settings-group-title">Homepage sections</h3>
         <p class="settings-group-note">Turn a section off and it disappears from the homepage.</p>
-        ${toggleRow('s-game', 'Hero runner game', 'game_enabled', 'true')}
         ${toggleRow('s-ai-brain', 'AI network band', 'ai_brain_enabled', 'true', 'The section that darkens as you scroll')}
-        ${toggleRow('s-pipeline', 'Workflow dashboard band', 'pipeline_enabled', 'true')}
-        ${toggleRow('s-stats', 'Facts strip', 'stats_enabled', 'true', 'Products, team size, founded, launchpad')}
         ${toggleRow('s-home-chat', 'Public message board', 'home_chat_enabled', 'true')}
         ${toggleRow('s-faq', 'FAQ', 'faq_enabled', 'true')}
       </div>
@@ -5657,12 +5650,6 @@
             <label for="s-job-expiry">Default job expiry (days)</label>
             <input type="number" id="s-job-expiry" min="1" max="365" value="${vals.default_job_expiry_days || '30'}">
             <span class="form-msg settings-msg" data-msg-for="s-job-expiry"></span>
-          </div>
-          <div class="field">
-            <label for="s-team-size">Team size on the homepage</label>
-            <input type="number" id="s-team-size" min="1" max="999" value="${vals.team_size || '7'}">
-            <span class="field-hint">Shown under "People on the team"</span>
-            <span class="form-msg settings-msg" data-msg-for="s-team-size"></span>
           </div>
         </div>
         <div class="form-actions">
@@ -5857,12 +5844,10 @@
       btn.disabled = true;
       const blogStatus = document.getElementById('s-blog-status').value;
       const jobExpiry = document.getElementById('s-job-expiry').value;
-      const teamSize = document.getElementById('s-team-size').value;
 
       const { failed } = await AdminSettings.saveMany({
         default_blog_status: blogStatus,
         default_job_expiry_days: jobExpiry,
-        team_size: teamSize,
       });
       if (!failed.length) {
         showMsg('s-blog-status', 'Saved', true);

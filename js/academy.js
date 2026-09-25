@@ -22,7 +22,7 @@
               '<i data-lucide="play-circle" width="28" height="28"></i>' +
             '</div>' +
             '<h3>Nothing published yet</h3>' +
-            '<p>Walkthroughs of the code, the product calls we got wrong, and what we would do differently. It lands here first.</p>' +
+            '<p>Code walkthroughs and lessons from real projects will land here first.</p>' +
             '<p><a href="blog.html">Read the journal</a> in the meantime.</p>' +
           '</div>';
         if (typeof lucide !== 'undefined') lucide.createIcons();

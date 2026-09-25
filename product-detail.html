@@ -22,12 +22,12 @@
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="stylesheet" href="css/base.css?v=202609252200">
-  <link rel="stylesheet" href="css/chrome.css?v=202609252200">
-  <link rel="stylesheet" href="css/ui.css?v=202609252200">
-  <link rel="stylesheet" href="css/dashboard.css?v=202609252200">
-  <link rel="stylesheet" href="css/pages.css?v=202609252200">
-  <link rel="stylesheet" href="css/chatbot.css?v=202609252200">
+  <link rel="stylesheet" href="css/base.css?v=202609260100">
+  <link rel="stylesheet" href="css/chrome.css?v=202609260100">
+  <link rel="stylesheet" href="css/ui.css?v=202609260100">
+  <link rel="stylesheet" href="css/dashboard.css?v=202609260100">
+  <link rel="stylesheet" href="css/pages.css?v=202609260100">
+  <link rel="stylesheet" href="css/chatbot.css?v=202609260100">
 </head>
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
@@ -36,13 +36,12 @@
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="index.html">Index</a>
-        <a href="products.html" class="active">Products</a>
-        <a href="launchpad.html">Launchpad</a>
-        <a href="blog.html">Journal</a>
-        <a href="academy.html">Academy</a>
+        <a href="services.html">Services</a>
+        <a href="products.html" class="active" aria-current="page" data-feed="products" hidden>Products</a>
+        <a href="launchpad.html" data-feed="launchpad" hidden>Launchpad</a>
+        <a href="blog.html" data-feed="blogs" hidden>Journal</a>
+        <a href="about.html">About</a>
         <a href="careers.html">Careers</a>
-        <a href="about.html">Studio</a>
         <a href="contact.html" class="nav-cta">Let's talk</a>
       </nav>
       <button class="menu-toggle" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
@@ -55,14 +54,14 @@
     <button class="mobile-menu-close" aria-label="Close menu">
       <i data-icon="x" width="24" height="24"></i>
     </button>
-    <a href="index.html" data-n="01">Index</a>
-    <a href="products.html" data-n="02" class="active">Products</a>
-    <a href="launchpad.html" data-n="03">Launchpad</a>
-    <a href="blog.html" data-n="04">Journal</a>
-    <a href="academy.html" data-n="05">Academy</a>
-    <a href="careers.html" data-n="06">Careers</a>
-    <a href="about.html" data-n="07">Studio</a>
-    <a href="contact.html" data-n="08" class="nav-cta">Let's talk</a>
+    <a href="index.html">Home</a>
+    <a href="services.html">Services</a>
+    <a href="products.html" class="active" aria-current="page" data-feed="products" hidden>Products</a>
+    <a href="launchpad.html" data-feed="launchpad" hidden>Launchpad</a>
+    <a href="blog.html" data-feed="blogs" hidden>Journal</a>
+    <a href="about.html">About</a>
+    <a href="careers.html">Careers</a>
+    <a href="contact.html" class="nav-cta">Let's talk</a>
   </div>
   <main id="main">
     <section class="section detail-section">
@@ -122,22 +121,23 @@
       <div class="footer-grid">
         <div class="footer-col">
           <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-          <p class="footer-brand-text">A product studio in Lahore. We find the bottleneck, then build the thing that removes it.</p>
+          <p class="footer-brand-text">Crafted around your needs. Custom software, AI and automation since 2022.</p>
           <div class="footer-social">
-            <a href="https://www.linkedin.com/company/avennex/posts/?feedView=all" aria-label="Avennex on LinkedIn" rel="noopener" target="_blank"><i data-icon="linkedin" width="17" height="17"></i></a>
+            <a href="https://www.linkedin.com/company/avennex/" aria-label="Avennex on LinkedIn" rel="noopener" target="_blank"><i data-icon="linkedin" width="17" height="17"></i></a>
           </div>
         </div>
         <div class="footer-col">
-          <h4>Index</h4>
-          <a href="products.html">Products</a>
-          <a href="launchpad.html">Launchpad</a>
-          <a href="blog.html">Journal</a>
-          <a href="academy.html">Academy</a>
+          <h4>Work</h4>
+          <a href="services.html">Services</a>
+          <a href="products.html" data-feed="products" hidden>Products</a>
+          <a href="launchpad.html" data-feed="launchpad" hidden>Launchpad</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="about.html">Studio</a>
+          <a href="about.html">About</a>
           <a href="careers.html">Careers</a>
+          <a href="blog.html" data-feed="blogs" hidden>Journal</a>
+          <a href="academy.html" data-feed="academy" hidden>Academy</a>
           <a href="contact.html">Contact</a>
         </div>
         <div class="footer-col">
@@ -148,21 +148,22 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 Avennex</p>
-      <p>Lahore, Pakistan</p>
+      <p>Waterloo, Canada</p>
     </div>
   </footer>
 
-  <script src="js/vendor/chart.umd.js?v=202609252200" defer></script>
-  <script src="js/vendor/pdf.min.js?v=202609252200" defer></script>
-  <script src="js/icons.js?v=202609252200" defer></script>
-  <script src="js/api.js?v=202609252200" defer></script>
-  <script src="js/motion.js?v=202609252200" defer></script>
-  <script src="js/figures.js?v=202609252200" defer></script>
-  <script src="js/dashboard.js?v=202609252200" defer></script>
-  <script src="js/doc-viewer.js?v=202609252200" defer></script>
-  <script src="js/product-detail.js?v=202609252200" defer></script>
-  <script src="js/schema.js?v=202609252200" defer></script>
-  <script src="js/chatbot.js?v=202609252200" defer></script>
+  <script src="js/vendor/chart.umd.js?v=202609260100" defer></script>
+  <script src="js/vendor/pdf.min.js?v=202609260100" defer></script>
+  <script src="js/icons.js?v=202609260100" defer></script>
+  <script src="js/api.js?v=202609260100" defer></script>
+  <script src="js/nav-feed.js?v=202609260100" defer></script>
+  <script src="js/motion.js?v=202609260100" defer></script>
+  <script src="js/figures.js?v=202609260100" defer></script>
+  <script src="js/dashboard.js?v=202609260100" defer></script>
+  <script src="js/doc-viewer.js?v=202609260100" defer></script>
+  <script src="js/product-detail.js?v=202609260100" defer></script>
+  <script src="js/schema.js?v=202609260100" defer></script>
+  <script src="js/chatbot.js?v=202609260100" defer></script>
 
 </body>
 </html>

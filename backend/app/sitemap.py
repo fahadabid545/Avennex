@@ -13,7 +13,8 @@ router = APIRouter(tags=["sitemap"])
 
 STATIC_PAGES = [
     {"loc": "https://avennex.com/", "priority": "1.0", "changefreq": "weekly"},
-    {"loc": "https://avennex.com/products.html", "priority": "0.9", "changefreq": "weekly"},
+    {"loc": "https://avennex.com/services.html", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "https://avennex.com/products.html", "priority": "0.8", "changefreq": "weekly"},
     {"loc": "https://avennex.com/blog.html", "priority": "0.8", "changefreq": "daily"},
     {"loc": "https://avennex.com/careers.html", "priority": "0.8", "changefreq": "weekly"},
     {"loc": "https://avennex.com/launchpad.html", "priority": "0.7", "changefreq": "weekly"},
@@ -24,7 +25,7 @@ STATIC_PAGES = [
 ]
 
 
-STATIC_LASTMOD = "2026-09-04"
+STATIC_LASTMOD = "2026-09-26"
 
 
 @router.get("/api/sitemap.xml")

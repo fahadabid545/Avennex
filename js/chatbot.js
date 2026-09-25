@@ -14,11 +14,11 @@
 
   var SUGGESTIONS = [
     'What does Avennex build?',
+    'Can you automate our workflow?',
+    'How does a project start?',
+    'Do you work with startups?',
     'Are you hiring?',
-    'What is on the launchpad?',
-    'Can I help build something?',
-    'How do I get in touch?',
-    'Who is on the team?'
+    'How do I get in touch?'
   ];
 
   function renderSuggestions() {

@@ -8,7 +8,7 @@
     if (!jobs || jobs.length === 0) {
       API.showEmpty(container,
         '<p>Nothing open at the moment.</p>' +
-        '<p>Roles show up here when a real gap exists on a real project. <a href="contact.html">Send a note</a> if you want in anyway.</p>'
+        '<p>Roles appear here when a project needs someone. <a href="contact.html">Send a note</a> if you\'d like to be considered anyway.</p>'
       );
       return;
     }

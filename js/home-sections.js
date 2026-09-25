@@ -1,132 +1,38 @@
+/* Our own work: whatever products and launches are published in the admin.
+   The section stays hidden until there is at least one of either. */
 (function () {
-  var items = document.querySelectorAll('.story-item');
-  var copies = document.querySelectorAll('.story-copy');
+  var section = document.getElementById('work-section');
+  var list = document.getElementById('work-list');
+  if (!section || !list || typeof NavFeed === 'undefined') return;
 
-  if (!items.length || !copies.length) return;
+  var STATUS = { 'in-development': 'In development', launched: 'Live', paused: 'Paused' };
+  var STAGE = { concept: 'Concept', planning: 'Planning', 'open-for-feedback': 'Open for comments', building: 'Building' };
 
-  // whichever entry sits closest to the middle of the screen leads. a plain
-  // threshold let two short entries qualify at once, and the lower one won
-  function lead() {
-    var mid = window.innerHeight / 2;
-    var best = null;
-    var bestDist = Infinity;
-    for (var i = 0; i < items.length; i++) {
-      var r = items[i].getBoundingClientRect();
-      var d = Math.abs(r.top + r.height / 2 - mid);
-      if (d < bestDist) { bestDist = d; best = items[i]; }
-    }
-    if (!best) return;
-    var key = best.getAttribute('data-story-item');
-    for (var j = 0; j < items.length; j++) {
-      items[j].classList.toggle('is-active', items[j] === best);
-    }
-    for (var k = 0; k < copies.length; k++) {
-      copies[k].classList.toggle('is-active', copies[k].getAttribute('data-story') === key);
-    }
+  function card(href, kind, title, line, state, progress) {
+    var html = '<a class="work-card" href="' + href + '">';
+    html += '<span class="work-kind">' + API.escHtml(kind) + '</span>';
+    html += '<h3 class="work-title">' + API.escHtml(title) + '</h3>';
+    if (line) html += '<p class="work-line">' + API.escHtml(line) + '</p>';
+    html += '<span class="work-state">' + API.escHtml(state);
+    if (typeof progress === 'number') html += ' <span class="work-pct">' + progress + '%</span>';
+    html += '</span>';
+    if (typeof progress === 'number') html += '<span class="work-bar"><span style="width:' + Math.max(0, Math.min(100, progress)) + '%"></span></span>';
+    return html + '</a>';
   }
 
-  var live = false;
-  var ticking = false;
-
-  function onScroll() {
-    if (!live || ticking) return;
-    ticking = true;
-    requestAnimationFrame(function () { ticking = false; lead(); });
-  }
-
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
-
-  // the run only costs anything while the section is on screen
-  if ('IntersectionObserver' in window) {
-    var section = items[0].closest('.story-scroll') || items[0].parentElement;
-    new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        live = e.isIntersecting;
-        if (live) lead();
-      });
-    }, { rootMargin: '10% 0px 10% 0px' }).observe(section);
-  } else {
-    live = true;
-    lead();
-  }
-})();
-
-(function () {
-  var tabs = document.querySelectorAll('.flow-tab');
-  var valueEl = document.getElementById('flow-value');
-  var noteEl = document.getElementById('flow-note');
-  var barsEl = document.getElementById('flow-bars');
-  var stepsEl = document.getElementById('flow-steps');
-  if (!tabs.length || !valueEl || !barsEl || !stepsEl) return;
-
-  var data = {
-    screening: {
-      value: '6 hrs',
-      note: 'down from two full days per role',
-      bars: [
-        { label: 'By hand', pct: 100, hours: '16 hrs' },
-        { label: 'Automated', pct: 38, hours: '6 hrs' }
-      ],
-      steps: ['Parse every resume', 'Score against the real requirements', 'Rank and explain each call', 'Export the shortlist']
-    },
-    storefront: {
-      value: '1 day',
-      note: 'down from three weeks of setup',
-      bars: [
-        { label: 'By hand', pct: 100, hours: '15 days' },
-        { label: 'Automated', pct: 22, hours: '1 day' }
-      ],
-      steps: ['Import the product list', 'Wire up local payments', 'Generate the storefront', 'Go live on a custom domain']
-    },
-    orders: {
-      value: '2 min',
-      note: 'down from an hour of manual sorting',
-      bars: [
-        { label: 'By hand', pct: 100, hours: '60 min' },
-        { label: 'Automated', pct: 14, hours: '2 min' }
-      ],
-      steps: ['Read the incoming order', 'Check stock across locations', 'Pick the cheapest route', 'Notify the buyer']
-    }
-  };
-
-  function paint(key) {
-    var d = data[key];
-    if (!d) return;
-
-    valueEl.textContent = d.value;
-    if (noteEl) noteEl.textContent = d.note;
-
-    barsEl.innerHTML = d.bars.map(function (b) {
-      return '<div class="flow-bar-row' + (b.pct < 100 ? ' is-auto' : '') + '">' +
-        '<span class="flow-bar-label">' + b.label + '</span>' +
-        '<span class="flow-bar-track"><span class="flow-bar-fill" style="width:0%"></span></span>' +
-        '<span class="flow-bar-value">' + b.hours + '</span>' +
-        '</div>';
-    }).join('');
-
-    var fills = barsEl.querySelectorAll('.flow-bar-fill');
-    requestAnimationFrame(function () {
-      d.bars.forEach(function (b, i) {
-        if (fills[i]) fills[i].style.width = b.pct + '%';
-      });
+  Promise.all([NavFeed.list('products'), NavFeed.list('launchpad')]).then(function (res) {
+    var html = '';
+    res[0].forEach(function (p) {
+      html += card('product-detail.html?slug=' + encodeURIComponent(p.slug), 'Product', p.name, p.tagline,
+        STATUS[p.status] || 'In development', p.status === 'launched' ? undefined : p.progress);
     });
-
-    stepsEl.innerHTML = d.steps.map(function (s) {
-      return '<li>' + s + '</li>';
-    }).join('');
-  }
-
-  tabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      tabs.forEach(function (t) {
-        var on = t === tab;
-        t.classList.toggle('is-active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      paint(tab.getAttribute('data-flow'));
+    res[1].forEach(function (e) {
+      html += card('launchpad-detail.html?slug=' + encodeURIComponent(e.slug), 'Launching soon', e.title, e.tagline,
+        STAGE[e.stage] || 'Coming soon');
     });
+    if (!html) return;
+    list.innerHTML = html;
+    section.hidden = false;
+    if (window.AvxMotion) AvxMotion.adopt(section);
   });
-
-  paint('screening');
 })();

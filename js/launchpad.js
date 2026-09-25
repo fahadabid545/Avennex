@@ -7,8 +7,8 @@
   API.get('/launchpad').then(function (entries) {
     if (!entries || entries.length === 0) {
       API.showEmpty(container,
-        '<p>The launchpad is quiet right now.</p>' +
-        '<p>Product ideas land here before any code gets written. <a href="contact.html">Pitch one</a> if you have something.</p>'
+        '<p>Nothing launching right now.</p>' +
+        '<p>Upcoming launches appear here, open for comments before they ship.</p>'
       );
       return;
     }

@@ -2,6 +2,17 @@
   var form = document.getElementById('contact-form');
   if (!form) return;
 
+  // arriving from a service on the services page starts the message for you
+  var TOPICS = {
+    'custom-software': 'custom software', 'ai-integration': 'AI integration',
+    'workflow-automation': 'workflow automation', 'web-and-mobile': 'a web or mobile app',
+    'cloud-and-data': 'cloud and data work', 'consulting-and-analytics': 'consulting and analytics',
+  };
+  var topic = TOPICS[new URLSearchParams(location.search).get('topic')];
+  if (topic && form.message && !form.message.value) {
+    form.message.value = "I'd like to talk about " + topic + '. ';
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var btn = form.querySelector('button[type="submit"]');

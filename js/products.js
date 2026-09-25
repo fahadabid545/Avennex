@@ -7,8 +7,8 @@
   API.get('/products').then(function (products) {
     if (!products || products.length === 0) {
       API.showEmpty(container,
-        '<p>Products page is empty right now. We\'re heads-down building.</p>' +
-        '<p>Check the <a href="launchpad.html">Launchpad</a> to see what\'s in the pipeline.</p>'
+        '<p>No products to show yet.</p>' +
+        '<p>See <a href="services.html">what we build for clients</a> in the meantime.</p>'
       );
       return;
     }

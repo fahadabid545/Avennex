@@ -153,14 +153,6 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   align-items: baseline;
   gap: 14px;
 }
-.mobile-menu a::before {
-  content: attr(data-n);
-  font-family: var(--label);
-  font-size: 11.5px;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  color: var(--panel-ink-3);
-}
 .mobile-menu a.active { color: var(--mark-lit); }
 .mobile-menu a.nav-cta {
   border: 0 !important;

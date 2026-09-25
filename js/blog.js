@@ -8,7 +8,7 @@
     if (!posts || posts.length === 0) {
       API.showEmpty(container,
         '<p>No posts yet. We write when there\'s something worth reading.</p>' +
-        '<p>Product updates and technical decisions will show up here.</p>'
+        '<p>Technical decisions and lessons from real projects will show up here.</p>'
       );
       return;
     }

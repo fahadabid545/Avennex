@@ -6,12 +6,16 @@
     name: 'Avennex',
     url: 'https://avennex.com',
     logo: 'https://avennex.com/img/og-image.png',
-    description: 'AI-powered product studio from Lahore building its own software.',
+    description: 'Custom software, AI integration and workflow automation for startups and established businesses.',
+    slogan: 'Crafted around your needs.',
+    foundingDate: '2022',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Lahore',
-      addressCountry: 'PK'
+      addressLocality: 'Waterloo',
+      addressRegion: 'ON',
+      addressCountry: 'CA'
     },
+    sameAs: ['https://www.linkedin.com/company/avennex/'],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@avennex.com',
@@ -97,7 +101,7 @@
       '@type': 'CollectionPage',
       name: 'Avennex Blog',
       url: 'https://avennex.com/blog.html',
-      description: 'Product decisions, technical tradeoffs, and the messy reality of building AI software from Lahore.',
+      description: 'Notes from the Avennex team on custom software, AI integration and automation.',
       publisher: org
     });
   }
@@ -165,8 +169,8 @@
                 '@type': 'Place',
                 address: {
                   '@type': 'PostalAddress',
-                  addressLocality: loc ? loc.textContent.trim() : 'Lahore',
-                  addressCountry: 'PK'
+                  addressLocality: loc ? loc.textContent.trim() : 'Waterloo',
+                  addressCountry: 'CA'
                 }
               },
               employmentType: type ? type.textContent.trim().toUpperCase().replace(/\s+/g, '_') : 'FULL_TIME',
@@ -223,12 +227,35 @@
     inject(aboutOrg);
   }
 
+  if (page === 'services.html') {
+    var services = [];
+    document.querySelectorAll('.service-block').forEach(function (block) {
+      var name = block.querySelector('.service-block-title');
+      var lead = block.querySelector('.service-block-lead');
+      if (!name) return;
+      services.push({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: name.textContent.trim(),
+          description: lead ? lead.textContent.trim() : '',
+          url: 'https://avennex.com/services.html#' + block.id,
+          provider: { '@type': 'Organization', name: 'Avennex', url: 'https://avennex.com' }
+        }
+      });
+    });
+    var withCatalog = Object.assign({}, org, {
+      hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Avennex services', itemListElement: services }
+    });
+    inject(withCatalog);
+  }
+
   if (page === 'contact.html') {
     inject({
       '@type': 'ContactPage',
       name: 'Contact Avennex',
       url: 'https://avennex.com/contact.html',
-      description: 'Reach the Avennex team in Lahore.',
+      description: 'Talk to Avennex about custom software, AI integration or workflow automation.',
       mainEntity: org
     });
   }
