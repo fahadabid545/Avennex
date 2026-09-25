@@ -790,8 +790,7 @@
 /* the article column is left aligned on the page grid at 820px (theme.css),
    so data blocks grow to the right only and keep that left edge */
 @media (min-width: 1024px) {
-  .product-dashboard-mount.dash-host,
-  .product-wide-band {
+  .product-dashboard-mount.dash-host {
     width: min(1152px, calc(100vw - 64px));
     max-width: none;
     margin-right: calc(820px - min(1152px, calc(100vw - 64px)));
