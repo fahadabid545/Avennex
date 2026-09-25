@@ -1136,3 +1136,85 @@
   color: var(--ink);
   max-width: 24ch;
 }
+
+/* ---------- how a project runs: steps beside a rising spiral ---------- */
+
+.spiral .about-text { align-self: center; }
+.spiral .about-visual { align-self: center; }
+.spiral-lede { max-width: 44ch; }
+
+.spiral-steps { list-style: none; margin: 26px 0 0; padding: 0; border-top: 1px solid var(--rule); }
+.spiral-steps li { border-bottom: 1px solid var(--rule); }
+.spiral-steps button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px 112px 1fr;
+  align-items: baseline;
+  width: 100%;
+  padding: 15px 0 15px 4px;
+  text-align: left;
+  color: var(--ink-2);
+  transition: color 300ms var(--ease), padding-left 400ms var(--ease-out);
+}
+.spiral-steps button:hover { color: var(--ink); }
+.spiral-num { font-family: var(--label); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3); transition: color 300ms var(--ease); }
+.spiral-name { font-family: var(--display); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.015em; color: var(--ink); }
+.spiral-line { font-size: 0.92rem; color: var(--ink-3); transition: color 300ms var(--ease); }
+.spiral-bar {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--mark), var(--mark-lit));
+  box-shadow: 0 0 10px rgba(246, 184, 75, 0.6);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left;
+  opacity: 0;
+}
+.spiral-steps [aria-current="step"] { padding-left: 12px; }
+.spiral-steps [aria-current="step"] .spiral-num { color: var(--mark-lit); }
+.spiral-steps [aria-current="step"] .spiral-line { color: var(--ink-2); }
+.spiral-steps [aria-current="step"] .spiral-bar { opacity: 1; }
+.spiral-steps [aria-current="step"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 2px;
+  background: var(--mark-lit);
+  box-shadow: 0 0 10px rgba(246, 184, 75, 0.7);
+}
+.spiral .text-link { margin-top: 28px; }
+
+.spiral-stage {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin-inline: auto;
+  aspect-ratio: 1 / 0.9;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.spiral-stage:active { cursor: grabbing; }
+.spiral-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.spiral-glow { filter: blur(14px) saturate(1.3); opacity: 0.8; pointer-events: none; }
+
+@media (max-width: 980px) {
+  .spiral .about-visual { order: -1; margin-top: 0; margin-bottom: 20px; }
+  .spiral-stage { max-width: 420px; }
+}
+
+@media (max-width: 720px) {
+  .spiral-steps button { grid-template-columns: 30px 1fr; row-gap: 2px; padding-block: 12px; }
+  .spiral-line { grid-column: 2; font-size: 0.88rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiral-steps button { transition: none; }
+}
