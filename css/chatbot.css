@@ -36,10 +36,10 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .chatbot-header-title::before {
@@ -81,9 +81,9 @@
   border: 1px solid var(--hair);
 }
 .chatbot-msg-sources {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
   margin-top: 8px;
@@ -128,8 +128,8 @@
   padding: 8px 11px;
   border: 1px solid var(--rule);
   border-top: 1px solid var(--rule);
-  font-family: var(--mono);
-  font-size: 9.5px;
+  font-family: var(--label);
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }

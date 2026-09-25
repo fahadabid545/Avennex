@@ -4,6 +4,20 @@
   // a categorical set drawn from the page's own palette: low chroma, all
   // legible on the ledger-grey paper, all distinguishable from one another
   var PALETTE = ['#8C6E1C', '#2F6B46', '#3E5C7E', '#8C3A2C', '#6B5B7B', '#5C6B2E'];
+  var themed = null;
+
+  // a page can hand in its own series through --dash-series, so the public
+  // site and the admin each keep colours that read on their own surface
+  function palette() {
+    if (themed) return themed;
+    var raw = '';
+    try {
+      raw = getComputedStyle(document.documentElement).getPropertyValue('--dash-series');
+    } catch (e) { /* no styles to read */ }
+    var list = raw.split(',').map(function (c) { return c.trim(); }).filter(function (c) { return /^#[0-9a-f]{6}$/i.test(c); });
+    themed = list.length ? list : PALETTE;
+    return themed;
+  }
   var reduceMotion = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var RANGES = [
@@ -96,7 +110,7 @@
       unit: raw.unit || '',
       value: raw.value,
       points: normalizePoints(raw.points),
-      color: PALETTE[i % PALETTE.length],
+      color: palette()[i % palette().length],
     };
   }
 
@@ -545,7 +559,7 @@
 
   function lineConfig(spec, theme) {
     var points = spec.points;
-    var color = spec.color || PALETTE[0];
+    var color = spec.color || palette()[0];
     var bar = spec.type === 'bar';
     return {
       type: bar ? 'bar' : 'line',
@@ -618,7 +632,7 @@
         labels: spec.points.map(function (p) { return p.x; }),
         datasets: [{
           data: spec.points.map(function (p) { return p.y; }),
-          backgroundColor: spec.points.map(function (p, i) { return PALETTE[i % PALETTE.length]; }),
+          backgroundColor: spec.points.map(function (p, i) { return palette()[i % palette().length]; }),
           borderColor: theme.surface,
           borderWidth: 2,
           hoverOffset: 8,
@@ -703,13 +717,13 @@
 
     function specFor(id) {
       if (id === 'velocity') {
-        return { points: inRange(model.velocity, state.rangeDays), color: PALETTE[0], unit: '%', max: 100, label: 'Progress' };
+        return { points: inRange(model.velocity, state.rangeDays), color: palette()[0], unit: '%', max: 100, label: 'Progress' };
       }
       if (id === 'primary' && model.primary) {
-        return { points: inRange(model.primary.points, state.rangeDays), color: PALETTE[1], unit: model.primary.unit, label: model.primary.name };
+        return { points: inRange(model.primary.points, state.rangeDays), color: palette()[1], unit: model.primary.unit, label: model.primary.name };
       }
       if (id === 'growth' && model.primary) {
-        return { points: cumulative(inRange(model.primary.points, state.rangeDays)), color: PALETTE[2], unit: model.primary.unit, label: 'Running total' };
+        return { points: cumulative(inRange(model.primary.points, state.rangeDays)), color: palette()[2], unit: model.primary.unit, label: 'Running total' };
       }
       if (id === 'activity') {
         return {
@@ -717,7 +731,7 @@
           points: inRange(activity.map(function (a) {
             return { x: a.date, y: num(a.count), t: parseAxisDate(a.date) };
           }), state.rangeDays),
-          color: PALETTE[4],
+          color: palette()[4],
           unit: model.kind === 'launchpad' ? 'comments' : 'messages',
           label: 'Messages',
         };
@@ -813,7 +827,7 @@
 
     function paintMomentum() {
       var spark = host.querySelector('[data-momentum-spark]');
-      if (spark && model.momentum) drawSparkline(spark, model.momentum.spark, PALETTE[0]);
+      if (spark && model.momentum) drawSparkline(spark, model.momentum.spark, palette()[0]);
     }
 
     function mountVisuals() {

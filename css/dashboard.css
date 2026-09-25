@@ -5,7 +5,7 @@
   --dash-ink: var(--ink, #17181A);
   --dash-ink-2: var(--ink-2, #494D51);
   --dash-axis: var(--ink-3, #82868B);
-  --dash-grid: rgba(23, 24, 26, 0.09);
+  --dash-grid: var(--hair, rgba(23, 24, 26, 0.09));
   --dash-accent: var(--mark, #8C6E1C);
   --dash-ok: var(--ok, #2F6B46);
   --dash-warn: var(--warn, #8A5A14);

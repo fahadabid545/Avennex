@@ -1,7 +1,7 @@
 /* ==========================================================
    Avennex — hero
-   A panel that states the studio, instruments its own run, and
-   hands the page a horizon to start from.
+   States the studio over the haze and hands the page a horizon
+   to start from.
    ========================================================== */
 
 .hero {
@@ -10,7 +10,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--panel);
+  background:
+    radial-gradient(48vw 40vw at 82% 34%, rgba(124, 58, 237, 0.3), transparent 66%),
+    radial-gradient(34vw 26vw at 62% 70%, rgba(246, 184, 75, 0.12), transparent 64%);
   color: var(--panel-ink);
   --rule: var(--panel-rule);
   --hair: var(--panel-hair);
@@ -50,7 +52,7 @@
 .hero-headline { color: var(--panel-ink); }
 .hero-headline-sub {
   display: block;
-  color: #A3A9B0;
+  color: var(--royal-lit);
   font-weight: 400;
 }
 .hero-subtext { margin-top: 28px; max-width: 44ch; }
@@ -67,8 +69,8 @@
 }
 .hero-link:hover { padding-left: 10px; }
 .hero-link-index {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   letter-spacing: 0.1em;
   color: var(--panel-ink-2);
 }
@@ -116,11 +118,11 @@
   pointer-events: none;
 }
 .hero-game-meta span {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.15em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(236, 237, 234, 0.3);
+  color: var(--ink-3);
 }
 
 

@@ -11,33 +11,14 @@
   left: 0;
   right: 0;
   z-index: 200;
-  border-bottom: 1px solid var(--panel-rule);
-  background: rgba(16, 18, 22, 0.76);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--hair);
+  background: rgba(13, 11, 24, 0.66);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
   transition: background var(--t-base) var(--ease), border-color var(--t-base) var(--ease);
 }
 
-/* on paper pages the bar is ink-on-paper until the page scrolls under it */
-body:not([data-header-transparent="true"]) .site-header {
-  background: rgba(233, 233, 227, 0.82);
-  border-bottom-color: var(--rule);
-}
-body:not([data-header-transparent="true"]) .site-header .logo,
-body:not([data-header-transparent="true"]) .site-header .nav-links a.active { color: var(--ink); }
-body:not([data-header-transparent="true"]) .site-header .nav-links a { color: var(--ink-3); }
-body:not([data-header-transparent="true"]) .site-header .nav-links a:hover { color: var(--ink); }
-/* .nav-cta sets its colour with !important, so the paper bar has to as well */
-body:not([data-header-transparent="true"]) .site-header .nav-cta {
-  color: var(--ink) !important;
-  border-color: var(--rule);
-}
-body:not([data-header-transparent="true"]) .site-header .nav-cta:hover {
-  background: var(--ink);
-  color: var(--paper) !important;
-  border-color: var(--ink);
-}
-body:not([data-header-transparent="true"]) .menu-toggle { color: var(--ink); }
+
 
 .header-inner {
   max-width: var(--maxw);
@@ -84,7 +65,6 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   background: var(--mark-lit);
   display: block;
 }
-body:not([data-header-transparent="true"]) .logo::after { background: var(--mark); }
 
 .nav-links {
   display: flex;
@@ -94,9 +74,10 @@ body:not([data-header-transparent="true"]) .logo::after { background: var(--mark
 }
 .nav-links a {
   position: relative;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--panel-ink-2);
@@ -106,8 +87,8 @@ body:not([data-header-transparent="true"]) .logo::after { background: var(--mark
 .nav-links a:hover { color: var(--panel-ink); }
 .nav-links a.active {
   color: var(--panel-ink);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 /* the current page carries a mark, not an underline */
@@ -121,19 +102,18 @@ body:not([data-header-transparent="true"]) .logo::after { background: var(--mark
   background: var(--mark-lit);
   transform: translateY(-50%);
 }
-body:not([data-header-transparent="true"]) .nav-links a.active::before { background: var(--mark); }
 
 .nav-cta {
-  color: var(--panel-ink) !important;
-  border: 1px solid var(--panel-rule);
+  color: var(--mark) !important;
+  border: 1px solid rgba(246, 184, 75, 0.55);
   padding: 7px 13px !important;
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 .nav-cta::before { display: none !important; }
 .nav-cta:hover {
-  background: var(--panel-ink);
-  color: var(--panel) !important;
-  border-color: var(--panel-ink);
+  background: var(--mark);
+  color: var(--mark-ink) !important;
+  border-color: var(--mark);
 }
 
 .menu-toggle {
@@ -175,8 +155,8 @@ body:not([data-header-transparent="true"]) .nav-links a.active::before { backgro
 }
 .mobile-menu a::before {
   content: attr(data-n);
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   font-weight: 400;
   letter-spacing: 0.1em;
   color: var(--panel-ink-3);
@@ -201,7 +181,8 @@ body:not([data-header-transparent="true"]) .nav-links a.active::before { backgro
 /* ---------- footer ---------- */
 
 .site-footer {
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(13, 11, 24, 0.4), rgba(8, 6, 16, 0.92));
+  border-top: 1px solid var(--hair);
   color: var(--panel-ink);
   --rule: var(--panel-rule);
   --hair: var(--panel-hair);
@@ -228,10 +209,10 @@ body:not([data-header-transparent="true"]) .nav-links a.active::before { backgro
   max-width: 28ch;
 }
 .footer-col h4 {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--panel-ink-3);
   margin-bottom: 18px;
@@ -276,9 +257,9 @@ body:not([data-header-transparent="true"]) .nav-links a.active::before { backgro
   flex-wrap: wrap;
 }
 .footer-bottom p {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--label);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--panel-ink-3);
   padding: 0;
@@ -298,9 +279,9 @@ body:not([data-header-transparent="true"]) .nav-links a.active::before { backgro
   background: var(--panel);
   color: var(--panel-ink);
   border: 1px solid var(--panel-rule);
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-family: var(--label);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   box-shadow: 0 10px 34px rgba(16, 18, 22, 0.24);
   transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease-out);

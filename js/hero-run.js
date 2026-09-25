@@ -16,12 +16,12 @@
 
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var INK = '#ECEDEA';
-  var DIM = 'rgba(236, 237, 234, 0.22)';
-  var MARK = '#C89B33';
-  var GROUND = 'rgba(236, 237, 234, 0.14)';
-  var TICK = 'rgba(236, 237, 234, 0.1)';
-  var CREST = 'rgba(200, 155, 51, 0.36)';
+  var INK = '#F4F1FB';
+  var DIM = 'rgba(207, 201, 226, 0.24)';
+  var MARK = '#F6B84B';
+  var GROUND = 'rgba(207, 201, 226, 0.16)';
+  var TICK = 'rgba(207, 201, 226, 0.1)';
+  var CREST = 'rgba(246, 184, 75, 0.36)';
 
   var dpr = 1, W = 0, H = 0, baseY = 0;
   var runner, bars, vel, dist, cleared, phase, spawnAt;

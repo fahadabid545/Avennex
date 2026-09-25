@@ -17,6 +17,9 @@
 }
 @media (max-width: 720px) {
   .page-hero { padding-top: 116px; }
+  /* drawn figures shrink with the column, so their labels are set larger */
+  .about-visual .fig:not(.loop-fig) .lab { font-size: 10px; }
+  .about-visual .fig:not(.loop-fig) .num { font-size: 9.5px; }
 }
 
 /* ==========================================================
@@ -27,7 +30,9 @@
 
 /* ---------- home: the signal field ---------- */
 
-.brain-section { background: var(--paper-2); }
+.brain-section {
+  background: radial-gradient(46vw 38vw at 78% 50%, rgba(124, 58, 237, 0.18), transparent 70%);
+}
 .brain-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--col), minmax(0, 1fr)); column-gap: var(--gutter); }
 .brain-text { grid-column: 1 / 6; }
 .brain-text .section-eyebrow { margin-bottom: 18px; }
@@ -64,9 +69,9 @@
 }
 .flow-tab {
   position: relative;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
   padding: 13px 22px 13px 0;
@@ -104,10 +109,10 @@
 }
 .flow-card-label {
   display: block;
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
@@ -136,9 +141,9 @@
   margin-top: 18px;
 }
 .flow-bar-label {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
@@ -151,8 +156,8 @@
 }
 .flow-bar-row.is-auto .flow-bar-fill { background: var(--mark); }
 .flow-bar-value {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--label);
+  font-size: 12.5px;
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--ink-2);
@@ -170,8 +175,8 @@
 }
 .flow-step-list li::before {
   content: '0' counter(fs);
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   letter-spacing: 0.08em;
   color: var(--ink-3);
   padding-top: 3px;
@@ -206,14 +211,14 @@
   gap: var(--gutter);
   align-items: start;
   transition: opacity var(--t-base) var(--ease);
-  opacity: 0.4;
+  opacity: 0.62;
 }
 .story-item.is-active { opacity: 1; }
 .story-index {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--label);
+  font-size: 11.5px;
   letter-spacing: 0.1em;
-  color: var(--ink-3);
+  color: var(--ink-2);
   padding-top: 6px;
 }
 .story-title {
@@ -234,9 +239,9 @@
 .story-stack li {
   background: var(--paper);
   padding: 12px 14px;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-2);
 }
@@ -332,15 +337,15 @@
   padding-bottom: 12px;
 }
 .product-progress-label {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.15em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .product-progress-pct {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--label);
+  font-size: 12.5px;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
@@ -352,9 +357,9 @@
   transition: width 1100ms var(--ease-out);
 }
 .product-progress-detail {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
   margin-top: 12px;
@@ -462,13 +467,13 @@
   color: var(--panel-ink);
   padding: 22px;
   overflow-x: auto;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.82rem;
   line-height: 1.6;
 }
 .product-article-body code,
 .blog-article-body code {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.88em;
 }
 .product-article-body blockquote,
@@ -498,9 +503,9 @@
 }
 .product-tech-tag,
 .job-tag {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-2);
   padding: 8px 12px;
@@ -510,9 +515,9 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 11px 16px;
   border: 1px solid var(--rule);
@@ -565,9 +570,9 @@
 .blog-article-meta,
 .blog-article-date,
 .blog-article-author {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-family: var(--label);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
@@ -589,22 +594,26 @@
 .job-aside { grid-column: 9 / -1; position: sticky; top: 118px; align-self: start; }
 .job-aside-card { border-top: 1px solid var(--rule); padding-top: 22px; }
 .job-aside-label {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.15em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.job-aside-list { display: grid; gap: 0; margin-top: 8px; }
-.job-aside-list > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
+/* job-post.js writes bare dt/dd pairs, so the rows are laid out as a grid */
+.job-aside-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  margin-top: 8px;
+}
+.job-aside-list dt,
+.job-aside-list dd {
   padding-block: 12px;
   border-bottom: 1px solid var(--hair);
   font-size: 0.9rem;
-  color: var(--ink-2);
 }
+.job-aside-list dt { color: var(--ink-3); padding-right: 14px; }
+.job-aside-list dd { color: var(--ink); text-align: right; }
 .job-aside-cta { margin-top: 26px; }
 .job-detail-header { margin-bottom: 48px; }
 .job-detail-title {
@@ -618,9 +627,9 @@
 }
 .job-section { margin-top: 2.4em; }
 .job-app-count {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
@@ -658,9 +667,9 @@
 .academy-card-desc { font-size: 0.92rem; line-height: 1.6; color: var(--ink-2); margin-top: 10px; }
 .academy-card-meta {
   display: block;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
   margin-top: 16px;
@@ -727,7 +736,7 @@
   padding-block: 20px;
   border-bottom: 1px solid var(--rule);
 }
-.academy-course-num { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.1em; }
+.academy-course-num { font-family: var(--label); font-size: 11.5px; color: var(--ink-3); letter-spacing: 0.1em; }
 .academy-course-title { font-family: var(--display); font-size: 1.08rem; font-weight: 600; letter-spacing: -0.022em; }
 .academy-course-desc { font-size: 0.9rem; color: var(--ink-2); line-height: 1.6; }
 .academy-course-play-icon { color: var(--ink-3); }
@@ -743,9 +752,9 @@
 }
 .pdf-doc-tab {
   position: relative;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.13em;
+  font-family: var(--label);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
   padding: 12px 20px 12px 0;
@@ -815,10 +824,10 @@
 .contact-info { grid-column: 8 / -1; }
 .contact-info-block { border-top: 1px solid var(--rule); padding-block: 22px; }
 .contact-info-block h3 {
-  font-family: var(--mono);
-  font-size: 9.5px;
+  font-family: var(--label);
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
   margin-bottom: 10px;
@@ -846,9 +855,9 @@
 .legal-content li::before { content: ''; width: 5px; height: 5px; background: var(--mark); margin-top: 0.62em; }
 .legal-content a { color: var(--ink); border-bottom: 1px solid var(--rule); }
 .legal-updated {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-family: var(--label);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
@@ -859,8 +868,8 @@
 .error-content { grid-column: 1 / 9; }
 .error-code {
   display: block;
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--label);
+  font-size: 12.5px;
   letter-spacing: 0.2em;
   color: var(--ink-3);
   margin-bottom: 26px;

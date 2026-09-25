@@ -7,16 +7,23 @@
   canvas.className = 'brain-net-canvas';
   host.appendChild(canvas);
 
-  /* the field is drawn in ink on paper. a node that is carrying a signal is
-     marked, the rest stay as structure */
-  var INK = [23, 24, 26];
-  var MARK = [140, 110, 28];
+  /* the field is drawn in pale lavender on the night surface. a node that is
+     carrying a signal is lit amber inside a purple halo, the rest stay as
+     structure */
+  var INK = [207, 201, 226];
+  var MARK = [246, 184, 75];
+  var HALO = [124, 58, 237];
 
   function readInk() { /* the surface is fixed now, so there is nothing to read */ }
 
   function ink(alpha) {
     var a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;
     return 'rgba(' + INK[0] + ',' + INK[1] + ',' + INK[2] + ',' + a + ')';
+  }
+
+  function halo(alpha) {
+    var a = alpha < 0 ? 0 : alpha > 1 ? 1 : alpha;
+    return 'rgba(' + HALO[0] + ',' + HALO[1] + ',' + HALO[2] + ',' + a + ')';
   }
 
   function mark(alpha) {
@@ -306,7 +313,7 @@
       if (a2 <= 0.02) continue;
 
       if (n.heat > 0.08) {
-        ctx.fillStyle = mark(n.heat * 0.3);
+        ctx.fillStyle = halo(n.heat * 0.45);
         ctx.beginPath();
         ctx.arc(n.x, n.y, r + 7 * n.heat, 0, Math.PI * 2);
         ctx.fill();
