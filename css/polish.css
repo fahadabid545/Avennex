@@ -1,0 +1,482 @@
+/* ==========================================================
+   Avennex — polish
+   The finishing layer. Loaded last on every page, it only adds
+   behaviour on top of what the other sheets already draw, so
+   removing it leaves a working, plainer site.
+   ========================================================== */
+
+@property --spin {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ---------- page to page ---------- */
+
+@view-transition { navigation: auto; }
+
+.site-header { view-transition-name: site-header; }
+.chatbot-trigger { view-transition-name: ask-ai; }
+
+::view-transition-old(root) { animation: vt-out 240ms cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-new(root) { animation: vt-in 560ms var(--ease-out) both; }
+
+@keyframes vt-out {
+  to { opacity: 0; filter: blur(6px); transform: translateY(-10px) scale(0.995); }
+}
+@keyframes vt-in {
+  from { opacity: 0; filter: blur(10px); transform: translateY(18px); }
+}
+
+/* ---------- small things everywhere ---------- */
+
+::selection { background: var(--mark); color: var(--mark-ink); }
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #4C2A9A transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--royal), #B0569B, var(--mark)) padding-box;
+}
+
+input, textarea { caret-color: var(--mark); }
+
+p, li, dd { text-wrap: pretty; }
+h1, h2, h3, h4 { text-wrap: balance; }
+
+/* focus lands with a small snap instead of just appearing */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: 3px;
+  animation: focus-snap 260ms var(--ease-out);
+}
+@keyframes focus-snap { from { outline-offset: 9px; outline-color: transparent; } }
+
+/* the read position, lit at its tip */
+.site-header::after {
+  background: linear-gradient(90deg, var(--royal), #B0569B 60%, var(--mark-lit)) !important;
+  box-shadow: 0 0 12px 1px rgba(246, 184, 75, 0.55);
+}
+
+/* ---------- primary actions ---------- */
+
+.hero-btn-primary,
+.form-submit,
+.error-actions a:first-child {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image: radial-gradient(160px circle at var(--bx, 50%) var(--by, 50%), rgba(255, 255, 255, 0.5), transparent 60%);
+  background-blend-mode: soft-light;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+    box-shadow var(--t-base) var(--ease), transform 420ms var(--ease-out);
+}
+
+/* a sheet of light crosses once on hover */
+.hero-btn-primary::after,
+.form-submit::after,
+.error-actions a:first-child::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.65) 48%, rgba(255, 244, 214, 0.2) 54%, transparent 70%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+.hero-btn-primary:hover::after,
+.form-submit:hover::after,
+.error-actions a:first-child:hover::after {
+  transform: translateX(110%);
+  transition: transform 820ms var(--ease-out);
+}
+
+.hero-btn-primary:hover,
+.form-submit:hover {
+  box-shadow: 0 14px 38px -10px rgba(124, 58, 237, 0.8), 0 0 0 1px rgba(255, 216, 138, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.hero-btn-primary:active,
+.hero-btn-secondary:active,
+.form-submit:active,
+.nav-cta:active {
+  transform: translate(var(--mx, 0), var(--my, 0)) scale(0.965) !important;
+  transition-duration: 90ms;
+}
+
+.form-submit:disabled {
+  cursor: progress;
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  animation: busy-sweep 1.1s linear infinite;
+}
+@keyframes busy-sweep { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+
+/* ---------- secondary actions: a border of light that turns ---------- */
+
+.hero-btn-secondary,
+.nav-cta {
+  position: relative;
+  isolation: isolate;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease), transform 420ms var(--ease-out);
+}
+.hero-btn-secondary::before,
+.nav-cta::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  background: conic-gradient(from var(--spin), transparent 0 55%, var(--royal-lit) 70%, var(--mark-lit) 82%, transparent 92%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-base) var(--ease);
+}
+.hero-btn-secondary:hover::before,
+.nav-cta:hover::after {
+  opacity: 1;
+  animation: spin-border 2.4s linear infinite;
+}
+@keyframes spin-border { to { --spin: 360deg; } }
+
+/* magnetic buttons carry their pull in --mx and --my, set by polish.js */
+.is-magnetic { transform: translate(var(--mx, 0), var(--my, 0)); }
+.is-magnetic > * { transition: transform 420ms var(--ease-out); transform: translate(calc(var(--mx, 0) * 0.35), calc(var(--my, 0) * 0.35)); }
+
+/* ---------- hero rows: a wash of light sweeps in behind the row ---------- */
+
+.hero-link { position: relative; isolation: isolate; }
+.hero-link::before {
+  content: '';
+  position: absolute;
+  inset: 0 -12px;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.26), rgba(176, 86, 155, 0.1) 55%, transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 640ms var(--ease-out);
+}
+.hero-link:hover::before { transform: scaleX(1); }
+.hero-link-index { transition: color var(--t-base) var(--ease); }
+.hero-link:hover .hero-link-index { color: var(--mark-lit); }
+.hero-link:hover .hero-link-arrow { color: var(--mark-lit); }
+
+/* ---------- arrows pass through instead of nudging ---------- */
+
+.text-link:hover .text-link-arrow,
+.hero-btn-primary:hover .text-link-arrow,
+.hero-btn-secondary:hover .text-link-arrow,
+.hero-link:hover .hero-link-arrow,
+.blog-card:hover .blog-card-read .icon {
+  animation: arrow-through 620ms var(--ease-out);
+  transform: none;
+}
+@keyframes arrow-through {
+  0% { transform: translateX(0); opacity: 1; }
+  45% { transform: translateX(14px); opacity: 0; }
+  46% { transform: translateX(-14px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* ---------- text links: the line draws in and leaves the other way ---------- */
+
+.text-link,
+.story-link,
+.back-link {
+  position: relative;
+}
+.text-link::after,
+.story-link::after,
+.back-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--mark), var(--royal-lit));
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 520ms var(--ease-out);
+}
+.text-link:hover::after,
+.story-link:hover::after,
+.back-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ---------- navigation: one soft pill glides to what you point at ---------- */
+
+.nav-links { position: relative; isolation: isolate; }
+.nav-glide {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 30px;
+  width: 0;
+  margin-top: -15px;
+  border-radius: 999px;
+  background: radial-gradient(120% 140% at 50% 0%, rgba(182, 156, 255, 0.22), rgba(124, 58, 237, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(182, 156, 255, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: transform 420ms var(--ease-out), width 420ms var(--ease-out), opacity 260ms var(--ease);
+}
+.nav-glide.is-on { opacity: 1; }
+
+/* ---------- cards: a light that follows the pointer, and an edge it catches ---------- */
+
+.spot { position: relative; }
+.spot-light {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+  transition: opacity 420ms var(--ease);
+  background: radial-gradient(420px circle at var(--sx, 50%) var(--sy, 50%), rgba(182, 156, 255, 0.11), transparent 62%);
+  mix-blend-mode: screen;
+}
+.spot-light::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: radial-gradient(260px circle at var(--sx, 50%) var(--sy, 50%), rgba(255, 203, 107, 0.75), rgba(182, 156, 255, 0.35) 40%, transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.spot.is-row .spot-light::after { display: none; }
+.spot:hover > .spot-light { opacity: 1; }
+
+.work-card,
+.blog-card,
+.lp-card,
+.academy-card,
+.team-card,
+.rep-block {
+  transition: transform 520ms var(--ease-out), border-color var(--t-base) var(--ease), box-shadow 520ms var(--ease-out);
+}
+.work-card:hover,
+.blog-card:hover,
+.academy-card:hover,
+.rep-block:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.9), 0 10px 40px -30px rgba(124, 58, 237, 0.9);
+}
+
+/* ---------- images arrive instead of popping in ---------- */
+
+img.px-wait {
+  opacity: 0;
+  filter: blur(14px) saturate(0.6);
+  transform: scale(1.03);
+}
+img.px-ready {
+  transition: opacity 700ms var(--ease), filter 900ms var(--ease-out), transform 1100ms var(--ease-out);
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .blog-card-media img,
+    .lp-card-media img,
+    .product-article-cover img,
+    .product-gallery-item {
+      animation: frame-open linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+  }
+}
+@keyframes frame-open {
+  from { clip-path: inset(10% 8% 10% 8%); transform: scale(1.08); }
+  to { clip-path: inset(0 0 0 0); transform: scale(1); }
+}
+
+/* ---------- labels decode on arrival ---------- */
+
+.px-decoding { font-variant-numeric: tabular-nums; }
+.px-decoding .px-glyph { color: var(--royal-lit); opacity: 0.8; }
+
+/* ---------- figures roll like an odometer ---------- */
+
+.odo {
+  display: inline-flex;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: baseline;
+}
+.odo-reel {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+.odo-reel > span {
+  display: flex;
+  flex-direction: column;
+  transition: transform 1500ms cubic-bezier(0.2, 0.9, 0.1, 1);
+  transform: translateY(0);
+}
+.odo-reel > span > span { height: 1em; line-height: 1; }
+
+/* ---------- tabs: the selection slides between them ---------- */
+
+.has-glide { position: relative; isolation: isolate; }
+.tab-glide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  z-index: -1;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--mark), var(--mark-lit));
+  box-shadow: 0 6px 22px -8px rgba(246, 184, 75, 0.7);
+  transition: transform 460ms var(--ease-out), width 460ms var(--ease-out);
+}
+.has-glide .rep-tab[aria-selected="true"] { background: transparent; }
+.has-glide .rep-tab { transition: color 300ms var(--ease); }
+
+/* ---------- forms: the line under a field lights from the left ---------- */
+
+.form-group { position: relative; }
+.form-group input,
+.form-group textarea,
+.form-group select {
+  background-image: linear-gradient(90deg, var(--mark), var(--royal-lit));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: border-color var(--t-fast) var(--ease), background-size 600ms var(--ease-out);
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  background-size: 100% 1px;
+  border-bottom-color: transparent;
+}
+.form-group:focus-within label { color: var(--mark); transition: color var(--t-fast) var(--ease); }
+.form-group input:user-invalid,
+.form-group textarea:user-invalid { border-bottom-color: var(--stop); }
+
+/* ---------- loading: a quiet skeleton rather than a blinking dot ---------- */
+
+.api-loading {
+  display: grid;
+  gap: 14px;
+  padding-block: 40px 64px;
+}
+.api-loading .api-spinner { display: none; }
+.api-loading::before,
+.api-loading::after {
+  content: '';
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(207, 201, 226, 0.06) 0%, rgba(182, 156, 255, 0.18) 20%, rgba(207, 201, 226, 0.06) 40%) 0 0 / 250% 100%;
+  animation: skeleton 1.6s linear infinite;
+}
+.api-loading::before { width: min(420px, 70%); height: 22px; }
+.api-loading::after { width: min(680px, 92%); box-shadow: 0 28px 0 -2px rgba(207, 201, 226, 0.05), 0 56px 0 -2px rgba(207, 201, 226, 0.04); margin-bottom: 56px; }
+@keyframes skeleton { to { background-position: -250% 0; } }
+
+/* ---------- ask ai: a slow halo, like it's listening ---------- */
+
+.chatbot-trigger { isolation: isolate; }
+.chatbot-trigger::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(from var(--spin), rgba(124, 58, 237, 0), rgba(124, 58, 237, 0.55), rgba(246, 184, 75, 0.5), rgba(124, 58, 237, 0));
+  filter: blur(12px);
+  opacity: 0.55;
+  animation: spin-border 7s linear infinite;
+  pointer-events: none;
+}
+
+/* ---------- footer: the name, drawn in as you reach the end ---------- */
+
+.site-footer { position: relative; overflow: hidden; }
+.site-footer::after {
+  content: 'avennex';
+  display: block;
+  margin: 0 auto -0.1em;
+  padding-top: 20px;
+  text-align: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(4.5rem, 19vw, 17rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  color: transparent;
+  background:
+    linear-gradient(100deg, rgba(124, 58, 237, 0.55), rgba(176, 86, 155, 0.4) 45%, rgba(246, 184, 75, 0.5)) 0 0 / 0% 100% no-repeat,
+    linear-gradient(rgba(207, 201, 226, 0.05), rgba(207, 201, 226, 0.05));
+  -webkit-background-clip: text;
+  background-clip: text;
+  pointer-events: none;
+  user-select: none;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .site-footer::after {
+      animation: wordmark-fill linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 100%;
+    }
+  }
+}
+@supports not (animation-timeline: view()) {
+  .site-footer::after { background-size: 100% 100%, 100% 100%; }
+}
+@keyframes wordmark-fill { to { background-size: 100% 100%, 100% 100%; } }
+
+/* ---------- touch and reduced motion ---------- */
+
+@media (hover: none) {
+  .spot-light { display: none; }
+  .is-magnetic, .is-magnetic > * { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { animation: none; }
+  .hero-btn-primary::after,
+  .form-submit::after,
+  .error-actions a:first-child::after { display: none; }
+  .hero-btn-secondary:hover::before,
+  .nav-cta:hover::after,
+  .chatbot-trigger::before { animation: none; }
+  .text-link:hover .text-link-arrow,
+  .hero-link:hover .hero-link-arrow,
+  .hero-btn-primary:hover .text-link-arrow,
+  .hero-btn-secondary:hover .text-link-arrow,
+  .blog-card:hover .blog-card-read .icon { animation: none; }
+  .api-loading::before,
+  .api-loading::after,
+  .form-submit:disabled { animation: none; }
+  .odo-reel > span,
+  .nav-glide,
+  .tab-glide,
+  img.px-ready { transition: none; }
+  .work-card:hover,
+  .blog-card:hover,
+  .academy-card:hover,
+  .rep-block:hover { transform: none; }
+}
