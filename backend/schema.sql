@@ -95,6 +95,7 @@ create table if not exists products (
   documents jsonb default '[]'::jsonb,
   documents_heading text,
   documents_body text,
+  report jsonb default '{}'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -148,6 +149,7 @@ create table if not exists launchpad_entries (
   documents jsonb default '[]'::jsonb,
   documents_heading text,
   documents_body text,
+  report jsonb default '{}'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   last_edited_by text,

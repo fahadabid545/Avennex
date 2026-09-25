@@ -1421,3 +1421,76 @@ body.is-splitting .editor-split-handle::before {
   accent-color: var(--accent);
   cursor: pointer;
 }
+
+/* ── project report editor ── */
+
+.repb {
+  gap: 12px;
+}
+
+.repb-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.repb-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.repb-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.repb-group > summary::before {
+  content: "+";
+  width: 1em;
+  color: var(--text-muted);
+}
+
+.repb-group[open] > summary::before {
+  content: "\2212";
+}
+
+.repb-group > summary span {
+  flex: 1;
+}
+
+.repb-group > summary em {
+  font-style: normal;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.repb-group > .field-hint,
+.repb-group > .dashb-section {
+  margin: 0 16px 14px;
+}
+
+.repb-tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.repb .dashb-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.repb-stage {
+  background: #0D0B18;
+  border-color: rgba(207, 201, 226, 0.2);
+}
+
+.repb-stage .rep {
+  margin: 0;
+}

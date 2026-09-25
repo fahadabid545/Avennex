@@ -685,6 +685,7 @@
       if (d.cover_image) {
         html += `<div class="product-article-cover"><img src="${esc(assetUrl(d.cover_image))}" alt="${esc(d.name || '')}"></div>`;
       }
+      if (typeof DashReport !== 'undefined') html += DashReport.html(d, 'product');
       const vid = ytId(d.video_url);
       if (vid) {
         html += `<div class="product-article-section"><div class="product-video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${esc(vid)}" allow="encrypted-media" allowfullscreen title="Product video"></iframe></div></div>`;
@@ -723,6 +724,7 @@
       html += `<h1 class="product-article-title">${esc(d.title || 'Untitled idea')}</h1>`;
       if (d.tagline) html += `<p class="product-article-tagline">${esc(d.tagline)}</p>`;
       html += '</div>';
+      if (typeof DashReport !== 'undefined') html += DashReport.html(d, 'launchpad');
 
       if (d.content) html += `<div class="product-article-body">${richText(d.content)}</div>`;
       else if (d.description) html += `<div class="product-article-body">${richText(d.description)}</div>`;
@@ -733,7 +735,6 @@
 
       let details = '';
       const item = (label, value) => `<div class="lp-detail"><span class="lp-detail-label">${esc(label)}</span><span class="lp-detail-value">${esc(value)}</span></div>`;
-      if (d.funding_needed) details += item('Funding needed', d.funding_needed);
       if (d.team_needed) details += item('Team needed', d.team_needed);
       if (d.status) details += item('Status', d.status);
       if (details) html += `<div class="lp-details-grid">${details}</div>`;
@@ -861,7 +862,8 @@
 
     function send() {
       try {
-        frame.contentWindow.postMessage({ type: 'preview-render', markup }, window.location.origin);
+        const item = { status: data.status, stage: data.stage, target_date: data.target_date, report: data.report };
+        frame.contentWindow.postMessage({ type: 'preview-render', markup, item, kind: type }, window.location.origin);
       } catch (err) {
         holder.innerHTML = '<p class="admin-empty">The preview could not be drawn. The fields tab still shows everything.</p>';
       }
@@ -950,6 +952,70 @@
     return bits.length ? bits.join(', ') : 'Nothing set';
   }
 
+  // ── Project report ──
+
+  let reportEditor = null;
+  let reportPreview = null;
+
+  function reportStep(kind) {
+    return {
+      fields: [],
+      onMount: (config) => {
+        const wrap = document.querySelector('.step-content');
+        if (!wrap) return;
+        const card = document.querySelector('.form-card');
+        if (card) card.classList.add('has-split');
+        wrap.innerHTML = `
+          <div class="dashb-layout">
+            <div class="field">
+              <label>Project report <span class="field-opt">Optional</span></label>
+              <span class="field-hint">Every section is optional and stays off the public page until it has something in it. Use plain words, the page explains each figure to visitors.</span>
+              <div id="rep-builder"></div>
+            </div>
+            <div class="dashb-preview-panel">
+              <div class="dashb-preview-head">
+                <h4>Live preview</h4>
+                <span class="field-hint">Exactly what visitors see</span>
+              </div>
+              <div class="dashb-preview-stage repb-stage" id="rep-preview"></div>
+            </div>
+          </div>`;
+
+        const builder = document.getElementById('rep-builder');
+        if (typeof AdminReport === 'undefined' || typeof DashReport === 'undefined') {
+          builder.innerHTML = '<p class="dashb-empty">The report editor did not load. Refresh the page and try again.</p>';
+          return;
+        }
+
+        const preview = document.getElementById('rep-preview');
+        let timer = null;
+        const draw = () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (reportPreview) reportPreview.destroy();
+            const snapshot = {
+              status: config.formData.status,
+              stage: config.formData.stage,
+              target_date: config.formData.target_date,
+              report: config.formData.report,
+            };
+            const html = DashReport.html(snapshot, kind);
+            preview.innerHTML = html || '<p class="dashb-empty">Nothing to preview yet. Fill in any section on the left.</p>';
+            reportPreview = html ? DashReport.init(preview, snapshot, kind) : null;
+          }, 250);
+        };
+
+        if (reportEditor) reportEditor.destroy();
+        reportEditor = AdminReport.mount(builder, config.formData.report, {
+          kind,
+          onChange: (value) => { config.formData.report = value; draw(); },
+        });
+        config.formData.report = reportEditor.value();
+        draw();
+      },
+    };
+  }
+
   function collectDashboard(config) {
     if (!dashboardBuilder || !document.getElementById('dash-builder')) return;
     const data = dashboardBuilder.value();
@@ -975,7 +1041,7 @@
     chat_enabled: 'Chat', display_order: 'Order', active: 'Visible',
     funding_needed: 'Funding needed', team_needed: 'Team needed',
     diagrams: 'Diagrams', collaboration_details: 'How to collaborate',
-    milestones: 'Milestones', metrics: 'Metrics', published_at: 'Published',
+    milestones: 'Milestones', metrics: 'Metrics', report: 'Project report', published_at: 'Published',
     publish_at: 'Scheduled for',
   };
 
@@ -3426,6 +3492,7 @@
       documents: Array.isArray(p.documents) ? p.documents.map((doc) => ({ ...doc })) : [],
       documents_heading: p.documents_heading || '',
       documents_body: p.documents_body || '',
+      report: p.report && typeof p.report === 'object' ? p.report : {},
     };
 
     renderStepForm({
@@ -3655,6 +3722,7 @@
           },
         },
         dashboardStep('product', 'Dates, milestones and your own metrics. The roadmap counts down live from these, and nothing shows on the public page unless you enter it here.'),
+        reportStep('product'),
         {
           review: true,
           fields: [],
@@ -3681,6 +3749,7 @@
               ['External Links', productLinks.filter((l) => l.label && l.url).length],
               ['Documents', `${(d.documents || []).length} attached${d.documents_heading ? ` under "${d.documents_heading}"` : ''}`],
               ['Dashboard data', dashboardSummary(d)],
+              ['Project report', typeof AdminReport !== 'undefined' ? AdminReport.summary(d.report) : ''],
               ['Features built', productFeatures.filter((f) => f.done).length + ' of ' + productFeatures.filter((f) => f.text).length],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
@@ -3731,6 +3800,7 @@
           start_date: d.start_date || null,
           target_date: d.target_date || null,
           milestones: Array.isArray(d.milestones) ? d.milestones.filter((m) => m.label) : [],
+          report: d.report && typeof d.report === 'object' ? d.report : {},
           chat_enabled: d.chat_enabled,
           cover_image: d.cover_image || null,
         };
@@ -3943,6 +4013,7 @@
       documents: Array.isArray(lp.documents) ? lp.documents.map((doc) => ({ ...doc })) : [],
       documents_heading: lp.documents_heading || '',
       documents_body: lp.documents_body || '',
+      report: lp.report && typeof lp.report === 'object' ? lp.report : {},
     };
 
     renderStepForm({
@@ -4050,11 +4121,6 @@
                 <input type="text" id="f-lp-timeline" value="${esc(config.formData.timeline)}">
               </div>
               <div class="field">
-                <label for="f-lp-funding">Funding Needed <span class="field-opt">Optional</span></label>
-                <span class="field-hint">e.g. $5,000 - $10,000</span>
-                <input type="text" id="f-lp-funding" value="${esc(config.formData.funding_needed)}">
-              </div>
-              <div class="field">
                 <label for="f-lp-team">Team Needed <span class="field-opt">Optional</span></label>
                 <span class="field-hint">e.g. 1 NLP engineer, 1 frontend dev</span>
                 <input type="text" id="f-lp-team" value="${esc(config.formData.team_needed)}">
@@ -4127,6 +4193,7 @@
           },
         },
         dashboardStep('launchpad', 'Dates, milestones and your own metrics for this idea. The roadmap counts down live from these.'),
+        reportStep('launchpad'),
         {
           review: true,
           fields: [],
@@ -4143,12 +4210,12 @@
               ['Stage', d.stage],
               ['Status', d.status],
               ['Timeline', d.timeline],
-              ['Funding Needed', d.funding_needed],
               ['Team Needed', d.team_needed],
               ['Tech Stack', d.tech_stack],
               ['Progress', (d.progress ?? 0) + '%'],
               ['Documents', `${(d.documents || []).length} attached${d.documents_heading ? ` under "${d.documents_heading}"` : ''}`],
               ['Dashboard data', dashboardSummary(d)],
+              ['Project report', typeof AdminReport !== 'undefined' ? AdminReport.summary(d.report) : ''],
             ].forEach(([label, v]) => {
               html += `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${v != null && v !== '' ? esc(String(v)) : '<span class="text-muted">Not set</span>'}</span></div>`;
             });
@@ -4211,6 +4278,7 @@
           documents: d.documents || [],
           documents_heading: (d.documents_heading || '').trim() || null,
           documents_body: (d.documents_body || '').trim() || null,
+          report: d.report && typeof d.report === 'object' ? d.report : {},
         };
       },
       onBack: loadLaunchpad,

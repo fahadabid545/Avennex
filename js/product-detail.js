@@ -57,6 +57,8 @@
       html += '<div class="product-article-cover"><img src="' + API.escHtml(API.assetUrl(product.cover_image)) + '" alt="' + API.escHtml(product.name) + '"></div>';
     }
 
+    if (typeof DashReport !== 'undefined') html += DashReport.html(product, 'product');
+
     var videoId = product.video_url ? extractYouTubeId(product.video_url) : '';
     if (videoId) {
       html += '<div class="product-article-section">';
@@ -139,6 +141,7 @@
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     mountDashboard(product);
+    if (typeof DashReport !== 'undefined') DashReport.init(content, product, 'product');
     DocViewer.init(content, product.documents);
 
     initChat(product);

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator, EmailStr
 from datetime import datetime
+from app.report_data import validate_report
 from app.uploads.documents import validate_list
 from typing import Any, Optional
 
@@ -26,11 +27,17 @@ class LaunchpadCreate(BaseModel):
     documents: Optional[Any] = None
     documents_heading: Optional[str] = None
     documents_body: Optional[str] = None
+    report: Optional[Any] = None
 
     @field_validator("documents")
     @classmethod
     def _at_most_five(cls, v):
         return validate_list(v)
+
+    @field_validator("report")
+    @classmethod
+    def _known_sections(cls, v):
+        return validate_report(v)
 
 
 class LaunchpadUpdate(BaseModel):
@@ -55,11 +62,17 @@ class LaunchpadUpdate(BaseModel):
     documents: Optional[Any] = None
     documents_heading: Optional[str] = None
     documents_body: Optional[str] = None
+    report: Optional[Any] = None
 
     @field_validator("documents")
     @classmethod
     def _at_most_five(cls, v):
         return validate_list(v)
+
+    @field_validator("report")
+    @classmethod
+    def _known_sections(cls, v):
+        return validate_report(v)
 
 
 class LaunchpadResponse(BaseModel):
@@ -90,6 +103,7 @@ class LaunchpadResponse(BaseModel):
     documents: Optional[Any] = []
     documents_heading: Optional[str] = None
     documents_body: Optional[str] = None
+    report: Optional[Any] = None
 
 
 

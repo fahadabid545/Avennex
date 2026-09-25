@@ -53,6 +53,8 @@
     }
     html += '</div>';
 
+    if (typeof DashReport !== 'undefined') html += DashReport.html(entry, 'launchpad');
+
     html += '<div id="launchpad-dashboard" class="product-dashboard-mount"></div>';
 
     if (entry.content) {
@@ -84,7 +86,6 @@
 
     // a field with nothing in it is left out, rather than printed as "TBD"
     var details = '';
-    if (entry.funding_needed) details += detailItem('Funding needed', API.escHtml(entry.funding_needed));
     if (entry.team_needed) details += detailItem('Team needed', API.escHtml(entry.team_needed));
     if (entry.status) details += detailItem('Status', API.escHtml(entry.status));
     if (details) html += '<div class="lp-details-grid">' + details + '</div>';
@@ -110,6 +111,7 @@
     html += '</article>';
     content.innerHTML = html;
     DocViewer.init(content, entry.documents);
+    if (typeof DashReport !== 'undefined') DashReport.init(content, entry, 'launchpad');
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 

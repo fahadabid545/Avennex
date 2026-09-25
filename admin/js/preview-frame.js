@@ -3,6 +3,7 @@
    nothing here talks to the API. */
 (function () {
   var root = document.getElementById('preview-root');
+  var activeReport = null;
 
   // the document is never shorter than the frame, so measure the content
   function height() {
@@ -21,8 +22,10 @@
     var data = e.data;
     if (!data || data.type !== 'preview-render') return;
 
+    if (activeReport && activeReport.destroy) activeReport.destroy();
     root.innerHTML = String(data.markup || '');
     if (window.lucide) window.lucide.createIcons();
+    if (window.DashReport && data.item) activeReport = window.DashReport.init(root, data.item, data.kind);
 
     report();
     // images settle late and change the height under it
