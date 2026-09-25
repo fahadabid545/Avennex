@@ -44,14 +44,42 @@
     send();
   }
 
+  // asked the moment this script runs, ahead of every other call the page makes
+  var VISIBLE_KEY = 'avennex_chatbot_visible';
+  var visibility = fetch(BASE + '/settings/chatbot_visible')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; });
+
+  function remembered() {
+    try { return sessionStorage.getItem(VISIBLE_KEY); } catch (e) { return null; }
+  }
+
+  function remember(value) {
+    try { sessionStorage.setItem(VISIBLE_KEY, value); } catch (e) { /* private mode */ }
+  }
+
+  /* the first page of a visit waits for the server to say yes. After that the
+     answer is kept for the visit, so later pages show the button at once and
+     still re-check, taking it away if the admin has since switched it off */
   function init() {
-    fetch(BASE + '/settings/chatbot_visible')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        if (!data || data.value !== 'true') return;
-        render();
-      })
-      .catch(function () {});
+    if (remembered() === 'true') render();
+    visibility.then(function (data) {
+      if (!data) return;
+      var on = data.value === 'true';
+      remember(on ? 'true' : 'false');
+      if (on && !trigger) render();
+      if (!on && trigger) teardown();
+    });
+  }
+
+  function teardown() {
+    [trigger, panel, greeting].forEach(function (el) {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+    trigger = null;
+    panel = null;
+    greeting = null;
+    open = false;
   }
 
   function render() {

@@ -47,7 +47,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 .logo {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.02rem;
+  font-size: 1.3rem;
   letter-spacing: -0.022em;
   color: var(--panel-ink);
   display: flex;
@@ -59,9 +59,9 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 .logo-nex { color: inherit; opacity: 0.55; }
 .logo::after {
   content: '';
-  width: 4px;
-  height: 4px;
-  margin-left: 5px;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
   background: var(--mark-lit);
   display: block;
 }
@@ -74,39 +74,36 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 }
 .nav-links a {
   position: relative;
-  font-family: var(--label);
-  font-size: 12.5px;
+  font-family: var(--text);
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: -0.006em;
   white-space: nowrap;
   color: var(--panel-ink-2);
   padding-block: 4px;
   transition: color var(--t-fast) var(--ease);
 }
 .nav-links a:hover { color: var(--panel-ink); }
-.nav-links a.active {
-  color: var(--panel-ink);
-  font-size: 14px;
-  font-weight: 800;
-}
+.nav-links a.active { color: var(--panel-ink); }
 
 /* the current page carries a mark, not an underline */
 .nav-links a.active::before {
   content: '';
   position: absolute;
-  left: -9px;
-  top: 50%;
-  width: 3px;
-  height: 3px;
+  left: 50%;
+  bottom: -6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
   background: var(--mark-lit);
-  transform: translateY(-50%);
+  box-shadow: 0 0 8px rgba(255, 203, 107, 0.7);
+  transform: translateX(-50%);
 }
 
 .nav-cta {
   color: var(--mark) !important;
   border: 1px solid rgba(246, 184, 75, 0.55);
-  padding: 7px 13px !important;
+  padding: 7px 15px !important;
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 .nav-cta::before { display: none !important; }
@@ -115,6 +112,28 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   color: var(--mark-ink) !important;
   border-color: var(--mark);
 }
+
+/* the name types itself in on first load and refresh, see logo-intro.js */
+.logo-intro .site-header .logo-aven,
+.logo-intro .site-header .logo-nex { visibility: hidden; }
+.logo-typing .site-header .logo-aven,
+.logo-typing .site-header .logo-nex { visibility: visible; }
+.logo-typing .site-header .logo-char {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(0.4em);
+  animation: logo-type 560ms var(--ease-out) forwards;
+  animation-delay: calc(300ms + var(--i) * 85ms);
+}
+.logo-typing .site-header .logo::after { animation: logo-caret 0.42s steps(1) infinite; }
+
+@keyframes logo-type {
+  40% { max-width: 1em; }
+  100% { max-width: 1em; opacity: 1; filter: none; transform: none; }
+}
+@keyframes logo-caret { 50% { opacity: 0; } }
 
 .menu-toggle {
   display: none;
