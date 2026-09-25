@@ -74,7 +74,6 @@
   letter-spacing: 0.1em;
   color: var(--panel-ink-2);
 }
-.hero-link-rule { display: none; }
 .hero-link-label {
   font-size: 0.97rem;
   font-weight: 500;

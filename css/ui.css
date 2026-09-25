@@ -54,7 +54,6 @@
 }
 
 .text-link,
-.story-link,
 .back-link,
 .academy-playlist-view {
   display: inline-flex;
@@ -71,41 +70,12 @@
   transition: border-color var(--t-fast) var(--ease), gap var(--t-fast) var(--ease-out);
 }
 .text-link:hover,
-.story-link:hover,
 .back-link:hover { border-color: var(--ink); gap: 15px; }
 .text-link-arrow,
 .blog-card-read .icon { transition: transform var(--t-base) var(--ease-out); }
 .text-link:hover .text-link-arrow { transform: translateX(4px); }
 
 .back-link { margin-bottom: 34px; text-transform: uppercase; }
-
-/* the indexed link list: the pattern the hero uses, reused wherever a
-   short set of destinations needs to read as a contents list */
-.index-list { border-top: 1px solid var(--rule); }
-.index-link {
-  display: grid;
-  grid-template-columns: 30px 1fr auto;
-  align-items: center;
-  gap: 16px;
-  padding-block: 15px;
-  border-bottom: 1px solid var(--rule);
-  transition: padding-left var(--t-base) var(--ease-out);
-}
-.index-link:hover { padding-left: 10px; }
-.index-link .n {
-  font-family: var(--label);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-}
-.index-link .t {
-  font-size: 0.97rem;
-  font-weight: 500;
-  letter-spacing: -0.012em;
-  color: var(--ink);
-}
-.index-link .a { color: var(--ink-3); transition: transform var(--t-base) var(--ease-out), color var(--t-base) var(--ease); }
-.index-link:hover .a { transform: translateX(7px); color: var(--mark); }
 
 /* ---------- status ---------- */
 
@@ -129,138 +99,7 @@
 .badge-green { color: var(--ink); }
 .badge-gray { color: var(--ink-3); }
 
-.meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 18px;
-  font-family: var(--label);
-  font-size: 11.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-/* ---------- a record in a list ---------- */
-
-.rec-list { border-top: 1px solid var(--rule); }
-.rec {
-  display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: var(--gutter);
-  padding-block: 30px;
-  border-bottom: 1px solid var(--rule);
-}
-.rec-n {
-  font-family: var(--label);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-  padding-top: 5px;
-}
-.rec-body { min-width: 0; }
-.rec-title { margin-bottom: 10px; }
-
-/* the facts table: the same numbers, read as entries rather than boasts */
-.facts-grid {
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--rule);
-}
-.fact {
-  display: grid;
-  grid-template-columns: 76px 1fr 20px;
-  grid-template-areas:
-    "value label mark"
-    ".     detail .";
-  align-items: baseline;
-  column-gap: var(--gutter);
-  row-gap: 0;
-  width: 100%;
-  text-align: left;
-  padding-block: 20px;
-  border-bottom: 1px solid var(--rule);
-  transition: padding-left var(--t-base) var(--ease-out);
-}
-.fact-value { grid-area: value; }
-.fact-label { grid-area: label; }
-.fact:hover { padding-left: 8px; }
-.fact-value {
-  font-family: var(--label);
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-}
-.fact-label {
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-.fact-detail {
-  grid-area: detail;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  color: var(--ink-2);
-  max-width: 54ch;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height var(--t-base) var(--ease), opacity var(--t-base) var(--ease), margin-top var(--t-base) var(--ease);
-}
-.fact.is-open .fact-detail {
-  max-height: 6em;
-  opacity: 1;
-  margin-top: 12px;
-}
-.fact::after {
-  grid-area: mark;
-  justify-self: end;
-  content: '+';
-  font-family: var(--label);
-  font-size: 13px;
-  color: var(--ink-3);
-  transition: transform var(--t-base) var(--ease), color var(--t-fast) var(--ease);
-}
-.fact.is-open::after { transform: rotate(45deg); color: var(--ink); }
-
-/* ---------- marquee ---------- */
-
-.scroll-strip {
-  overflow: hidden;
-  border-block: 1px solid var(--rule);
-  padding-block: 15px;
-  background: var(--paper-2);
-}
-.scroll-strip-track {
-  display: flex;
-  width: max-content;
-  animation: strip 46s linear infinite;
-}
-.scroll-strip-text {
-  font-family: var(--label);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  white-space: nowrap;
-  padding-right: 34px;
-}
-@keyframes strip { to { transform: translateX(-33.34%); } }
-@media (prefers-reduced-motion: reduce) { .scroll-strip-track { animation: none; } }
-
 /* ---------- cards, where a card is genuinely the right object ---------- */
-
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 1px;
-  background: var(--rule);
-  border: 1px solid var(--rule);
-}
-.card-grid > * { background: var(--paper); }
 
 .blog-grid {
   grid-column: 1 / -1;
@@ -437,7 +276,6 @@
   gap: var(--gutter);
   counter-reset: step;
 }
-.step-connector { display: none; }
 .step-item {
   counter-increment: step;
   border-top: 1px solid var(--rule);
@@ -551,7 +389,6 @@
 
 /* ---------- public board ---------- */
 
-.chat-intro { grid-column: 1 / -1; margin-bottom: 44px; }
 .chat-board {
   grid-column: 1 / -1;
   border-top: 1px solid var(--rule);
@@ -672,12 +509,6 @@
 /* ---------- forms ---------- */
 
 .form-container { min-width: 0; }
-.form-heading {
-  font-family: var(--display);
-  font-size: clamp(1.35rem, 2vw, 1.8rem);
-  letter-spacing: -0.03em;
-  margin-bottom: 32px;
-}
 .form-group { margin-bottom: 26px; }
 .form-group label,
 .job-resume-upload label {
@@ -892,17 +723,6 @@
 }
 .product-mock { max-width: 100%; }
 
-.fig-caption {
-  font-family: var(--label);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--hair);
-}
-
 /* ---------- responsive ---------- */
 
 @media (max-width: 1180px) {
@@ -922,16 +742,6 @@
   .blog-grid { grid-template-columns: 1fr; gap: 40px; }
   .values-grid, .steps-row { grid-template-columns: 1fr; gap: 34px; }
   .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .fact {
-    grid-template-columns: 58px 1fr 16px;
-    grid-template-areas:
-      "value label mark"
-      "detail detail detail";
-    column-gap: 14px;
-    padding-block: 16px;
-  }
-  .rec { grid-template-columns: 1fr; gap: 10px; }
-  .rec-n { padding-top: 0; }
   .chat-msg-time { margin-left: 0; }
   .jobs-table thead { display: none; }
   .jobs-table tbody tr { display: grid; gap: 6px; padding-block: 20px; border-bottom: 1px solid var(--rule); }

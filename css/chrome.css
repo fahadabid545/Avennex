@@ -253,9 +253,6 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 }
 .footer-social a:hover { color: var(--panel-ink); border-color: var(--panel-ink); }
 
-/* the index, moved off the hero on small screens */
-.footer-index { display: none; }
-
 .footer-bottom {
   border-top: 1px solid var(--panel-hair);
   max-width: var(--maxw);
@@ -337,7 +334,6 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   }
   .footer-grid .footer-col:first-child { grid-column: 1 / -1; }
   .footer-grid .footer-col:last-child { grid-column: auto; }
-  .footer-index { display: flex; flex-direction: column; }
   .site-footer { padding-top: 56px; }
   .footer-bottom { padding-block: 18px; }
   .chatbot-trigger { right: 14px; bottom: 14px; }

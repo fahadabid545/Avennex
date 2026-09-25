@@ -190,12 +190,10 @@ h1, h2, h3, h4 { text-wrap: balance; }
 /* ---------- text links: the line draws in and leaves the other way ---------- */
 
 .text-link,
-.story-link,
 .back-link {
   position: relative;
 }
 .text-link::after,
-.story-link::after,
 .back-link::after {
   content: '';
   position: absolute;
@@ -209,7 +207,6 @@ h1, h2, h3, h4 { text-wrap: balance; }
   transition: transform 520ms var(--ease-out);
 }
 .text-link:hover::after,
-.story-link:hover::after,
 .back-link:hover::after {
   transform: scaleX(1);
   transform-origin: left;
