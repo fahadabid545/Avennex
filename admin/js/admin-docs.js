@@ -291,7 +291,7 @@ const AdminDocs = (() => {
 
   /* data is the form's own formData, so drafts and revisions carry the
      documents with everything else. uploadPath returns where to send a file,
-     or throws when the record has not been saved yet. */
+     or throws when it can't. */
   function mount(prefix, data, uploadPath) {
     if (!Array.isArray(data.documents)) data.documents = [];
     const msg = document.getElementById(`${prefix}-docs-msg`);
@@ -358,7 +358,7 @@ const AdminDocs = (() => {
           });
           renderList(prefix, data);
           const warn = (res.warnings || []).join(' ');
-          say(`Uploaded.${previewNote}${warn ? ' ' + warn : ''} Save to publish it.`, previewNote || warn ? 'warning' : 'success');
+          say(`Uploaded.${previewNote}${warn ? ' ' + warn : ''} It goes live when you publish or save.`, previewNote || warn ? 'warning' : 'success');
         } catch (err) {
           say(AdminUI.friendly(err), 'error');
         }
@@ -370,5 +370,13 @@ const AdminDocs = (() => {
     renderList(prefix, data);
   }
 
-  return { field, mount, toPreview, check, parseCsv, MAX, ACCEPT };
+  /* a record that hasn't been published yet has no id, so its files go into
+     a folder named by a key the form keeps until it's saved */
+  function folderFor(item, data) {
+    if (item && item.id) return item.id;
+    if (!data.docs_key) data.docs_key = 'new-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    return data.docs_key;
+  }
+
+  return { field, mount, folderFor, toPreview, check, parseCsv, MAX, ACCEPT };
 })();

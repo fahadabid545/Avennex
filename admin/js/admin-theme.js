@@ -3,11 +3,11 @@
   const root = document.documentElement;
 
   function current() {
-    return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   }
 
   function apply(theme, save) {
-    const next = theme === 'light' ? 'light' : 'dark';
+    const next = theme === 'dark' ? 'dark' : 'light';
     root.setAttribute('data-theme', next);
     if (save) {
       try { localStorage.setItem(KEY, next); } catch (e) {}

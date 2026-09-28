@@ -165,6 +165,32 @@ body {
   color: var(--danger);
 }
 
+/* narrow or heavily zoomed windows: the sidebar becomes a bar across the top
+   that scrolls sideways, so every section stays one tap away */
+@media (max-width: 768px) {
+  body:has(> .sidebar) { flex-direction: column; }
+  .sidebar {
+    position: static;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo { margin: 0 12px 0 0; padding: 0 4px; flex-shrink: 0; }
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0;
+    scrollbar-width: thin;
+  }
+  .sidebar-link { width: auto; flex-shrink: 0; white-space: nowrap; padding: 8px 12px; }
+  .sidebar-bottom { border-top: 0; margin: 0 0 0 8px; padding: 0; flex-shrink: 0; }
+  .main-wrap { margin-left: 0; }
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -408,7 +434,7 @@ div.row-actions {
 /* ---------- Cards and forms ---------- */
 
 .form-card,
-.dash-card,
+.stat-card,
 .dash-chart-card,
 .chatbot-admin-section,
 .settings-group {
@@ -655,12 +681,18 @@ div.row-actions {
 
 .dash-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
+@media (max-width: 1100px) {
+  .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .dash-grid { grid-template-columns: minmax(0, 1fr); }
+}
 
-.dash-card {
+.stat-card {
   padding: 20px;
 }
 
@@ -696,7 +728,13 @@ div.row-actions {
 
 .dash-chart-card {
   padding: 20px;
+  min-width: 0;
 }
+.dash-charts,
+.dash-charts-6 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+.dash-chart-card canvas { max-width: 100%; }
 
 /* ---------- Editor split ---------- */
 

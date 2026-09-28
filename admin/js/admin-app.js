@@ -42,7 +42,11 @@
   });
 
   function markNav(mod) {
-    navLinks.forEach((l) => l.classList.toggle('active', l.dataset.module === mod));
+    navLinks.forEach((l) => {
+      const on = l.dataset.module === mod;
+      l.classList.toggle('active', on);
+      if (on && l.scrollIntoView) l.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
   }
 
   // the loaders are async, so a rejected promise used to escape the old
@@ -1517,7 +1521,7 @@
       html += '<button type="submit" class="btn btn-primary">Save changes</button>';
       html += '<button type="button" class="btn btn-secondary" id="next-step">Next step</button>';
     } else {
-      html += '<button type="button" class="btn btn-primary" id="next-step">Save &amp; continue</button>';
+      html += '<button type="button" class="btn btn-primary" id="next-step">Continue</button>';
     }
     html += '</div>';
     html += '<div class="form-msg" id="form-msg"></div>';
@@ -3715,10 +3719,8 @@
               if (idx !== undefined && field) productLinks[Number(idx)][field] = e.target.value;
             });
 
-            AdminDocs.mount('p', config.formData, () => {
-              if (!config.item.id) throw new Error('Save the product once before uploading a document.');
-              return `/api/products/${config.item.id}/upload-document`;
-            });
+            AdminDocs.mount('p', config.formData, () =>
+              `/api/products/${AdminDocs.folderFor(config.item, config.formData)}/upload-document`);
 
           },
         },
@@ -4187,10 +4189,8 @@
               }
             });
 
-            AdminDocs.mount('lp', config.formData, () => {
-              if (!config.item.id) throw new Error('Save the idea once before uploading a document.');
-              return `/api/launchpad/${config.item.id}/upload-document`;
-            });
+            AdminDocs.mount('lp', config.formData, () =>
+              `/api/launchpad/${AdminDocs.folderFor(config.item, config.formData)}/upload-document`);
           },
         },
         dashboardStep('launchpad', 'Dates, milestones and your own metrics for this idea. The roadmap counts down live from these.'),
@@ -5469,42 +5469,42 @@
         <div class="content-header"><h1 class="content-title">Dashboard</h1></div>
 
         <div class="dash-grid">
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Blogs</div>
             <div class="dash-card-value">${(s.blogs_published || 0) + (s.blogs_draft || 0)}</div>
             <div class="dash-card-sub">${s.blogs_published || 0} published, ${s.blogs_draft || 0} draft</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Jobs</div>
             <div class="dash-card-value">${(s.jobs_open || 0) + (s.jobs_closed || 0)}</div>
             <div class="dash-card-sub">${s.jobs_open || 0} open, ${s.jobs_closed || 0} closed</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Applications</div>
             <div class="dash-card-value">${s.applications || 0}</div>
             <div class="dash-card-sub">total received</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Products</div>
             <div class="dash-card-value">${s.products || 0}</div>
             <div class="dash-card-sub">listed</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Launchpad</div>
             <div class="dash-card-value">${s.launchpad_total || 0}</div>
             <div class="dash-card-sub">${lpSummary}</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Chat</div>
             <div class="dash-card-value">${s.chat_total || 0}</div>
             <div class="dash-card-sub">${s.chat_unreplied || 0} unreplied</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">Academy</div>
             <div class="dash-card-value">${s.playlists || 0}</div>
             <div class="dash-card-sub">${s.videos || 0} videos</div>
           </div>
-          <div class="dash-card">
+          <div class="stat-card">
             <div class="dash-card-label">FAQs</div>
             <div class="dash-card-value">${(s.faqs_active || 0) + (s.faqs_inactive || 0)}</div>
             <div class="dash-card-sub">${s.faqs_active || 0} active, ${s.faqs_inactive || 0} inactive</div>
@@ -5518,12 +5518,12 @@
         <div class="dash-section">
           <h2 class="dash-section-title">Engagement</h2>
           <div class="dash-grid">
-            <div class="dash-card">
+            <div class="stat-card">
               <div class="dash-card-label">Engagement Rate</div>
               <div class="dash-card-value">${s.engagement_rate || 0}%</div>
               <div class="dash-card-sub">messages replied to</div>
             </div>
-            <div class="dash-card">
+            <div class="stat-card">
               <div class="dash-card-label">Chatbot Documents</div>
               <div class="dash-card-value">${s.chatbot_docs_ready || 0}</div>
               <div class="dash-card-sub">ready, ${s.chatbot_docs_failed || 0} failed</div>
@@ -5562,7 +5562,7 @@
         <div class="dash-section">
           <h2 class="dash-section-title">Jobs &amp; Applications</h2>
           <div class="dash-grid">
-            <div class="dash-card">
+            <div class="stat-card">
               <div class="dash-card-label">Applications This Month</div>
               <div class="dash-card-value">${s.applications_this_month || 0}</div>
               <div class="dash-card-sub">calendar month to date</div>
@@ -5583,7 +5583,7 @@
         <div class="dash-section">
           <h2 class="dash-section-title">Academy</h2>
           <div class="dash-grid">
-            <div class="dash-card">
+            <div class="stat-card">
               <div class="dash-card-label">Total Videos Published</div>
               <div class="dash-card-value">${s.videos || 0}</div>
               <div class="dash-card-sub">across ${s.playlists || 0} playlists</div>
