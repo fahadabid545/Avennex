@@ -151,6 +151,36 @@
       e.preventDefault();
     }, { passive: false });
 
+    // and dragging it with the mouse pulls it along. a drag of a few pixels
+    // or more is a scroll, not a click on the chip under the cursor
+    var drag = null;
+    suggestEl.addEventListener('pointerdown', function (e) {
+      if (!started || e.pointerType !== 'mouse' || e.button !== 0) return;
+      drag = { x: e.clientX, left: suggestEl.scrollLeft, moved: false };
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) < 5) return;
+      drag.moved = true;
+      suggestEl.classList.add('is-dragging');
+      suggestEl.scrollLeft = drag.left - dx;
+    });
+    var justDragged = false;
+    window.addEventListener('pointerup', function () {
+      if (!drag) return;
+      justDragged = drag.moved;
+      drag = null;
+      suggestEl.classList.remove('is-dragging');
+      // the click that follows this pointerup arrives before the timer runs
+      setTimeout(function () { justDragged = false; }, 0);
+    });
+    suggestEl.addEventListener('click', function (e) {
+      if (!justDragged) return;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
+
     addBotMessage('Hi, I\'m Nex. I can walk you through what Avennex builds, how a project gets started, or which roles are open. What would you like to know?');
     var hello = messagesEl.lastElementChild;
     var wave = document.createElement('span');
