@@ -1,7 +1,7 @@
 const AdminAPI = (() => {
   // the staging panel talks to the staging backend, never the live one
   const BASE = window.location.hostname === 'staging.avennex.com'
-    ? 'https://avennex-api-staging.onrender.com' : 'https://avennex.onrender.com';
+    ? 'https://avennex-stagging.onrender.com' : 'https://avennex.onrender.com';
 
   function formatErrorDetail(detail) {
     if (Array.isArray(detail)) {

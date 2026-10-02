@@ -19,9 +19,9 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# on the main site, the API source and repository folders are never served.
-# limited to avennex.com so subdomains with their own folders aren't touched
-RewriteCond %{HTTP_HOST} ^(www\.)?avennex\.com$ [NC]
+# on the main site and staging, the API source and repository folders are
+# never served. limited to these hosts so other subdomains aren't touched
+RewriteCond %{HTTP_HOST} ^((www\.)?avennex\.com|staging\.avennex\.com)$ [NC]
 RewriteRule ^(backend|\.git|private_uploads)(/|$) - [F,L]
 
 # staging stays out of search results
@@ -36,7 +36,7 @@ SetEnvIfNoCase Host ^staging\.avennex\.com$ AVX_STAGING
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; connect-src 'self' https://avennex.onrender.com https://avennex-api-staging.onrender.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; connect-src 'self' https://avennex.onrender.com https://avennex-stagging.onrender.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
   Header set Cross-Origin-Opener-Policy "same-origin"
   Header unset Server
   Header unset X-Powered-By

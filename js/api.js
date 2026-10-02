@@ -2,7 +2,7 @@ var API = (function () {
   // staging.avennex.com has its own backend and database, so nothing done
   // there reaches the live site
   var BASE = (location.hostname === 'staging.avennex.com'
-    ? 'https://avennex-api-staging.onrender.com' : 'https://avennex.onrender.com') + '/api';
+    ? 'https://avennex-stagging.onrender.com' : 'https://avennex.onrender.com') + '/api';
 
   function request(method, path, body) {
     var opts = {
