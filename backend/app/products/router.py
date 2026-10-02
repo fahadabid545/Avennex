@@ -40,6 +40,8 @@ def get_product(slug: str):
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(body: ProductCreate, _user: dict = Depends(get_current_user)):
     data = body.model_dump(exclude_none=True)
+    if not (data.get("name") or "").strip():
+        raise HTTPException(status_code=400, detail="A product needs a name")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     try:
@@ -60,11 +62,15 @@ def update_product(id: str, body: ProductUpdate, _user: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    if "name" in data and not (data["name"] or "").strip():
+        raise HTTPException(status_code=400, detail="A product needs a name")
     revisions.record_before("product", id, service.get_by_id, _user["email"], data)
     # a raised error is the database refusing the write, an empty result is
     # simply no row with that id, and the two deserve different answers
     try:
         result = service.update(id, data)
+    except service.SlugTaken as e:
+        raise HTTPException(status_code=409, detail=f"Another product already uses the address \"{e}\". Pick a different slug.")
     except Exception:
         raise HTTPException(status_code=500, detail="The changes could not be saved. The reason is in the server log.")
     if not result:

@@ -33,6 +33,7 @@ def list_playlists():
         db.table("playlists")
         .select("*")
         .order("display_order")
+        .order("created_at")
         .execute()
     )
     playlists = result.data or []
@@ -45,6 +46,7 @@ def list_playlists():
         .select("id, playlist_id, youtube_url, display_order")
         .in_("playlist_id", playlist_ids)
         .order("display_order")
+        .order("created_at")
         .execute()
     )
 
@@ -69,6 +71,7 @@ def list_playlists_admin():
         db.table("playlists")
         .select("*")
         .order("display_order")
+        .order("created_at")
         .execute()
     )
     playlists = result.data or []
@@ -111,6 +114,7 @@ def get_playlist_by_slug(slug: str):
         .select("*")
         .eq("playlist_id", playlist["id"])
         .order("display_order")
+        .order("created_at")
         .execute()
     )
     for v in (videos.data or []):
@@ -133,6 +137,7 @@ def get_playlist_admin(playlist_id: str):
         .select("*")
         .eq("playlist_id", playlist_id)
         .order("display_order")
+        .order("created_at")
         .execute()
     )
     playlist["videos"] = videos.data or []

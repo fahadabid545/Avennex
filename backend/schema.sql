@@ -96,8 +96,14 @@ create table if not exists products (
   documents_heading text,
   documents_body text,
   report jsonb default '{}'::jsonb,
+  video_url text,
+  gallery jsonb default '[]'::jsonb,
+  external_links jsonb default '[]'::jsonb,
+  metrics jsonb default '[]'::jsonb,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  last_edited_by text,
+  last_edited_at timestamptz
 );
 
 -- The live table also carries a dashboard jsonb column, added by
