@@ -1,5 +1,4 @@
 import logging
-from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
@@ -8,6 +7,7 @@ from app.product_chat import service
 from app.product_chat.schemas import ProductChatMessageCreate, ProductChatReply
 from app.products.service import get_by_slug
 from app.email.service import send_email, is_email_enabled
+from app.email import templates
 from app.settings.service import get_setting
 from app.admin.service import log_activity
 from app.security import limiter
@@ -110,15 +110,10 @@ def reply_to_message(slug: str, id: str, body: ProductChatReply, _user: dict = D
             email_status = "disabled"
         else:
             try:
-                html = f"""
-                <h2>Avennex replied to your message on {html_escape(product['name'])}</h2>
-                <p><strong>Your message:</strong></p>
-                <blockquote>{html_escape(original['message'])}</blockquote>
-                <p><strong>Reply:</strong></p>
-                <p>{html_escape(body.message)}</p>
-                <p><a href="https://avennex.com/product-detail.html?slug={html_escape(product['slug'])}">View the conversation</a></p>
-                """
-                sent = send_email(original["author_email"], f"Avennex replied on {product['name']}", html)
+                subject, html, text = templates.product_chat_reply(
+                    original.get("author_name"), product["name"], product["slug"], original.get("message"), body.message
+                )
+                sent = send_email(original["author_email"], subject, html, "general", text)
                 email_status = "sent" if sent else "failed"
                 # a false return is a delivery failure the same as a raised one,
                 # and the admin hears about it either way

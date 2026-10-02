@@ -24,14 +24,44 @@ def is_email_enabled() -> bool:
     return True
 
 
+SENDER_NAMES = {"careers": "Avennex Careers", "general": "Avennex"}
+
+
+def _with_name(address: str, email_type: str) -> str:
+    # a bare address shows up as "careers" in the inbox and scores worse
+    # with spam filters than a named sender
+    if not address or "<" in address:
+        return address
+    return f"{SENDER_NAMES.get(email_type, 'Avennex')} <{address}>"
+
+
 def _from_address(settings, email_type: str) -> str:
     if email_type == "careers":
-        return settings.smtp_from_careers or "careers@avennex.com"
-    return settings.smtp_from_general or "hello@avennex.com"
+        return _with_name(settings.smtp_from_careers or "careers@avennex.com", email_type)
+    return _with_name(settings.smtp_from_general or "hello@avennex.com", email_type)
 
 
-def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type: str) -> bool:
+def _plain(html: str) -> str:
+    import re
+    text = re.sub(r"(?is)<(style|script|title)[^>]*>.*?</\1>", "", html)
+    text = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</tr>|</h[1-6]>", "\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    from html import unescape
+    return re.sub(r"\n{3,}", "\n\n", unescape(text)).strip()
+
+
+def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type: str,
+                     text: str, reply_to: str | None) -> bool:
     from_addr = _from_address(settings, email_type)
+    payload = {
+        "from": from_addr,
+        "to": [to],
+        "subject": subject,
+        "html": body_html,
+        "text": text,
+    }
+    if reply_to:
+        payload["reply_to"] = [reply_to]
     try:
         response = requests.post(
             RESEND_API_URL,
@@ -39,12 +69,7 @@ def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type
                 "Authorization": f"Bearer {settings.resend_api_key}",
                 "Content-Type": "application/json",
             },
-            json={
-                "from": from_addr,
-                "to": [to],
-                "subject": subject,
-                "html": body_html,
-            },
+            json=payload,
             timeout=10,
         )
         if response.ok:
@@ -57,7 +82,8 @@ def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type
         return False
 
 
-def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: str) -> bool:
+def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: str,
+                   text: str, reply_to: str | None) -> bool:
     if not settings.smtp_host:
         logger.warning("Email to %s not sent: SMTP_HOST is not configured", to)
         return False
@@ -70,6 +96,7 @@ def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: 
         user = settings.smtp_general_user or settings.smtp_user
         password = settings.smtp_general_password or settings.smtp_password
         from_addr = settings.smtp_from_general or settings.smtp_from_email
+    from_addr = _with_name(from_addr, email_type)
 
     if not user or not password:
         logger.warning(
@@ -83,7 +110,10 @@ def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: 
         msg["Subject"] = subject
         msg["From"] = from_addr
         msg["To"] = to
-        msg.attach(MIMEText(body_html, "html"))
+        if reply_to:
+            msg["Reply-To"] = reply_to
+        msg.attach(MIMEText(text, "plain", "utf-8"))
+        msg.attach(MIMEText(body_html, "html", "utf-8"))
 
         if settings.smtp_port == 465:
             with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port) as server:
@@ -108,8 +138,11 @@ def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: 
         return False
 
 
-def send_email(to: str, subject: str, body_html: str, email_type: str = "general") -> bool:
+def send_email(to: str, subject: str, body_html: str, email_type: str = "general",
+               text: str | None = None, reply_to: str | None = None) -> bool:
     settings = get_settings()
+    text = text or _plain(body_html)
+    subject = " ".join(str(subject or "").split())
     if settings.resend_api_key:
-        return _send_via_resend(settings, to, subject, body_html, email_type)
-    return _send_via_smtp(settings, to, subject, body_html, email_type)
+        return _send_via_resend(settings, to, subject, body_html, email_type, text, reply_to)
+    return _send_via_smtp(settings, to, subject, body_html, email_type, text, reply_to)

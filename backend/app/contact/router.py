@@ -1,10 +1,10 @@
 import logging
-from html import escape as html_escape
 
 from fastapi import APIRouter, Request, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.email.service import send_email, is_email_enabled
+from app.email import templates
 from app.config import get_settings
 from app.security import limiter, clean_text, single_line
 
@@ -39,15 +39,9 @@ def contact(body: ContactRequest, request: Request):
         return {"success": False, "message": "Email notifications are currently disabled"}
 
     settings = get_settings()
-    html = f"""
-    <h2>New contact form submission</h2>
-    <p><strong>Name:</strong> {html_escape(body.name)}</p>
-    <p><strong>Email:</strong> {html_escape(body.email)}</p>
-    <h3>Message</h3>
-    <p>{html_escape(body.message)}</p>
-    """
+    subject, html, text = templates.contact_alert(body.name, body.email, body.message)
     try:
-        sent = send_email(settings.notification_recipient, f"Contact: {body.name}", html)
+        sent = send_email(settings.notification_recipient, subject, html, "general", text, body.email)
         if sent:
             return {"success": True, "message": "Message sent"}
         return {"success": False, "message": "Email service not configured"}

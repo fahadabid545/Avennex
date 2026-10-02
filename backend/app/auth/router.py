@@ -178,22 +178,9 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
         reset_link = f"https://avennex.com/admin/index.html?reset={token}"
         try:
             from app.email.service import send_email
-            html = f"""
-            <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
-              <h2 style="margin-bottom: 16px;">Password Reset</h2>
-              <p>You requested a password reset for your Avennex admin account.</p>
-              <p style="margin: 24px 0;">
-                <a href="{reset_link}"
-                   style="display: inline-block; padding: 12px 24px; background: #3b82f6;
-                          color: #fff; text-decoration: none; border-radius: 6px;">
-                  Reset Password
-                </a>
-              </p>
-              <p style="color: #666; font-size: 14px;">This link expires in 1 hour.</p>
-              <p style="color: #666; font-size: 14px;">If you didn't request this, ignore this email.</p>
-            </div>
-            """
-            sent = send_email(admin["email"], "Reset your Avennex admin password", html)
+            from app.email import templates
+            subject, html, text = templates.password_reset(admin["email"], reset_link)
+            sent = send_email(admin["email"], subject, html, "general", text)
             if not sent:
                 logger.warning("Password reset email for %s was not delivered", admin["email"])
         except Exception as e:

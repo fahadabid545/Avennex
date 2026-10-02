@@ -1,5 +1,4 @@
 import logging
-from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
@@ -7,6 +6,7 @@ from app.auth.dependencies import get_current_user, require_manager
 from app.chat import service
 from app.chat.schemas import ChatMessageCreate, ChatReply, ChatMessageUpdate
 from app.email.service import send_email, is_email_enabled
+from app.email import templates
 from app.admin.service import log_activity
 from app.security import limiter
 
@@ -71,15 +71,8 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
             email_status = "disabled"
         else:
             try:
-                html = f"""
-                <h2>Avennex replied to your message</h2>
-                <p><strong>Your message:</strong></p>
-                <blockquote>{html_escape(original['message'])}</blockquote>
-                <p><strong>Reply:</strong></p>
-                <p>{html_escape(body.message)}</p>
-                <p><a href="https://avennex.com/#chat">View the conversation</a></p>
-                """
-                sent = send_email(original["author_email"], "Avennex replied to your message", html)
+                subject, html, text = templates.chat_reply(original.get("author_name"), original.get("message"), body.message)
+                sent = send_email(original["author_email"], subject, html, "general", text)
                 email_status = "sent" if sent else "failed"
                 # a false return is a delivery failure the same as a raised one,
                 # and the admin hears about it either way

@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
-from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from fastapi.responses import Response
@@ -11,6 +10,7 @@ from app.auth.dependencies import get_current_user, require_manager
 from app.jobs import service
 from app.jobs.schemas import JobCreate, JobUpdate, JobResponse, JobApplication
 from app.email.service import send_email, is_email_enabled
+from app.email import templates
 from app.config import get_settings
 from app.admin.service import log_activity
 from app.revisions import service as revisions
@@ -296,24 +296,15 @@ async def apply_to_job(
         return response
 
     settings = get_settings()
-    cover = cover_letter or "Not provided"
-    resume_link = "<p>Resume attached. View it in the admin panel.</p>" if resume_uploaded else ""
-    admin_html = f"""
-    <h2>New application for: {html_escape(job['title'])}</h2>
-    <p><strong>Name:</strong> {html_escape(name)}</p>
-    <p><strong>Email:</strong> {html_escape(email)}</p>
-    <h3>Resume</h3>
-    <pre>{html_escape(resume_text)}</pre>
-    {resume_link}
-    <h3>Cover Letter</h3>
-    <p>{html_escape(cover)}</p>
-    """
+    alert_subject, alert_html, alert_text = templates.application_alert(
+        job["title"], name, email, resume_text, cover_letter, app_data.get("custom_answers"), resume_uploaded
+    )
 
     # send_email blocks on an HTTP call, and this endpoint is async, so a slow
     # provider would stall every other request this worker is serving
     try:
         notified = await asyncio.to_thread(
-            send_email, settings.notification_recipient, f"Job Application: {job['title']} - {name}", admin_html, "careers"
+            send_email, settings.notification_recipient, alert_subject, alert_html, "careers", alert_text, email
         )
         if not notified:
             logger.error("Admin notification for the application by %s was not delivered", email)
@@ -323,13 +314,9 @@ async def apply_to_job(
         warnings.append("Admin notification email failed")
 
     try:
-        applicant_html = f"""
-        <h2>Application received</h2>
-        <p>Your application for <strong>{html_escape(job['title'])}</strong> at Avennex has been received.</p>
-        <p>We'll review it and get back to you if there's a fit.</p>
-        """
+        subject, applicant_html, applicant_text = templates.application_received(name, job["title"], resume_uploaded)
         sent = await asyncio.to_thread(
-            send_email, email, f"Application received for {job['title']} at Avennex", applicant_html, "careers"
+            send_email, email, subject, applicant_html, "careers", applicant_text
         )
         email_status = "sent" if sent else "failed"
         # a false return is a delivery failure the same as a raised one,
