@@ -1918,6 +1918,8 @@
     chatbot_visible: 'Assistant visible on the site',
     default_blog_status: 'Default blog status',
     default_job_expiry_days: 'Default job expiry',
+    job_cleanup_days: 'Delete closed jobs after',
+    team_enabled: 'Team on the About page',
     product_chat_enabled: 'Product discussion',
     chat_show_details: 'Show author details',
     emails_enabled: 'Email notifications',
@@ -5917,7 +5919,7 @@
       'product_chat_enabled', 'chat_show_details', 'emails_enabled',
       'animations_enabled',
       'ai_brain_enabled', 'home_chat_enabled', 'faq_enabled',
-      'default_blog_status', 'default_job_expiry_days',
+      'default_blog_status', 'default_job_expiry_days', 'job_cleanup_days', 'team_enabled',
     ];
 
     const vals = {};
@@ -5968,6 +5970,12 @@
       </div>
 
       <div class="settings-group">
+        <h3 class="settings-group-title">About page</h3>
+        <p class="settings-group-note">Turn it off and the team section disappears from the About page. The profiles stay saved under Team.</p>
+        ${toggleRow('s-team', 'Team profiles', 'team_enabled', 'true')}
+      </div>
+
+      <div class="settings-group">
         <h3 class="settings-group-title">Content defaults</h3>
         <p class="settings-group-note">What a new item starts with, and the numbers the site quotes.</p>
         <div class="settings-grid">
@@ -5983,6 +5991,12 @@
             <label for="s-job-expiry">Default job expiry (days)</label>
             <input type="number" id="s-job-expiry" min="1" max="365" value="${vals.default_job_expiry_days || '30'}">
             <span class="form-msg settings-msg" data-msg-for="s-job-expiry"></span>
+          </div>
+          <div class="field">
+            <label for="s-job-cleanup">Delete closed jobs after (days)</label>
+            <input type="number" id="s-job-cleanup" min="0" max="3650" value="${vals.job_cleanup_days ?? '7'}">
+            <span class="field-hint">A closed or expired job goes, with its applications and resumes, once it has been closed this long. 0 keeps them forever.</span>
+            <span class="form-msg settings-msg" data-msg-for="s-job-cleanup"></span>
           </div>
         </div>
         <div class="form-actions">
@@ -6039,7 +6053,9 @@
       if (!msg) return;
       msg.textContent = text;
       msg.className = 'form-msg settings-msg ' + (success ? 'form-msg-success' : 'form-msg-error');
-      if (success) setTimeout(() => { msg.textContent = ''; }, 2000);
+      // an earlier "Saved" must not wipe a newer message when its timer runs
+      clearTimeout(msg.clearTimer);
+      if (success) msg.clearTimer = setTimeout(() => { msg.textContent = ''; }, 2000);
     }
 
     content.querySelectorAll('.settings-toggle').forEach((cb) => {
@@ -6177,14 +6193,22 @@
       btn.disabled = true;
       const blogStatus = document.getElementById('s-blog-status').value;
       const jobExpiry = document.getElementById('s-job-expiry').value;
+      const cleanupDays = parseInt(document.getElementById('s-job-cleanup').value, 10);
+      if (!(cleanupDays >= 0 && cleanupDays <= 3650)) {
+        showMsg('s-job-cleanup', 'Enter a number from 0 to 3650', false);
+        btn.disabled = false;
+        return;
+      }
 
       const { failed } = await AdminSettings.saveMany({
         default_blog_status: blogStatus,
         default_job_expiry_days: jobExpiry,
+        job_cleanup_days: String(cleanupDays),
       });
       if (!failed.length) {
         showMsg('s-blog-status', 'Saved', true);
         showMsg('s-job-expiry', 'Saved', true);
+        showMsg('s-job-cleanup', 'Saved', true);
       } else {
         showMsg('s-blog-status', 'Some settings did not save. See the notice.', false);
       }

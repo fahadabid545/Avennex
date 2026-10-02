@@ -90,8 +90,21 @@ def application_counts(
 
 @router.delete("/admin/cleanup")
 def cleanup_old_jobs(_user: dict = Depends(require_manager)):
-    result = service.cleanup_old_closed_jobs()
-    log_activity(_user["email"], "cleanup", "jobs", "", f"Deleted {result['deleted']} old jobs")
+    # set in the panel. 0 keeps closed roles forever
+    days = 7
+    try:
+        setting = get_supabase().table("settings").select("value").eq("key", "job_cleanup_days").execute().data
+        if setting:
+            days = int(setting[0]["value"])
+    except (ValueError, TypeError):
+        logger.warning("job_cleanup_days is not a number, using %s", days)
+    except Exception as e:
+        logger.warning("Could not read job_cleanup_days: %s", e)
+    if days <= 0:
+        return {"success": True, "deleted": 0, "warnings": []}
+    result = service.cleanup_old_closed_jobs(days)
+    if result["deleted"]:
+        log_activity(_user["email"], "cleanup", "jobs", "", f"Deleted {result['deleted']} jobs closed over {days} days ago")
     return {"success": True, "deleted": result["deleted"], "warnings": result.get("warnings", [])}
 
 

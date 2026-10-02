@@ -9,6 +9,7 @@ from app.team.schemas import (
     TeamMemberCreate, TeamMemberUpdate, TeamMemberResponse, TeamMemberPublic,
 )
 from app.admin.service import log_activity
+from app.settings.service import get_setting
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,14 @@ def _load():
 
 @router.get("", response_model=list[TeamMemberPublic])
 def list_team():
+    # switched off in the panel, the About page gets nobody and hides the section
+    try:
+        setting = get_setting("team_enabled")
+    except Exception as e:
+        logger.warning("Could not read team_enabled: %s", e)
+        setting = None
+    if setting and setting.get("value") == "false":
+        return []
     return _load()
 
 

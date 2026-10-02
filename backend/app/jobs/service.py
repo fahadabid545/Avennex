@@ -244,9 +244,9 @@ def repost_job(job_id: str, overrides: dict = None):
     return result.data[0] if result.data else None
 
 
-def cleanup_old_closed_jobs():
+def cleanup_old_closed_jobs(days: int = 7):
     db = get_supabase()
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     deleted_count = 0
     warnings = []
 
