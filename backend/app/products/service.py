@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.blogs.service import slugify
+from app.slugs import slugify
 from app.progress_history import stamp as stamp_progress
 from app.storage import ftp_service
 from app.uploads import documents

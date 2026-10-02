@@ -305,15 +305,28 @@
       .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?]|$)/g, '$1<em>$2</em>');
   }
 
+  // a code block may hold blank lines, so it is set aside before the text is
+  // split into paragraphs and put back whole
+  function keepCodeBlocks(text, kept) {
+    return String(text).replace(/```[a-z]*\n?([\s\S]*?)```|<pre\b[\s\S]*?<\/pre>/gi, (m, code) => {
+      kept.push(code !== undefined ? '<pre><code>' + esc(code.replace(/\n$/, '')) + '</code></pre>' : m);
+      return '\n\n\u0000' + (kept.length - 1) + '\u0000\n\n';
+    });
+  }
+
   function richText(text) {
     if (!text) return '';
     const blockTagRe = /<(h[1-6]|ul|ol|li|blockquote|pre|img|div|table|p)[\s>/]/i;
-    const paragraphs = String(text).split(/\n\n+/);
+    const kept = [];
+    const paragraphs = keepCodeBlocks(text, kept).split(/\n\n+/);
     let html = '';
     for (const block of paragraphs) {
       const para = block.trim();
       if (!para) continue;
-      if (blockTagRe.test(para)) {
+      const code = para.match(/^\u0000(\d+)\u0000$/);
+      if (code) {
+        html += kept[Number(code[1])];
+      } else if (blockTagRe.test(para)) {
         html += para;
       } else if (para.startsWith('## ')) {
         html += '<h2>' + inlineMd(para.substring(3)) + '</h2>';
@@ -322,7 +335,7 @@
       } else if (para.startsWith('> ')) {
         html += '<blockquote>' + inlineMd(para.replace(/^>\s?/gm, '').trim()).replace(/\n/g, '<br>') + '</blockquote>';
       } else if (para.startsWith('```')) {
-        const fenced = para.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '');
+        const fenced = para.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').replace(/\n$/, '');
         html += '<pre><code>' + esc(fenced) + '</code></pre>';
       } else if (para.startsWith('- ') || para.includes('\n- ')) {
         html += '<ul>';
@@ -1541,6 +1554,11 @@
 
     if (isReview) addReviewPreview(config, entityType);
 
+    if (config.showProblem) {
+      delete config.showProblem;
+      stepProblem(config, currentStep);
+    }
+
     offerDraft(config);
 
     document.getElementById('back-btn').addEventListener('click', async () => {
@@ -1575,6 +1593,7 @@
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
         collectStepData(step, config);
+        if (stepProblem(config, currentStep)) return;
         renderStepForm({ ...config, currentStep: currentStep + 1 });
       });
     }
@@ -1584,6 +1603,7 @@
         const target = Number(dot.dataset.gotoStep);
         if (target === currentStep) return;
         collectStepData(step, config);
+        if (target > currentStep && !item.id && stepProblem(config, currentStep)) return;
         renderStepForm({ ...config, currentStep: target });
       });
     });
@@ -1591,9 +1611,43 @@
     document.getElementById('crud-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       collectStepData(step, config);
+      for (let i = 1; i <= steps.length; i++) {
+        if (!missingOn(config, i)) continue;
+        if (i !== currentStep) renderStepForm({ ...config, currentStep: i, showProblem: true });
+        else stepProblem(config, i);
+        return;
+      }
       const data = onSubmit(config.formData);
       await submitForm(item.id, config.apiPath, data, config.reloadFn, entityType, config.formData.slug);
     });
+  }
+
+  /* the browser only checks required inputs on the step being shown, so a
+     form could reach its last step and save with an earlier one empty */
+  function missingOn(config, n) {
+    const s = config.steps[n - 1];
+    if (!s || s.review) return null;
+    const field = s.fields.find((f) => f.required && f.type !== 'features'
+      && !String(config.formData[f.name] == null ? '' : config.formData[f.name]).trim());
+    if (field) return { field, text: `${field.label} is required.` };
+    const text = s.check ? s.check(config.formData) : '';
+    return text ? { text } : null;
+  }
+
+  function stepProblem(config, n) {
+    const problem = missingOn(config, n);
+    if (!problem) return false;
+    const msg = document.getElementById('form-msg');
+    if (msg) {
+      msg.textContent = problem.text;
+      msg.className = 'form-msg form-msg-error';
+    }
+    const el = problem.field && document.getElementById(problem.field.id);
+    if (el) {
+      el.focus();
+      if (el.reportValidity) el.reportValidity();
+    }
+    return true;
   }
 
   /* a draft only exists if a session died or the tab closed mid-edit, so it
@@ -2236,7 +2290,7 @@
       case 'link': {
         const url = prompt('Enter URL:');
         if (!url) return;
-        before = `<a href="${url}" target="_blank">`;
+        before = `<a href="${url.trim().replace(/"/g, '%22')}" target="_blank" rel="noopener">`;
         after = '</a>';
         break;
       }
@@ -2246,7 +2300,8 @@
         break;
       }
       case 'blockquote': before = '<blockquote>'; after = '</blockquote>'; break;
-      case 'code': before = '<pre><code>'; after = '</code></pre>'; break;
+      // a fenced block is escaped when drawn, so code containing tags shows as code
+      case 'code': before = '\n```\n'; after = '\n```\n'; break;
     }
 
     if (insert) {
@@ -2418,6 +2473,7 @@
         },
         {
           fields: [],
+          check: (d) => (String(d.content || '').trim() ? '' : 'Write the post before moving on.'),
           onMount: (config) => {
             const wrap = document.querySelector('.step-content');
             if (!wrap) return;
@@ -5813,7 +5869,7 @@
         categoryBarChart('chart-actions-by-module', Object.keys(modules), Object.values(modules), '#3b82f6');
       }
 
-      if (!jobsCleanedUp) {
+      if (!jobsCleanedUp && AdminRole.canDelete()) {
         jobsCleanedUp = true;
         AdminAPI.request('/api/jobs/admin/cleanup', { method: 'DELETE' }).then((result) => {
           if (result && result.warnings && result.warnings.length) {

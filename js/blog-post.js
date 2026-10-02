@@ -29,6 +29,18 @@
     var twTitle = document.querySelector('meta[name="twitter:title"]');
     if (twTitle) twTitle.setAttribute('content', post.title + ' | Avennex');
 
+    function setMeta(selector, value) {
+      var el = document.querySelector(selector);
+      if (el && value) el.setAttribute('content', value);
+    }
+    var summary = post.meta_description || post.excerpt;
+    setMeta('meta[name="description"]', summary);
+    setMeta('meta[property="og:description"]', summary);
+    setMeta('meta[name="twitter:description"]', summary);
+    var shareImage = API.assetUrl(post.cover_image);
+    setMeta('meta[property="og:image"]', shareImage);
+    setMeta('meta[name="twitter:image"]', shareImage);
+
     var html = '<article class="blog-article">';
     html += '<a href="blog.html" class="back-link"><i data-lucide="arrow-left" width="16" height="16"></i> All posts</a>';
 

@@ -107,6 +107,12 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--gutter) var(--gutter);
 }
+.blog-more {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
 .blog-card {
   display: flex;
   flex-direction: column;

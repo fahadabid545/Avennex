@@ -128,15 +128,28 @@ var API = (function () {
       .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?]|$)/g, '$1<em>$2</em>');
   }
 
+  // a code block may hold blank lines, so it is set aside before the text is
+  // split into paragraphs and put back whole
+  function keepCodeBlocks(text, kept) {
+    return String(text).replace(/```[a-z]*\n?([\s\S]*?)```|<pre\b[\s\S]*?<\/pre>/gi, function (m, code) {
+      kept.push(code !== undefined ? '<pre><code>' + escHtml(code.replace(/\n$/, '')) + '</code></pre>' : m);
+      return '\n\n\u0000' + (kept.length - 1) + '\u0000\n\n';
+    });
+  }
+
   function renderRichText(text) {
     if (!text) return '';
     var blockTagRe = /<(h[1-6]|ul|ol|li|blockquote|pre|img|div|table|p)[\s>/]/i;
-    var paragraphs = String(text).split(/\n\n+/);
+    var kept = [];
+    var paragraphs = keepCodeBlocks(text, kept).split(/\n\n+/);
     var html = '';
     for (var i = 0; i < paragraphs.length; i++) {
       var para = paragraphs[i].trim();
       if (!para) continue;
-      if (blockTagRe.test(para)) {
+      var code = para.match(/^\u0000(\d+)\u0000$/);
+      if (code) {
+        html += kept[Number(code[1])];
+      } else if (blockTagRe.test(para)) {
         html += para;
       } else if (para.indexOf('## ') === 0) {
         html += '<h2>' + inlineMd(para.substring(3)) + '</h2>';
@@ -145,7 +158,7 @@ var API = (function () {
       } else if (para.indexOf('> ') === 0) {
         html += '<blockquote>' + inlineMd(para.replace(/^>\s?/gm, '').trim()).replace(/\n/g, '<br>') + '</blockquote>';
       } else if (para.indexOf('```') === 0) {
-        var fenced = para.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '');
+        var fenced = para.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').replace(/\n$/, '');
         html += '<pre><code>' + escHtml(fenced) + '</code></pre>';
       } else if (para.indexOf('- ') === 0 || para.indexOf('\n- ') >= 0) {
         var lines = para.split('\n');

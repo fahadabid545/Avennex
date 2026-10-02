@@ -3,7 +3,7 @@ import re
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.blogs.service import slugify
+from app.slugs import slugify
 
 logger = logging.getLogger(__name__)
 

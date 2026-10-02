@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 
 from app.database import get_supabase
-from app.blogs.service import slugify
+from app.slugs import slugify
 from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)

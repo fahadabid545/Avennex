@@ -80,6 +80,8 @@ def get_blog(slug: str):
 @router.post("", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
 def create_blog(body: BlogCreate, _user: dict = Depends(get_current_user)):
     data = _as_text_dates(body.model_dump(exclude_none=True))
+    if not (data.get("title") or "").strip():
+        raise HTTPException(status_code=400, detail="A post needs a title")
     _check_schedule(data)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
@@ -93,13 +95,18 @@ def update_blog(id: str, body: BlogUpdate, _user: dict = Depends(get_current_use
     data = _as_text_dates(body.model_dump(exclude_unset=True))
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    if "title" in data and not (data["title"] or "").strip():
+        raise HTTPException(status_code=400, detail="A post needs a title")
     _check_schedule(data)
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     revisions.record_before("blog", id, service.get_by_id, _user["email"], data)
     action = "publish" if data.get("status") == "published" else (
         "schedule" if data.get("status") == "scheduled" else "update")
-    result = service.update(id, data)
+    try:
+        result = service.update(id, data)
+    except service.SlugTaken as e:
+        raise HTTPException(status_code=409, detail=f"Another post already uses the address \"{e}\". Pick a different slug.")
     if not result:
         raise HTTPException(status_code=404, detail="Blog not found")
     log_activity(_user["email"], action, "blog", result["id"], result["title"])

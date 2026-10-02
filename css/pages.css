@@ -271,6 +271,16 @@
   padding-left: 22px;
   border-left: 1px solid var(--rule);
 }
+.product-article-body a,
+.blog-article-body a,
+.job-body a {
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+  transition: border-color var(--t-fast) var(--ease);
+}
+.product-article-body a:hover,
+.blog-article-body a:hover,
+.job-body a:hover { border-color: var(--ink); }
 .product-article-section { margin-top: 3em; }
 
 .product-wide-band {
@@ -339,9 +349,15 @@
 .blog-article-cover {
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
   background: var(--paper-2);
-  margin-bottom: 52px;
+  margin: 0 0 52px;
+  overflow: hidden;
+}
+.blog-article-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .blog-article-title {
   font-family: var(--display);

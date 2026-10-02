@@ -1,9 +1,9 @@
 import logging
-import re
 import threading
 from datetime import datetime, timedelta, timezone
 
 from app.database import get_supabase
+from app.slugs import free_slug, slug_taken, slugify
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 SWEEP_EVERY_SECONDS = 60
 _last_sweep = None
 _sweep_lock = threading.Lock()
+
+
+class SlugTaken(Exception):
+    pass
 
 
 def release_due(force: bool = False) -> int:
@@ -52,13 +56,6 @@ def _sweep():
         release_due()
     except Exception as e:
         logger.warning("Scheduled publishing sweep failed: %s", e)
-
-
-def slugify(text: str) -> str:
-    slug = text.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    return re.sub(r"-+", "-", slug).strip("-")
 
 
 def list_all(page: int, limit: int):
@@ -111,8 +108,7 @@ def get_by_id(blog_id: str):
 
 def create(data: dict):
     db = get_supabase()
-    if not data.get("slug"):
-        data["slug"] = slugify(data["title"])
+    data["slug"] = free_slug("blogs", data.get("slug") or data["title"], "post")
     if data.get("status") == "published" and not data.get("published_at"):
         data["published_at"] = datetime.now(timezone.utc).isoformat()
     if data.get("status") != "scheduled":
@@ -125,9 +121,14 @@ def update(blog_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    existing = db.table("blogs").select("status").eq("id", blog_id).execute()
+    existing = db.table("blogs").select("status, title").eq("id", blog_id).execute()
     if not existing.data:
         return None
+
+    if "slug" in data:
+        data["slug"] = slugify(data["slug"] or data.get("title") or existing.data[0]["title"]) or "post"
+        if slug_taken("blogs", data["slug"], blog_id):
+            raise SlugTaken(data["slug"])
 
     if data.get("status") == "published" and existing.data[0]["status"] != "published":
         data["published_at"] = datetime.now(timezone.utc).isoformat()
