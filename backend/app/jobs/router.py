@@ -186,7 +186,21 @@ def get_application_resume(id: str, _user: dict = Depends(get_current_user)):
 @router.post("/{id}/repost", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 def repost_job(id: str, body: Optional[JobUpdate] = None, _user: dict = Depends(get_current_user)):
     overrides = body.model_dump(exclude_none=True) if body else {}
-    result = service.repost_job(id, overrides)
+    overrides.pop("slug", None)
+    expires = overrides.get("expires_at")
+    if expires is not None:
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if expires <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Pick an expiry date in the future.")
+        overrides["expires_at"] = expires.isoformat()
+    overrides["last_edited_by"] = _user["email"]
+    overrides["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        result = service.repost_job(id, overrides)
+    except Exception as e:
+        logger.error("Repost of job %s failed: %s", id, e)
+        raise HTTPException(status_code=500, detail="The job could not be republished. The reason is in the server log.")
     if not result:
         raise HTTPException(status_code=404, detail="Job not found")
     log_activity(_user["email"], "repost", "job", result["id"], result["title"])

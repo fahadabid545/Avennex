@@ -2608,7 +2608,7 @@
         </div>
         <div class="field">
           <label for="republish-date">New Expiry Date <span class="field-req">Required</span></label>
-          <input type="date" id="republish-date" required>
+          <input type="date" id="republish-date" min="${new Date(Date.now() + 864e5).toISOString().slice(0, 10)}" required>
         </div>
         <div class="form-msg" id="republish-msg"></div>
         <div class="confirm-actions" style="margin-top:16px">

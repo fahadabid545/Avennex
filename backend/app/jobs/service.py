@@ -206,10 +206,25 @@ def repost_job(job_id: str, overrides: dict = None):
     if overrides:
         new_data.update(overrides)
 
-    new_data["slug"] = slugify(new_data["title"]) + "-repost"
+    new_data["slug"] = free_slug(slugify(new_data["title"]))
 
     result = db.table("jobs").insert(new_data).execute()
     return result.data[0] if result.data else None
+
+
+def free_slug(base: str) -> str:
+    # slugs are unique, and the closed posting still holds the plain one, so
+    # a repost takes the next number free: ai-engineer-2, ai-engineer-3
+    db = get_supabase()
+    base = base or "job"
+    rows = db.table("jobs").select("slug").like("slug", f"{base}%").execute().data or []
+    taken = {r["slug"] for r in rows}
+    if base not in taken:
+        return base
+    n = 2
+    while f"{base}-{n}" in taken:
+        n += 1
+    return f"{base}-{n}"
 
 
 def cleanup_old_closed_jobs():
