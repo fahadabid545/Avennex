@@ -12,6 +12,29 @@
   var suggestEl = null;
   var started = false;
 
+  // the conversation follows the visitor across pages and reloads for as
+  // long as the tab is open, and goes when the tab closes
+  var STORE = 'avx_chat';
+  var MAX_LOG = 60;
+  var log = [];
+
+  function save() {
+    try {
+      sessionStorage.setItem(STORE, JSON.stringify({
+        token: sessionToken, started: started, open: open, log: log.slice(-MAX_LOG)
+      }));
+    } catch (e) { /* storage full or blocked, the chat still works */ }
+  }
+
+  function restore() {
+    try {
+      var data = JSON.parse(sessionStorage.getItem(STORE) || 'null');
+      return data && Array.isArray(data.log) ? data : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   var SUGGESTIONS = [
     'What does Avennex build?',
     'Can you automate our workflow?',
@@ -135,6 +158,16 @@
     wave.setAttribute('aria-hidden', 'true');
     wave.textContent = '\uD83D\uDC4B';
     hello.insertBefore(wave, hello.firstChild);
+    var saved = restore();
+    if (saved) {
+      sessionToken = saved.token || null;
+      saved.log.forEach(function (m) {
+        if (m.role === 'user') addUserMessage(m.text, true);
+        else addBotMessage(m.text, m.sources);
+      });
+      log = saved.log.slice(-MAX_LOG);
+      started = !!saved.started || log.some(function (m) { return m.role === 'user'; });
+    }
     renderSuggestions();
 
     // the hand waves each time the panel opens
@@ -144,20 +177,22 @@
       wave.classList.add('is-waving');
     }
 
-    function openPanel() {
+    function openPanel(quiet) {
       dismissGreeting();
       open = true;
+      save();
       panel.classList.add('open');
-      waveHello();
+      if (!quiet) waveHello();
       trigger.classList.add('trigger-closing');
       setTimeout(function () {
         if (open) trigger.style.display = 'none';
       }, 220);
-      inputEl.focus();
+      if (!quiet) inputEl.focus();
     }
 
     function closePanel() {
       open = false;
+      save();
       panel.classList.remove('open');
       trigger.style.display = '';
       requestAnimationFrame(function () {
@@ -166,7 +201,8 @@
       trigger.focus();
     }
 
-    trigger.addEventListener('click', openPanel);
+    trigger.addEventListener('click', function () { openPanel(false); });
+    if (saved && saved.open) openPanel(true);
 
     panel.querySelector('.chatbot-close').addEventListener('click', closePanel);
 
@@ -245,12 +281,19 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  function addUserMessage(text) {
+  function keepMessage(entry) {
+    log.push(entry);
+    if (log.length > MAX_LOG) log = log.slice(-MAX_LOG);
+    save();
+  }
+
+  function addUserMessage(text, replay) {
     var div = document.createElement('div');
     div.className = 'chatbot-msg chatbot-msg-user';
     div.textContent = text;
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (!replay) keepMessage({ role: 'user', text: text });
   }
 
   function showTyping() {
@@ -299,6 +342,7 @@
         hideTyping();
         if (data.session_token) sessionToken = data.session_token;
         addBotMessage(data.response, data.sources);
+        keepMessage({ role: 'bot', text: data.response, sources: data.sources || [] });
       })
       .catch(function () {
         hideTyping();
