@@ -88,6 +88,8 @@ def get_entry(slug: str):
 @router.post("", response_model=LaunchpadResponse, status_code=status.HTTP_201_CREATED)
 def create_entry(body: LaunchpadCreate, _user: dict = Depends(get_current_user)):
     data = body.model_dump(exclude_none=True)
+    if not (data.get("title") or "").strip():
+        raise HTTPException(status_code=400, detail="An idea needs a title")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     try:
@@ -108,9 +110,13 @@ def update_entry(id: str, body: LaunchpadUpdate, _user: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="No fields to update")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
+    if "title" in data and not (data["title"] or "").strip():
+        raise HTTPException(status_code=400, detail="An idea needs a title")
     revisions.record_before("launchpad", id, service.get_by_id, _user["email"], data)
     try:
         result = service.update(id, data)
+    except service.SlugTaken as e:
+        raise HTTPException(status_code=409, detail=f"Another idea already uses the address \"{e}\". Pick a different slug.")
     except Exception as e:
         logger.error("Failed to update launchpad entry %s: %s", id, e)
         raise HTTPException(status_code=500, detail="Failed to update entry")
@@ -151,6 +157,8 @@ def add_comment(slug: str, body: CommentCreate, request: Request):
     entry = service.get_by_slug(slug)
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
+    if entry.get("status") == "closed":
+        raise HTTPException(status_code=403, detail="This idea is closed to new comments.")
     comment = service.add_comment(entry["id"], body.model_dump())
     if not comment:
         logger.error("Comment by %s on entry %s was not stored", body.author_email, slug)

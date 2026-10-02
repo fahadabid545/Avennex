@@ -87,7 +87,7 @@
     // a field with nothing in it is left out, rather than printed as "TBD"
     var details = '';
     if (entry.team_needed) details += detailItem('Team needed', API.escHtml(entry.team_needed));
-    if (entry.status) details += detailItem('Status', API.escHtml(entry.status));
+    if (entry.status) details += detailItem('Status', entry.status === 'closed' ? 'Closed' : 'Open for comments');
     if (details) html += '<div class="lp-details-grid">' + details + '</div>';
 
     if (entry.tech_stack) {
@@ -165,6 +165,13 @@
 
     var form = document.getElementById('lp-comment-form');
     if (!form) return;
+    if (entry.status === 'closed') {
+      var note = document.createElement('p');
+      note.className = 'chat-empty';
+      note.textContent = 'This idea is closed to new comments.';
+      form.parentNode.replaceChild(note, form);
+      return;
+    }
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();

@@ -777,7 +777,7 @@
       let details = '';
       const item = (label, value) => `<div class="lp-detail"><span class="lp-detail-label">${esc(label)}</span><span class="lp-detail-value">${esc(value)}</span></div>`;
       if (d.team_needed) details += item('Team needed', d.team_needed);
-      if (d.status) details += item('Status', d.status);
+      if (d.status) details += item('Status', d.status === 'closed' ? 'Closed' : 'Open for comments');
       if (details) html += `<div class="lp-details-grid">${details}</div>`;
 
       if (d.tech_stack) {

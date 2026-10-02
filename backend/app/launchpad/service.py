@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.slugs import slugify
+from app.slugs import free_slug, slug_taken, slugify
 from app.progress_history import stamp as stamp_progress
 from app.storage import ftp_service
 from app.uploads import documents
@@ -63,20 +63,33 @@ def get_by_id(entry_id: str):
 
 def create(data: dict):
     db = get_supabase()
-    if not data.get("slug"):
-        data["slug"] = slugify(data["title"])
+    data["slug"] = free_slug("launchpad_entries", data.get("slug") or data["title"], "idea")
     stamp_progress(data)
     result = db.table("launchpad_entries").insert(data).execute()
     return result.data[0] if result.data else None
 
 
+class SlugTaken(Exception):
+    pass
+
+
 def update(entry_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    current = None
     try:
-        stamp_progress(data, get_by_id(entry_id))
+        current = get_by_id(entry_id)
+        stamp_progress(data, current)
     except Exception as e:
         logger.warning("Progress history lookup failed for entry %s: %s", entry_id, e)
+    if "slug" in data:
+        if not data["slug"]:
+            title = data.get("title") or (current or {}).get("title") or ""
+            data["slug"] = free_slug("launchpad_entries", title, "idea", exclude_id=entry_id)
+        else:
+            data["slug"] = slugify(data["slug"]) or "idea"
+            if slug_taken("launchpad_entries", data["slug"], entry_id):
+                raise SlugTaken(data["slug"])
     result = db.table("launchpad_entries").update(data).eq("id", entry_id).execute()
     return result.data[0] if result.data else None
 
@@ -86,13 +99,8 @@ def delete(entry_id: str):
     entry = get_by_id(entry_id)
     result = db.table("launchpad_entries").delete().eq("id", entry_id).execute()
 
-    if entry and entry.get("diagrams"):
-        for url in entry["diagrams"].split("\n"):
-            url = url.strip()
-            remote_path = ftp_service.remote_path_from_url(url) if url else None
-            if remote_path and not ftp_service.delete_file(remote_path):
-                logger.warning("Failed to delete diagram %s for launchpad entry %s", url, entry_id)
-
+    # diagrams are media library images a copy of this idea may still show,
+    # so only its own documents go
     if entry:
         for url in documents.file_urls(entry.get("documents")):
             remote_path = ftp_service.remote_path_from_url(url)
