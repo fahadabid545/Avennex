@@ -3,7 +3,7 @@ import re
 from datetime import datetime, timezone
 
 from app.database import get_supabase
-from app.slugs import slugify
+from app.slugs import free_slug, slug_taken, slugify
 
 logger = logging.getLogger(__name__)
 
@@ -153,15 +153,26 @@ def get_playlist_by_id(playlist_id: str):
 
 def create_playlist(data: dict):
     db = get_supabase()
-    if not data.get("slug"):
-        data["slug"] = slugify(data["title"])
+    data["slug"] = free_slug("playlists", data.get("slug") or data["title"], "playlist")
     result = db.table("playlists").insert(data).execute()
     return result.data[0] if result.data else None
+
+
+class SlugTaken(Exception):
+    pass
 
 
 def update_playlist(playlist_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    if "slug" in data:
+        if not data["slug"]:
+            title = data.get("title") or (get_playlist_by_id(playlist_id) or {}).get("title") or ""
+            data["slug"] = free_slug("playlists", title, "playlist", exclude_id=playlist_id)
+        else:
+            data["slug"] = slugify(data["slug"]) or "playlist"
+            if slug_taken("playlists", data["slug"], playlist_id):
+                raise SlugTaken(data["slug"])
     try:
         result = db.table("playlists").update(data).eq("id", playlist_id).execute()
     except Exception as e:

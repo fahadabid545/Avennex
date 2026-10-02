@@ -55,6 +55,8 @@ def get_playlist(slug: str):
 
 @router.post("/playlists", status_code=status.HTTP_201_CREATED)
 def create_playlist(body: PlaylistCreate, _user: dict = Depends(get_current_user)):
+    if not body.title.strip():
+        raise HTTPException(status_code=400, detail="A playlist needs a title")
     try:
         result = service.create_playlist(body.model_dump(exclude_none=True))
     except Exception as e:
@@ -72,8 +74,12 @@ def update_playlist(id: str, body: PlaylistUpdate, _user: dict = Depends(get_cur
     data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    if "title" in data and not (data["title"] or "").strip():
+        raise HTTPException(status_code=400, detail="A playlist needs a title")
     try:
         result = service.update_playlist(id, data)
+    except service.SlugTaken as e:
+        raise HTTPException(status_code=409, detail=f"Another playlist already uses the address \"{e}\". Pick a different slug.")
     except Exception:
         raise HTTPException(status_code=500, detail="The playlist could not be updated. The reason is in the server log.")
     if not result:
