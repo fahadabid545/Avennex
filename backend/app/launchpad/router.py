@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.auth.dependencies import get_current_user, require_manager
 from app.launchpad import service
@@ -19,6 +17,7 @@ from app.launchpad.schemas import (
     CommentCreate,
     CommentResponse,
 )
+from app.security import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,6 @@ def _id_list(raw: Optional[str]) -> Optional[list]:
     if raw is None:
         return None
     return [part.strip() for part in raw.split(",") if part.strip()]
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("", response_model=list[LaunchpadResponse])

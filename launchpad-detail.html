@@ -96,15 +96,15 @@
           <form id="lp-comment-form" class="lp-comment-form">
             <div class="form-group">
               <label for="lpc-name">Name</label>
-              <input type="text" id="lpc-name" required>
+              <input type="text" id="lpc-name" maxlength="100" required>
             </div>
             <div class="form-group">
               <label for="lpc-email">Email</label>
-              <input type="email" id="lpc-email" required>
+              <input type="email" id="lpc-email" maxlength="254" required>
             </div>
             <div class="form-group">
               <label for="lpc-message">Message</label>
-              <textarea id="lpc-message" rows="4" required></textarea>
+              <textarea id="lpc-message" maxlength="4000" rows="4" required></textarea>
             </div>
             <div id="lpc-msg" class="form-msg"></div>
             <button type="submit" class="hero-btn-primary form-submit">Post comment</button>

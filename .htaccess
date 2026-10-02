@@ -1,18 +1,39 @@
 ErrorDocument 404 /404.html
 
+# no folder listings anywhere
+Options -Indexes
+
+# never serve source, config, notes or dot files that may sit beside the site
+<FilesMatch "(^\.|\.(py|pyc|sql|md|env|ini|log|sh|bak|old|swp|yaml|yml|toml|cfg|lock|zip)$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order Deny,Allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
 # Force HTTPS
 RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# on the main site, the API source and repository folders are never served.
+# limited to avennex.com so subdomains with their own folders aren't touched
+RewriteCond %{HTTP_HOST} ^(www\.)?avennex\.com$ [NC]
+RewriteRule ^(backend|\.git|private_uploads)(/|$) - [F,L]
+
 # Security headers
 <IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000"
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; connect-src 'self' https://avennex.onrender.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; connect-src 'self' https://avennex.onrender.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+  Header set Cross-Origin-Opener-Policy "same-origin"
   Header unset Server
   Header unset X-Powered-By
 </IfModule>

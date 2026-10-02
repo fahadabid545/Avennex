@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
-import uuid
+import hashlib
+import secrets
 
 import bcrypt
 import jwt
@@ -12,7 +13,25 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode(), hashed.encode())
+    try:
+        return bcrypt.checkpw(password.encode(), hashed.encode())
+    except ValueError:
+        return False
+
+
+# checked against when the email isn't registered, so a wrong email takes as
+# long to refuse as a wrong password and the timing gives nothing away
+_DUMMY_HASH = bcrypt.hashpw(b"not-a-real-password", bcrypt.gensalt()).decode()
+
+
+def burn_password_check(password: str):
+    verify_password(password, _DUMMY_HASH)
+
+
+def token_digest(token: str) -> str:
+    # refresh and reset tokens are stored as digests, so a copy of the
+    # database can't be used to sign in
+    return hashlib.sha256((token or "").encode()).hexdigest()
 
 
 def create_access_token(admin_id: str, email: str, role: str = "admin") -> str:
@@ -30,13 +49,13 @@ def create_access_token(admin_id: str, email: str, role: str = "admin") -> str:
 
 def create_refresh_token() -> tuple[str, datetime]:
     settings = get_settings()
-    token = uuid.uuid4().hex
+    token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     return token, expires_at
 
 
 def create_reset_token() -> tuple[str, datetime]:
-    token = uuid.uuid4().hex
+    token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     return token, expires_at
 

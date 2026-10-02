@@ -11,16 +11,16 @@ DEFAULT_ROLE = "admin"
 
 
 def _role_from_db(admin_id: str) -> str:
-    # tokens issued before roles existed carry no claim, and neither does a
-    # database that has not had the migration run yet. both keep working as
-    # before rather than locking the only account out of its own panel.
+    # tokens issued before roles existed carry no claim. the role comes from
+    # the account itself, an account that no longer exists gets nothing, and
+    # a lookup that fails falls back to the least access, never the most
     try:
         from app.database import get_supabase
         result = get_supabase().table("admins").select("*").eq("id", admin_id).execute()
     except Exception:
-        return "owner"
+        return "editor"
     if not result.data:
-        return "owner"
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account not found")
     role = result.data[0].get("role")
     return role if role in ROLES else "owner"
 

@@ -1,0 +1,5 @@
+# the admin panel stays out of search results and out of shared caches
+<IfModule mod_headers.c>
+  Header set X-Robots-Tag "noindex, nofollow"
+  Header set Cache-Control "no-store"
+</IfModule>

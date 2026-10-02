@@ -2,19 +2,17 @@ import logging
 from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.auth.dependencies import get_current_user, require_manager
 from app.chat import service
 from app.chat.schemas import ChatMessageCreate, ChatReply, ChatMessageUpdate
 from app.email.service import send_email, is_email_enabled
 from app.admin.service import log_activity
+from app.security import limiter
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/send", status_code=status.HTTP_201_CREATED)
@@ -91,7 +89,7 @@ def reply_to_message(id: str, body: ChatReply, _user: dict = Depends(get_current
             except Exception as e:
                 logger.error("Failed to send reply email: %s", e)
                 email_status = "failed"
-                warnings.append(f"Email notification failed: {e}")
+                warnings.append("Email notification failed. The reason is in the server log.")
         service.clear_personal_data(id)
 
     # the status belongs on the message that was replied to, because that is

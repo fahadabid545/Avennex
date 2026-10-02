@@ -254,10 +254,11 @@ def cleanup_old_closed_jobs():
                 db.table("jobs").delete().eq("id", job_id).execute()
                 deleted_count += 1
             except Exception as e:
-                warnings.append(f"Failed to delete job {job_id}: {e}")
+                logger.error("Failed to delete job %s during cleanup: %s", job_id, e)
+                warnings.append(f"Job {job_id} could not be removed. The reason is in the server log.")
 
     except Exception as e:
         logger.error("Job cleanup failed: %s", e)
-        warnings.append(f"Cleanup query failed: {e}")
+        warnings.append("The cleanup could not run. The reason is in the server log.")
 
     return {"deleted": deleted_count, "warnings": warnings}

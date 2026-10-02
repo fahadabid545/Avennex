@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
+from app.security import limiter, body_size_guard, security_headers, unhandled_error
 from app.auth.router import router as auth_router
 from app.blogs.router import router as blogs_router
 from app.jobs.router import router as jobs_router
@@ -25,18 +25,19 @@ from app.team.router import router as team_router
 
 settings = get_settings()
 
-limiter = Limiter(key_func=get_remote_address)
-
 app = FastAPI(title="Avennex API", docs_url=None, redoc_url=None, openapi_url=None)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(Exception, unhandled_error)
+app.middleware("http")(security_headers)
+app.middleware("http")(body_size_guard)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Chat-Token"],
 )
 
 app.include_router(auth_router)
@@ -56,6 +57,14 @@ app.include_router(product_chat_router)
 app.include_router(uploads_router)
 app.include_router(revisions_router)
 app.include_router(team_router)
+
+
+@app.on_event("startup")
+def startup_check_secrets():
+    import logging
+    logger = logging.getLogger(__name__)
+    if len(settings.jwt_secret or "") < 32:
+        logger.warning("JWT_SECRET is shorter than 32 characters. Use a long random value.")
 
 
 @app.on_event("startup")

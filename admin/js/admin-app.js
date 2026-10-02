@@ -41,6 +41,14 @@
     });
   });
 
+  // the CSP refuses inline handlers, so broken thumbnails are dealt with here
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== 'IMG' || !img.dataset.broken) return;
+    if (img.dataset.broken === 'remove') img.remove();
+    else img.style.display = 'none';
+  }, true);
+
   function markNav(mod) {
     navLinks.forEach((l) => {
       const on = l.dataset.module === mod;
@@ -3484,7 +3492,7 @@
     if (!list) return;
     list.innerHTML = productGallery.map((url, i) => `
       <div class="feature-row">
-        <img src="${esc(assetUrl(url))}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <img src="${esc(assetUrl(url))}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" data-broken="hide">
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-secondary)">${esc(url)}</span>
         <button type="button" class="btn-remove" data-remove="${i}">Remove</button>
       </div>`).join('');
@@ -4019,7 +4027,7 @@
     if (!list) return;
     list.innerHTML = launchpadDiagrams.map((url, i) => `
       <div class="lp-diagram-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <img src="${esc(assetUrl(url))}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <img src="${esc(assetUrl(url))}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" data-broken="hide">
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-secondary)">${esc(url)}</span>
         <button type="button" class="btn btn-danger btn-sm" data-remove="${i}">Remove</button>
       </div>`).join('');
@@ -4266,7 +4274,7 @@
             if (diagramUrls.length) {
               html += '<div class="field" style="margin-top:20px"><label>Diagrams</label>';
               diagramUrls.forEach((url) => {
-                html += `<img src="${esc(assetUrl(url))}" style="max-width:400px;border-radius:8px;margin-bottom:12px;display:block" onerror="this.style.display='none'">`;
+                html += `<img src="${esc(assetUrl(url))}" style="max-width:400px;border-radius:8px;margin-bottom:12px;display:block" data-broken="hide">`;
               });
               html += '</div>';
             }
@@ -5064,7 +5072,7 @@
           <tbody>${people.map((p) => `
             <tr${people.length > 1 ? ` data-order-id="${p.id}" tabindex="0"` : ''}>
               ${people.length > 1 ? '<td class="drag-handle" aria-hidden="true">&#8942;&#8942;</td>' : ''}
-              <td><span class="team-thumb" data-initial="${esc((p.name || '?').charAt(0).toUpperCase())}">${p.photo_url ? `<img src="${esc(assetUrl(p.photo_url))}" alt="" onerror="this.remove()">` : ''}</span></td>
+              <td><span class="team-thumb" data-initial="${esc((p.name || '?').charAt(0).toUpperCase())}">${p.photo_url ? `<img src="${esc(assetUrl(p.photo_url))}" alt="" data-broken="remove">` : ''}</span></td>
               <td class="row-title">${esc(p.name)}${editedBy(p)}</td>
               <td>${p.role ? esc(p.role) : '<span class="text-muted">Not set</span>'}</td>
               <td>${p.linkedin_url ? `<a href="${esc(p.linkedin_url)}" target="_blank" rel="noopener">Open</a>` : '<span class="text-muted">Not set</span>'}</td>

@@ -93,15 +93,15 @@
               <input type="hidden" name="job_slug" value="">
               <div class="form-group">
                 <label for="apply-name">Full name</label>
-                <input type="text" id="apply-name" name="name" required>
+                <input type="text" id="apply-name" maxlength="100" name="name" required>
               </div>
               <div class="form-group">
                 <label for="apply-email">Email</label>
-                <input type="email" id="apply-email" name="email" required>
+                <input type="email" id="apply-email" maxlength="254" name="email" required>
               </div>
               <div class="form-group">
                 <label for="apply-resume">Tell us about your experience</label>
-                <textarea id="apply-resume" name="resume_text" rows="6" required></textarea>
+                <textarea id="apply-resume" maxlength="10000" name="resume_text" rows="6" required></textarea>
               </div>
               <div class="job-resume-upload">
                 <label for="apply-file">Resume (PDF, max 5MB)</label>
@@ -111,7 +111,7 @@
               <div id="custom-questions-wrap"></div>
               <div class="form-group">
                 <label for="apply-cover">Anything else we should know? (optional)</label>
-                <textarea id="apply-cover" name="cover_letter" rows="4"></textarea>
+                <textarea id="apply-cover" maxlength="8000" name="cover_letter" rows="4"></textarea>
               </div>
               <div id="apply-msg" class="form-msg"></div>
               <button type="submit" class="hero-btn-primary form-submit">Submit application</button>

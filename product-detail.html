@@ -94,7 +94,7 @@
           <div class="chat-board">
             <div class="chat-messages" id="product-chat-messages"></div>
             <div class="chat-compose">
-              <input type="text" id="product-chat-input" placeholder="Write a message" class="chat-compose-input" autocomplete="off">
+              <input type="text" id="product-chat-input" maxlength="4000" placeholder="Write a message" class="chat-compose-input" autocomplete="off">
               <button type="button" id="product-chat-send" class="hero-btn-primary chat-compose-btn">Send</button>
             </div>
             <p class="chat-disclaimer">Messages and replies here are public.</p>
@@ -107,11 +107,11 @@
               <form id="product-chat-form">
                 <div class="form-group">
                   <label for="pc-name">Name</label>
-                  <input type="text" id="pc-name" required>
+                  <input type="text" id="pc-name" maxlength="100" required>
                 </div>
                 <div class="form-group">
                   <label for="pc-email">Email</label>
-                  <input type="email" id="pc-email" required>
+                  <input type="email" id="pc-email" maxlength="254" required>
                 </div>
                 <div id="pc-msg" class="form-msg"></div>
                 <button type="submit" class="hero-btn-primary form-submit">Send message</button>

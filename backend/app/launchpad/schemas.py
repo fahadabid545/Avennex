@@ -1,8 +1,10 @@
-from pydantic import BaseModel, field_validator, EmailStr
+from pydantic import BaseModel, Field, field_validator, EmailStr
 from datetime import datetime
 from app.report_data import validate_report
 from app.uploads.documents import validate_list
 from typing import Any, Optional
+
+from app.security import clean_text, single_line
 
 
 class LaunchpadCreate(BaseModel):
@@ -112,9 +114,22 @@ class LaunchpadDetailResponse(LaunchpadResponse):
 
 
 class CommentCreate(BaseModel):
-    author_name: str
+    author_name: str = Field(..., min_length=1, max_length=100)
     author_email: EmailStr
-    content: str
+    content: str = Field(..., min_length=1, max_length=4000)
+
+    @field_validator("author_name")
+    @classmethod
+    def _one_line(cls, v):
+        return single_line(v)
+
+    @field_validator("content")
+    @classmethod
+    def _text(cls, v):
+        v = clean_text(v)
+        if not v:
+            raise ValueError("Comment can't be empty")
+        return v
 
 
 class CommentResponse(BaseModel):

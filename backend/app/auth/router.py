@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.database import get_supabase
 from app.auth.service import (
@@ -13,22 +11,24 @@ from app.auth.service import (
     create_access_token,
     create_refresh_token,
     create_reset_token,
+    burn_password_check,
+    token_digest,
 )
+from app.security import limiter, failed_logins
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-limiter = Limiter(key_func=get_remote_address)
 
 
 class SetupRequest(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=8, max_length=128)
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=1, max_length=128)
 
 
 class TokenResponse(BaseModel):
@@ -38,7 +38,13 @@ class TokenResponse(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(..., min_length=1, max_length=200)
+
+
+def _token_rows(db, token: str):
+    # tokens issued before digests were stored still match on their plain
+    # value until they expire
+    return db.table("refresh_tokens").select("*, admins(*)").in_("token", [token_digest(token), token])
 
 
 class AccessTokenResponse(BaseModel):
@@ -47,7 +53,8 @@ class AccessTokenResponse(BaseModel):
 
 
 @router.post("/setup", status_code=status.HTTP_201_CREATED)
-def setup(body: SetupRequest):
+@limiter.limit("5/hour")
+def setup(body: SetupRequest, request: Request):
     db = get_supabase()
     existing = db.table("admins").select("id").limit(1).execute()
     if existing.data:
@@ -72,23 +79,31 @@ def setup(body: SetupRequest):
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 def login(body: LoginRequest, request: Request):
+    if failed_logins.blocked(body.email):
+        raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
+
     db = get_supabase()
 
     result = db.table("admins").select("*").eq("email", body.email).execute()
     if not result.data:
+        burn_password_check(body.password)
+        failed_logins.fail(body.email)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     admin = result.data[0]
-    if not verify_password(body.password, admin["password_hash"]):
+    if not verify_password(body.password, admin.get("password_hash") or ""):
+        failed_logins.fail(body.email)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    failed_logins.clear(body.email)
 
     access_token = create_access_token(admin["id"], admin["email"], admin.get("role") or "owner")
     refresh_token, expires_at = create_refresh_token()
 
     db.table("refresh_tokens").insert({
         "admin_id": admin["id"],
-        "token": refresh_token,
+        "token": token_digest(refresh_token),
         "expires_at": expires_at.isoformat(),
+        "revoked": False,
     }).execute()
 
     try:
@@ -102,16 +117,11 @@ def login(body: LoginRequest, request: Request):
 
 
 @router.post("/refresh", response_model=AccessTokenResponse)
-def refresh(body: RefreshRequest):
+@limiter.limit("30/minute")
+def refresh(body: RefreshRequest, request: Request):
     db = get_supabase()
 
-    result = (
-        db.table("refresh_tokens")
-        .select("*, admins(*)")
-        .eq("token", body.refresh_token)
-        .eq("revoked", False)
-        .execute()
-    )
+    result = _token_rows(db, body.refresh_token).eq("revoked", False).execute()
     if not result.data:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
@@ -122,15 +132,22 @@ def refresh(body: RefreshRequest):
         db.table("refresh_tokens").update({"revoked": True}).eq("id", record["id"]).execute()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
 
-    admin = record["admins"]
+    admin = record.get("admins")
+    if not admin:
+        # the account was removed after this token was issued
+        db.table("refresh_tokens").update({"revoked": True}).eq("id", record["id"]).execute()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
     access_token = create_access_token(admin["id"], admin["email"], admin.get("role") or "owner")
     return AccessTokenResponse(access_token=access_token)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(body: RefreshRequest):
+@limiter.limit("30/minute")
+def logout(body: RefreshRequest, request: Request):
     db = get_supabase()
-    db.table("refresh_tokens").update({"revoked": True}).eq("token", body.refresh_token).execute()
+    db.table("refresh_tokens").update({"revoked": True}).in_(
+        "token", [token_digest(body.refresh_token), body.refresh_token]
+    ).execute()
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -138,8 +155,8 @@ class ForgotPasswordRequest(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str
-    new_password: str = Field(..., min_length=8)
+    token: str = Field(..., min_length=1, max_length=200)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 # The emails_enabled setting is deliberately not consulted here. It governs
@@ -154,7 +171,7 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
         admin = result.data[0]
         token, expires_at = create_reset_token()
         db.table("admins").update({
-            "reset_token": token,
+            "reset_token": token_digest(token),
             "reset_token_expires": expires_at.isoformat(),
         }).eq("id", admin["id"]).execute()
 
@@ -186,21 +203,22 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
 
 
 @router.post("/reset-password")
-def reset_password(body: ResetPasswordRequest):
+@limiter.limit("10/hour")
+def reset_password(body: ResetPasswordRequest, request: Request):
     db = get_supabase()
     result = (
         db.table("admins")
         .select("id, reset_token, reset_token_expires")
-        .eq("reset_token", body.token)
+        .in_("reset_token", [token_digest(body.token), body.token])
         .execute()
     )
     if not result.data:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
 
     admin = result.data[0]
-    if admin.get("reset_token_expires"):
-        if datetime.fromisoformat(admin["reset_token_expires"]) < datetime.now(timezone.utc):
-            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    expires = admin.get("reset_token_expires")
+    if not expires or datetime.fromisoformat(expires) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
 
     password_hash = hash_password(body.new_password)
     db.table("admins").update({

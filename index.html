@@ -228,7 +228,7 @@
           <div class="chat-board m-in">
             <div class="chat-messages" id="chat-messages"></div>
             <div class="chat-compose">
-              <input type="text" id="chat-input" placeholder="Write a message" class="chat-compose-input" autocomplete="off">
+              <input type="text" id="chat-input" maxlength="4000" placeholder="Write a message" class="chat-compose-input" autocomplete="off">
               <button type="button" id="chat-send-btn" class="hero-btn-primary chat-compose-btn">Send</button>
             </div>
             <p class="chat-disclaimer">Messages and replies here are public.</p>
@@ -241,19 +241,19 @@
               <form id="chat-details-form">
                 <div class="form-group">
                   <label for="chat-name">Name</label>
-                  <input type="text" id="chat-name" required>
+                  <input type="text" id="chat-name" maxlength="100" required>
                 </div>
                 <div class="form-group">
                   <label for="chat-email">Email</label>
-                  <input type="email" id="chat-email" required>
+                  <input type="email" id="chat-email" maxlength="254" required>
                 </div>
                 <div class="form-group">
                   <label for="chat-profession">Profession (optional)</label>
-                  <input type="text" id="chat-profession">
+                  <input type="text" id="chat-profession" maxlength="120">
                 </div>
                 <div class="form-group">
                   <label for="chat-company">Company (optional)</label>
-                  <input type="text" id="chat-company">
+                  <input type="text" id="chat-company" maxlength="120">
                 </div>
                 <div id="chat-form-msg" class="form-msg"></div>
                 <button type="submit" class="hero-btn-primary form-submit" style="width:100%">Send message</button>

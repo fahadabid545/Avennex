@@ -5,8 +5,6 @@ from html import escape as html_escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File, Form, status
 from fastapi.responses import Response
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from typing import Optional
 
 from app.auth.dependencies import get_current_user, require_manager
@@ -18,6 +16,28 @@ from app.admin.service import log_activity
 from app.revisions import service as revisions
 from app.database import get_supabase
 from app.storage import ftp_service
+from app.security import limiter, clean_text, single_line
+from pydantic import EmailStr, TypeAdapter, ValidationError
+
+_email = TypeAdapter(EmailStr)
+MAX_RESUME_BYTES = 5 * 1024 * 1024
+
+
+def _clean_answers(raw: Optional[str]) -> Optional[dict]:
+    if not raw or len(raw) > 20000:
+        return None
+    import json
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    out = {}
+    for q, a in list(data.items())[:30]:
+        if isinstance(a, (str, int, float, bool)):
+            out[single_line(str(q))[:300]] = clean_text(str(a))[:3000]
+    return out
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +50,6 @@ def _id_list(raw: Optional[str]) -> Optional[list]:
     if raw is None:
         return None
     return [part.strip() for part in raw.split(",") if part.strip()]
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("", response_model=list[JobResponse])
@@ -186,6 +205,20 @@ async def apply_to_job(
     custom_answers: Optional[str] = Form(None),
     resume: Optional[UploadFile] = File(None),
 ):
+    name = single_line(name)
+    resume_text = clean_text(resume_text)
+    cover_letter = clean_text(cover_letter or "")
+    try:
+        email = str(_email.validate_python(email.strip()))
+    except ValidationError:
+        raise HTTPException(status_code=422, detail="Please enter a valid email address")
+    if not name or len(name) > 100:
+        raise HTTPException(status_code=422, detail="Please enter your name (up to 100 characters)")
+    if not resume_text or len(resume_text) > 10000:
+        raise HTTPException(status_code=422, detail="Tell us about your experience in up to 10,000 characters")
+    if len(cover_letter) > 8000:
+        raise HTTPException(status_code=422, detail="Cover letter must be under 8,000 characters")
+
     job = service.get_by_slug(slug)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -202,22 +235,20 @@ async def apply_to_job(
         "cover_letter": cover_letter or "",
     }
 
-    if custom_answers:
-        import json
-        try:
-            app_data["custom_answers"] = json.loads(custom_answers)
-        except (json.JSONDecodeError, TypeError):
-            pass
+    answers = _clean_answers(custom_answers)
+    if answers:
+        app_data["custom_answers"] = answers
 
     resume_path = None
     resume_uploaded = False
     resume_error = None
     if resume:
-        content = await resume.read()
+        # read one byte past the limit rather than the whole upload
+        content = await resume.read(MAX_RESUME_BYTES + 1)
         if not content[:5].startswith(b'%PDF-'):
             raise HTTPException(status_code=400, detail="Resume must be a PDF file")
 
-        if len(content) > 5 * 1024 * 1024:
+        if len(content) > MAX_RESUME_BYTES:
             raise HTTPException(status_code=400, detail="Resume must be under 5MB")
 
         import time
