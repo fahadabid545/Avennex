@@ -97,6 +97,15 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+async def rate_limited(request: Request, exc: Exception):
+    response = JSONResponse(
+        status_code=429,
+        content={"success": False, "detail": "Too many requests. Please wait a few minutes and try again."},
+    )
+    response.headers["Retry-After"] = "60"
+    return response
+
+
 async def unhandled_error(request: Request, exc: Exception):
     logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(status_code=500, content={"success": False, "detail": "Something went wrong. Please try again."})

@@ -11,9 +11,10 @@ DEFAULT_ROLE = "admin"
 
 
 def _role_from_db(admin_id: str) -> str:
-    # tokens issued before roles existed carry no claim. the role comes from
-    # the account itself, an account that no longer exists gets nothing, and
-    # a lookup that fails falls back to the least access, never the most
+    # the role in a token is only what it was at login, so a removed account
+    # or a changed role would otherwise carry on until the token expired. the
+    # account is read on every request, one that no longer exists gets
+    # nothing, and a lookup that fails falls back to the least access
     try:
         from app.database import get_supabase
         result = get_supabase().table("admins").select("*").eq("id", admin_id).execute()
@@ -38,9 +39,7 @@ def get_current_user(
     if payload.get("type") != "access":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
-    role = payload.get("role")
-    if role not in ROLES:
-        role = _role_from_db(payload["sub"])
+    role = _role_from_db(payload["sub"])
 
     return {"id": payload["sub"], "email": payload["email"], "role": role}
 

@@ -120,8 +120,18 @@ def get_stats():
 
     stats["blogs_published"] = safe_count("blogs", {"status": "published"})
     stats["blogs_draft"] = safe_count("blogs", {"status": "draft"})
-    stats["jobs_open"] = safe_count("jobs", {"status": "open"})
-    stats["jobs_closed"] = safe_count("jobs", {"status": "closed"})
+    # a role past its date takes no applications, so it counts as closed
+    # even while its status still says open
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        stats["jobs_open"] = (
+            db.table("jobs").select("id", count="exact")
+            .eq("status", "open").or_(f"expires_at.is.null,expires_at.gt.{now}")
+            .execute().count or 0
+        )
+    except Exception:
+        stats["jobs_open"] = 0
+    stats["jobs_closed"] = max(0, safe_count("jobs") - stats["jobs_open"])
     stats["products"] = safe_count("products")
     stats["applications"] = safe_count("job_applications")
     stats["faqs_active"] = safe_count("faqs", {"active": True})
