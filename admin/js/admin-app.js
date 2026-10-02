@@ -5962,6 +5962,28 @@
       </div>
 
       <div class="settings-group">
+        <h3 class="settings-group-title">Email delivery</h3>
+        <p class="settings-group-note">Send a test to see whether site emails go out, and what the email service answers.</p>
+        <div class="settings-grid">
+          <div class="field">
+            <label for="s-test-to">Send to</label>
+            <input type="email" id="s-test-to" value="${esc(localStorage.getItem('admin_email') || '')}">
+          </div>
+          <div class="field">
+            <label for="s-test-kind">Sent as</label>
+            <select id="s-test-kind">
+              <option value="general">General (contact form, replies)</option>
+              <option value="careers">Careers (job applications)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-sm" id="s-test-send">Send test email</button>
+        </div>
+        <div class="review-fields" id="s-test-result" hidden></div>
+      </div>
+
+      <div class="settings-group">
         <h3 class="settings-group-title">Homepage sections</h3>
         <p class="settings-group-note">Turn a section off and it disappears from the homepage.</p>
         ${toggleRow('s-ai-brain', 'AI network band', 'ai_brain_enabled', 'true', 'The section that darkens as you scroll')}
@@ -6187,6 +6209,37 @@
         window.location.href = 'index.html';
       });
     }
+
+    document.getElementById('s-test-send').addEventListener('click', async () => {
+      const btn = document.getElementById('s-test-send');
+      const out = document.getElementById('s-test-result');
+      const to = document.getElementById('s-test-to').value.trim();
+      if (!to) { document.getElementById('s-test-to').focus(); return; }
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      const row = (label, value) => `<div class="review-row"><span class="review-label">${label}</span><span class="review-value">${value}</span></div>`;
+      try {
+        const res = await AdminAPI.request('/api/admin/test-email', {
+          method: 'POST',
+          body: JSON.stringify({ to, kind: document.getElementById('s-test-kind').value }),
+        });
+        const d = res.data || {};
+        const verdict = res.success
+          ? `<span class="form-msg form-msg-success">${esc(d.detail)}. If it isn't in the inbox or spam within a few minutes, the email service holds it back, check its log for this address.</span>`
+          : `<span class="form-msg form-msg-error">${esc(d.detail)}</span>`;
+        out.innerHTML = row('Result', verdict)
+          + row('Service', esc(d.provider))
+          + row('From', esc(d.from))
+          + row('To', esc(d.to))
+          + row('Team alerts go to', esc(d.team_inbox))
+          + row('Email notifications', d.emails_enabled ? 'On' : '<span class="form-msg form-msg-error">Off, so the site sends nothing. Turn it on under Website.</span>');
+      } catch (err) {
+        out.innerHTML = row('Result', `<span class="form-msg form-msg-error">${esc(AdminUI.friendly(err))}</span>`);
+      }
+      out.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Send test email';
+    });
 
     document.getElementById('s-save-defaults').addEventListener('click', async () => {
       const btn = document.getElementById('s-save-defaults');

@@ -51,7 +51,7 @@ def _plain(html: str) -> str:
 
 
 def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type: str,
-                     text: str, reply_to: str | None) -> bool:
+                     text: str, reply_to: str | None) -> tuple[bool, str]:
     from_addr = _from_address(settings, email_type)
     payload = {
         "from": from_addr,
@@ -74,19 +74,23 @@ def _send_via_resend(settings, to: str, subject: str, body_html: str, email_type
         )
         if response.ok:
             logger.info("Email sent to %s via Resend (%s)", to, subject)
-            return True
+            try:
+                email_id = response.json().get("id", "")
+            except ValueError:
+                email_id = ""
+            return True, f"Resend accepted it{f' (id {email_id})' if email_id else ''}"
         logger.error("Resend API rejected email to %s: %s %s", to, response.status_code, response.text)
-        return False
+        return False, f"Resend refused it: {response.status_code} {response.text[:300]}"
     except requests.exceptions.RequestException as e:
         logger.error("Resend API request failed for email to %s: %s", to, e)
-        return False
+        return False, f"Could not reach Resend: {e}"
 
 
 def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: str,
-                   text: str, reply_to: str | None) -> bool:
+                   text: str, reply_to: str | None) -> tuple[bool, str]:
     if not settings.smtp_host:
         logger.warning("Email to %s not sent: SMTP_HOST is not configured", to)
-        return False
+        return False, "No RESEND_API_KEY and no SMTP_HOST is set on the server"
 
     if email_type == "careers":
         user = settings.smtp_careers_user or settings.smtp_general_user or settings.smtp_user
@@ -103,7 +107,7 @@ def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: 
             "Email to %s not sent: SMTP credentials missing for type '%s' (need SMTP_GENERAL_USER/SMTP_GENERAL_PASSWORD or SMTP_USER/SMTP_PASSWORD)",
             to, email_type,
         )
-        return False
+        return False, "SMTP username or password is missing on the server"
 
     try:
         msg = MIMEMultipart("alternative")
@@ -126,23 +130,38 @@ def _send_via_smtp(settings, to: str, subject: str, body_html: str, email_type: 
                 server.send_message(msg)
 
         logger.info("Email sent to %s via SMTP (%s)", to, subject)
-        return True
+        return True, "The mail server accepted it"
     except smtplib.SMTPAuthenticationError as e:
         logger.error("Email send failed to %s: SMTP authentication rejected: %s", to, e)
-        return False
+        return False, f"The mail server rejected the login: {e}"
     except (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected, OSError) as e:
         logger.error("Email send failed to %s: could not connect to SMTP server %s:%s: %s", to, settings.smtp_host, settings.smtp_port, e)
-        return False
+        return False, f"Could not connect to {settings.smtp_host}:{settings.smtp_port}: {e}"
     except Exception as e:
         logger.error("Email send failed to %s: %s", to, e)
-        return False
+        return False, f"Sending failed: {e}"
 
 
-def send_email(to: str, subject: str, body_html: str, email_type: str = "general",
-               text: str | None = None, reply_to: str | None = None) -> bool:
+def deliver(to: str, subject: str, body_html: str, email_type: str = "general",
+            text: str | None = None, reply_to: str | None = None) -> tuple[bool, str]:
+    """Like send_email, but also says what the provider answered."""
     settings = get_settings()
     text = text or _plain(body_html)
     subject = " ".join(str(subject or "").split())
     if settings.resend_api_key:
         return _send_via_resend(settings, to, subject, body_html, email_type, text, reply_to)
     return _send_via_smtp(settings, to, subject, body_html, email_type, text, reply_to)
+
+
+def send_email(to: str, subject: str, body_html: str, email_type: str = "general",
+               text: str | None = None, reply_to: str | None = None) -> bool:
+    return deliver(to, subject, body_html, email_type, text, reply_to)[0]
+
+
+def describe(email_type: str) -> dict:
+    settings = get_settings()
+    return {
+        "provider": "Resend" if settings.resend_api_key else ("SMTP" if settings.smtp_host else "none"),
+        "from": _from_address(settings, email_type),
+        "team_inbox": settings.notification_recipient,
+    }

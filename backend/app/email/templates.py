@@ -296,3 +296,23 @@ def password_reset(email: str, link: str):
         "Didn't ask for this? You can ignore this email. Your password stays the same.",
     )
     return subject, html, text
+
+
+def test_message(admin_email: str, email_type: str):
+    label = "careers" if email_type == "careers" else "general"
+    subject = f"Test email from the Avennex panel ({label})"
+    body = (
+        _h1("This is a test")
+        + _p(f"<strong>{_e(admin_email)}</strong> sent this from Settings in the Avennex admin panel to check that "
+             f"{label} emails arrive.")
+        + _p("If you're reading it, sending works. Nothing else needs doing.")
+    )
+    html = _layout("Checking that site emails arrive.", body, "Sent from Settings in the Avennex admin panel.")
+    text = _text(
+        "This is a test",
+        "",
+        f"{admin_email} sent this from Settings in the Avennex admin panel to check that {label} emails arrive.",
+        "",
+        "If you're reading it, sending works. Nothing else needs doing.",
+    )
+    return subject, html, text

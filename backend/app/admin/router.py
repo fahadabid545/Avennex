@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
-from app.auth.dependencies import get_current_user, require_owner
+from app.auth.dependencies import get_current_user, require_manager, require_owner
 from app.admin import service
 
 logger = logging.getLogger(__name__)
@@ -102,3 +102,23 @@ def delete_admin(id: str, _user: dict = Depends(require_owner)):
         raise HTTPException(status_code=400, detail="At least one owner is needed")
     if not service.delete_admin(id):
         raise HTTPException(status_code=404, detail="Admin not found")
+
+
+class TestEmail(BaseModel):
+    to: EmailStr
+    kind: str = "general"
+
+
+@router.post("/test-email")
+def send_test_email(body: TestEmail, _user: dict = Depends(require_manager)):
+    """Sends one email and reports exactly what the provider answered, so a
+    missing email can be traced without reading the server log."""
+    from app.email import templates
+    from app.email.service import deliver, describe, is_email_enabled
+
+    kind = "careers" if body.kind == "careers" else "general"
+    subject, html, text = templates.test_message(_user["email"], kind)
+    sent, detail = deliver(str(body.to), subject, html, kind, text)
+    info = describe(kind)
+    info.update({"to": str(body.to), "detail": detail, "emails_enabled": is_email_enabled()})
+    return {"success": sent, "data": info}

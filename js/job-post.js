@@ -120,9 +120,9 @@
         if (qWrap) {
           var qHtml = '';
           for (var q = 0; q < job.custom_questions.length; q++) {
-            qHtml += '<div class="job-custom-question">';
+            qHtml += '<div class="form-group">';
             qHtml += '<label for="cq-' + q + '">' + API.escHtml(job.custom_questions[q]) + '</label>';
-            qHtml += '<textarea id="cq-' + q + '" data-question="' + API.escHtml(job.custom_questions[q]) + '" rows="3"></textarea>';
+            qHtml += '<textarea id="cq-' + q + '" data-question="' + API.escHtml(job.custom_questions[q]) + '" rows="4" maxlength="3000"></textarea>';
             qHtml += '</div>';
           }
           qWrap.innerHTML = qHtml;
