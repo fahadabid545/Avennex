@@ -108,6 +108,8 @@ def get_job(slug: str):
 @router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 def create_job(body: JobCreate, _user: dict = Depends(get_current_user)):
     data = body.model_dump(exclude_none=True)
+    if not (data.get("title") or "").strip():
+        raise HTTPException(status_code=400, detail="A role needs a title")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     try:
@@ -126,6 +128,8 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
     data = body.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    if "title" in data and not (data["title"] or "").strip():
+        raise HTTPException(status_code=400, detail="A role needs a title")
     data["last_edited_by"] = _user["email"]
     data["last_edited_at"] = datetime.now(timezone.utc).isoformat()
     revisions.record_before("job", id, service.get_by_id, _user["email"], data)
@@ -133,6 +137,8 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
     # simply no row with that id, and the two deserve different answers
     try:
         result = service.update(id, data)
+    except service.SlugTaken as e:
+        raise HTTPException(status_code=409, detail=f"Another role already uses the address \"{e}\". Pick a different slug.")
     except Exception:
         raise HTTPException(status_code=500, detail="The changes could not be saved. The reason is in the server log.")
     if not result:
@@ -144,8 +150,11 @@ def update_job(id: str, body: JobUpdate, _user: dict = Depends(get_current_user)
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_job(id: str, _user: dict = Depends(require_manager)):
     job = service.get_by_id(id)
-    if not service.delete(id):
+    deleted, warnings = service.delete(id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Job not found")
+    for warning in warnings:
+        logger.warning("Job %s: %s", id, warning)
     log_activity(_user["email"], "delete", "job", id, job["title"] if job else id)
 
 

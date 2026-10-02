@@ -32,7 +32,7 @@
       }
 
       html += '<tr class="jobs-table-row" data-slug="' + API.escHtml(job.slug) + '" data-created="' + API.escHtml(job.created_at || '') + '">';
-      html += '<td>' + API.escHtml(job.title) + '</td>';
+      html += '<td><a class="jobs-table-link" href="job-post.html?slug=' + encodeURIComponent(job.slug) + '">' + API.escHtml(job.title) + '</a></td>';
       html += '<td>' + API.escHtml(type.join(' / ')) + '</td>';
       html += '<td>' + API.escHtml(closing) + '</td>';
       html += '</tr>';

@@ -34,10 +34,12 @@
   navLinks.forEach((link) => {
     link.addEventListener('click', async () => {
       const target = link.dataset.module;
-      if (target === currentModule) return;
       // a half-written form is not discarded just because a nav item was hit
       if (!(await AdminUI.guard())) return;
-      AdminUI.Router.go(target);
+      // the hash does not change for the module already open, so it is
+      // reloaded directly, which takes you back to its list with fresh data
+      if (target === currentModule) loadModule(target);
+      else AdminUI.Router.go(target);
     });
   });
 
@@ -186,6 +188,19 @@
 
   // <input type="datetime-local"> speaks local wall clock, the API speaks
   // ISO in UTC. these two keep the crossing in one place.
+  // a job closes at the end of the day picked, in the admin's own time, and
+  // reads back as that same day whatever the timezone
+  function endOfDay(day) {
+    return day ? new Date(day + 'T23:59:59').toISOString() : null;
+  }
+
+  function localDay(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   function toLocalInput(iso) {
     if (!iso) return '';
     const d = new Date(iso);
@@ -2664,7 +2679,7 @@
         </div>
         <div class="field">
           <label for="republish-date">New Expiry Date <span class="field-req">Required</span></label>
-          <input type="date" id="republish-date" min="${new Date(Date.now() + 864e5).toISOString().slice(0, 10)}" required>
+          <input type="date" id="republish-date" min="${localDay(new Date(Date.now() + 864e5).toISOString())}" required>
         </div>
         <div class="form-msg" id="republish-msg"></div>
         <div class="confirm-actions" style="margin-top:16px">
@@ -2693,7 +2708,7 @@
         // overwrite the original and carry last cycle's applicants across.
         await AdminAPI.request(`/api/jobs/${job.id}/repost`, {
           method: 'POST',
-          body: JSON.stringify({ expires_at: new Date(dateVal).toISOString() }),
+          body: JSON.stringify({ expires_at: endOfDay(dateVal) }),
         });
         document.body.removeChild(overlay);
         jobsTab = 'open';
@@ -3078,7 +3093,7 @@
       good_to_have: j.good_to_have || '',
       max_applications: j.max_applications || '',
       status: j.status || 'open',
-      expires_at: j.expires_at ? j.expires_at.slice(0, 10) : '',
+      expires_at: localDay(j.expires_at),
     };
 
     if (!j.id) {
@@ -3087,7 +3102,7 @@
         if (days > 0) {
           const d = new Date();
           d.setDate(d.getDate() + days);
-          formData.expires_at = d.toISOString().slice(0, 10);
+          formData.expires_at = localDay(d.toISOString());
         }
       }).catch(() => {}).finally(() => renderJobForm());
     } else {
@@ -3268,11 +3283,21 @@
             if (d.description) {
               html += '<div class="field" style="margin-top:20px"><label>Description Preview</label><div class="blog-preview">' + richText(d.description) + '</div></div>';
             }
+            html += `
+              <div class="field" style="margin-top:20px">
+                <label for="f-status">Status</label>
+                <select id="f-status">
+                  <option value="open" ${d.status !== 'closed' ? 'selected' : ''}>Open, taking applications</option>
+                  <option value="closed" ${d.status === 'closed' ? 'selected' : ''}>Closed, off the careers page</option>
+                </select>
+              </div>`;
             wrap.innerHTML = html;
           },
         },
       ],
       onSubmit: (d) => {
+        const statusEl = document.getElementById('f-status');
+        if (statusEl) d.status = statusEl.value;
         const descEl = document.getElementById('f-description');
         if (descEl) d.description = descEl.value.trim();
         const reqEl = document.getElementById('f-requirements');
@@ -3291,7 +3316,7 @@
           status: d.status || 'open',
           max_applications: d.max_applications ? parseInt(d.max_applications, 10) : null,
           custom_questions: jobCustomQuestions.filter((q) => q.trim()),
-          expires_at: d.expires_at ? new Date(d.expires_at).toISOString() : null,
+          expires_at: endOfDay(d.expires_at),
         };
       },
       onBack: loadJobs,
@@ -3865,6 +3890,8 @@
         },
       ],
       onSubmit: (d) => {
+        const statusEl = document.getElementById('f-status');
+        if (statusEl) d.status = statusEl.value;
         const descEl = document.getElementById('f-description');
         if (descEl) d.description = descEl.value.trim();
         const contentEl = document.getElementById('f-content');

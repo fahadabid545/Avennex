@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 
 from app.database import get_supabase
-from app.slugs import slugify
+from app.slugs import free_slug, slug_taken, slugify
 from app.storage import ftp_service
 
 logger = logging.getLogger(__name__)
@@ -38,12 +38,15 @@ def list_open(page: int, limit: int):
 
 
 def list_closed(page: int, limit: int):
+    # a role past its date is closed to applicants even while its status
+    # still says open, so it belongs here where it can be republished
     db = get_supabase()
     offset = (page - 1) * limit
+    now = datetime.now(timezone.utc).isoformat()
     result = (
         db.table("jobs")
         .select("*")
-        .eq("status", "closed")
+        .or_(f"status.eq.closed,expires_at.lt.{now}")
         .order("created_at", desc=True)
         .range(offset, offset + limit - 1)
         .execute()
@@ -67,8 +70,7 @@ def get_by_slug(slug: str):
 
 def create(data: dict):
     db = get_supabase()
-    if not data.get("slug"):
-        data["slug"] = slugify(data["title"])
+    data["slug"] = free_slug("jobs", data.get("slug") or data["title"], "job")
     if data.get("expires_at"):
         data["expires_at"] = data["expires_at"].isoformat() if hasattr(data["expires_at"], "isoformat") else data["expires_at"]
     try:
@@ -79,9 +81,24 @@ def create(data: dict):
     return result.data[0] if result.data else None
 
 
+class SlugTaken(Exception):
+    pass
+
+
 def update(job_id: str, data: dict):
     db = get_supabase()
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    if "slug" in data:
+        title = data.get("title")
+        if not data["slug"] and not title:
+            current = get_by_id(job_id)
+            title = current["title"] if current else ""
+        if not data["slug"]:
+            data["slug"] = free_slug("jobs", title, "job", exclude_id=job_id)
+        else:
+            data["slug"] = slugify(data["slug"]) or "job"
+            if slug_taken("jobs", data["slug"], job_id):
+                raise SlugTaken(data["slug"])
     if data.get("expires_at") and hasattr(data["expires_at"], "isoformat"):
         data["expires_at"] = data["expires_at"].isoformat()
     try:
@@ -93,9 +110,22 @@ def update(job_id: str, data: dict):
 
 
 def delete(job_id: str):
+    """The applications go with the job in the database, but their resume
+    files would stay on the server, so they are removed here too."""
     db = get_supabase()
+    try:
+        apps = db.table("job_applications").select("resume_path").eq("job_id", job_id).execute().data or []
+    except Exception as e:
+        logger.error("Could not list resumes for job %s: %s", job_id, e)
+        apps = []
     result = db.table("jobs").delete().eq("id", job_id).execute()
-    return bool(result.data)
+    if not result.data:
+        return False, []
+    warnings = []
+    for app in apps:
+        if app.get("resume_path") and not ftp_service.delete_file(app["resume_path"]):
+            warnings.append("The job was deleted, but a resume file could not be removed from storage.")
+    return True, warnings[:1]
 
 
 def get_by_id(job_id: str):
@@ -206,25 +236,12 @@ def repost_job(job_id: str, overrides: dict = None):
     if overrides:
         new_data.update(overrides)
 
-    new_data["slug"] = free_slug(slugify(new_data["title"]))
+    # the closed posting still holds the plain slug, so a repost takes the
+    # next number free: ai-engineer-2, ai-engineer-3
+    new_data["slug"] = free_slug("jobs", new_data["title"], "job")
 
     result = db.table("jobs").insert(new_data).execute()
     return result.data[0] if result.data else None
-
-
-def free_slug(base: str) -> str:
-    # slugs are unique, and the closed posting still holds the plain one, so
-    # a repost takes the next number free: ai-engineer-2, ai-engineer-3
-    db = get_supabase()
-    base = base or "job"
-    rows = db.table("jobs").select("slug").like("slug", f"{base}%").execute().data or []
-    taken = {r["slug"] for r in rows}
-    if base not in taken:
-        return base
-    n = 2
-    while f"{base}-{n}" in taken:
-        n += 1
-    return f"{base}-{n}"
 
 
 def cleanup_old_closed_jobs():

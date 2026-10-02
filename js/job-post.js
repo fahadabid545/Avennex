@@ -193,8 +193,17 @@
       xhr.open('POST', API.BASE_URL + '/jobs/' + encodeURIComponent(jobSlug) + '/apply');
       xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
-          msg.className = 'form-msg form-msg-success';
-          msg.textContent = 'Application sent. We\'ll be in touch.';
+          // the application is saved even when the resume isn't, and the
+          // applicant should know the file didn't come through
+          var resumeLost = false;
+          try {
+            var ok = JSON.parse(xhr.responseText);
+            resumeLost = (ok.warnings || []).some(function (w) { return /resume/i.test(w); });
+          } catch (ex) {}
+          msg.className = 'form-msg ' + (resumeLost ? 'form-msg-error' : 'form-msg-success');
+          msg.textContent = resumeLost
+            ? 'Application sent, but your resume didn\'t upload. Reply to the confirmation email with it attached.'
+            : 'Application sent. We\'ll be in touch.';
           form.reset();
         } else {
           var errMsg = 'Something went wrong. Try again.';

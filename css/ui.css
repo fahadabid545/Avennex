@@ -638,6 +638,7 @@
 .jobs-table-row { cursor: pointer; transition: background var(--t-fast) var(--ease); }
 .jobs-table-row:hover { background: var(--paper-2); }
 .jobs-table-row:hover td:first-child { color: var(--ink); }
+.jobs-table-link { color: inherit; }
 
 /* ---------- api states ---------- */
 

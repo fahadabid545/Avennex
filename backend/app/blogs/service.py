@@ -126,9 +126,13 @@ def update(blog_id: str, data: dict):
         return None
 
     if "slug" in data:
-        data["slug"] = slugify(data["slug"] or data.get("title") or existing.data[0]["title"]) or "post"
-        if slug_taken("blogs", data["slug"], blog_id):
-            raise SlugTaken(data["slug"])
+        if not data["slug"]:
+            title = data.get("title") or existing.data[0]["title"]
+            data["slug"] = free_slug("blogs", title, "post", exclude_id=blog_id)
+        else:
+            data["slug"] = slugify(data["slug"]) or "post"
+            if slug_taken("blogs", data["slug"], blog_id):
+                raise SlugTaken(data["slug"])
 
     if data.get("status") == "published" and existing.data[0]["status"] != "published":
         data["published_at"] = datetime.now(timezone.utc).isoformat()
