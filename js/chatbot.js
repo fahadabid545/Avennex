@@ -85,14 +85,14 @@
   function render() {
     trigger = document.createElement('button');
     trigger.className = 'chatbot-trigger';
-    trigger.setAttribute('aria-label', 'Ask AI about Avennex');
+    trigger.setAttribute('aria-label', 'Ask Nex about Avennex');
     trigger.innerHTML =
       '<span class="glyph" aria-hidden="true">' +
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" ' +
         'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">' +
         '<path d="M4 4h16v11H9l-5 4V4z"/></svg>' +
       '</span>' +
-      '<span>Ask AI</span>';
+      '<span>Ask Nex</span>';
     document.body.appendChild(trigger);
 
     showGreeting();
@@ -101,7 +101,7 @@
     panel.className = 'chatbot-panel';
     panel.innerHTML =
       '<div class="chatbot-header">' +
-        '<span class="chatbot-header-title">Ask Avennex</span>' +
+        '<span class="chatbot-header-title">Ask Nex</span>' +
         '<button class="chatbot-close" aria-label="Close chat">' +
           '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M5 5l14 14M19 5L5 19"/></svg>' +
         '</button>' +
@@ -128,13 +128,27 @@
       e.preventDefault();
     }, { passive: false });
 
-    addBotMessage('Hi! Ask me anything about Avennex.');
+    addBotMessage('Hi, I\'m Nex. Ask me anything about Avennex.');
+    var hello = messagesEl.lastElementChild;
+    var wave = document.createElement('span');
+    wave.className = 'chatbot-wave';
+    wave.setAttribute('aria-hidden', 'true');
+    wave.textContent = '\uD83D\uDC4B';
+    hello.insertBefore(wave, hello.firstChild);
     renderSuggestions();
+
+    // the hand waves each time the panel opens
+    function waveHello() {
+      wave.classList.remove('is-waving');
+      void wave.offsetWidth;
+      wave.classList.add('is-waving');
+    }
 
     function openPanel() {
       dismissGreeting();
       open = true;
       panel.classList.add('open');
+      waveHello();
       trigger.classList.add('trigger-closing');
       setTimeout(function () {
         if (open) trigger.style.display = 'none';

@@ -213,3 +213,20 @@
   }
   .chatbot-greeting { right: 14px; bottom: 66px; max-width: calc(100vw - 28px); }
 }
+
+.chatbot-wave {
+  display: inline-block;
+  margin-right: 6px;
+  transform-origin: 70% 80%;
+}
+.chatbot-wave.is-waving { animation: chatbot-wave 1.4s ease-in-out 0.25s 1; }
+@keyframes chatbot-wave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(16deg); }
+  20% { transform: rotate(-10deg); }
+  40% { transform: rotate(-6deg); }
+  50% { transform: rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chatbot-wave.is-waving { animation: none; }
+}
