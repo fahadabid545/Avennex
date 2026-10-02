@@ -3,7 +3,7 @@
   const navLinks = document.querySelectorAll('.sidebar-link[data-module]');
   let currentModule = 'blogs';
 
-  const SITE_URL = 'https://avennex.com';
+  const SITE_URL = window.location.hostname === 'staging.avennex.com' ? 'https://staging.avennex.com' : 'https://avennex.com';
 
   if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = '../js/vendor/pdf.worker.min.js';

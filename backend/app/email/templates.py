@@ -7,7 +7,15 @@ from datetime import datetime, timezone
 from html import escape
 from urllib.parse import quote
 
-SITE = "https://avennex.com"
+
+
+def _site() -> str:
+    from app.config import get_settings
+    return get_settings().site_base
+
+
+def _domain() -> str:
+    return _site().split("://", 1)[-1]
 INK = "#14111f"
 MUTED = "#5f5a70"
 LINE = "#e7e4ee"
@@ -81,7 +89,7 @@ def _layout(preheader: str, body: str, note: str) -> str:
 </td></tr>
 <tr><td style="padding:20px 6px 0;font-size:12px;line-height:1.6;color:{MUTED};">
 {_e(note)}<br>
-Avennex &middot; Custom software, AI and automation &middot; <a href="{SITE}" style="color:{MUTED};">avennex.com</a>
+Avennex &middot; Custom software, AI and automation &middot; <a href="{_site()}" style="color:{MUTED};">{_domain()}</a>
 </td></tr>
 </table>
 </td></tr>
@@ -92,7 +100,7 @@ Avennex &middot; Custom software, AI and automation &middot; <a href="{SITE}" st
 
 def _text(*parts) -> str:
     lines = [p for p in parts if p is not None]
-    lines += ["", "--", "Avennex | Custom software, AI and automation", SITE]
+    lines += ["", "--", "Avennex | Custom software, AI and automation", _site()]
     return "\n".join(lines)
 
 
@@ -126,7 +134,7 @@ def application_received(name: str, job_title: str, resume_attached: bool):
     html = _layout(
         "Your application is in. Here's what happens next.",
         body,
-        f"You're receiving this because you applied for {job_title} on avennex.com.",
+        f"You're receiving this because you applied for {job_title} on {_domain()}.",
     )
     text = _text(
         f"Hi {_first_name(name)},",
@@ -166,7 +174,7 @@ def application_alert(job_title: str, name: str, email: str, experience: str, co
         + _section("Experience", _paragraphs(experience))
         + (_section("Cover letter", _paragraphs(cover_letter)) if cover_letter else "")
         + "".join(_section(q, _paragraphs(a)) for q, a in answers.items())
-        + _button(f"{SITE}/admin/dashboard.html#/jobs", "Open in the admin panel")
+        + _button(f"{_site()}/admin/dashboard.html#/jobs", "Open in the admin panel")
         + f'<p style="margin:10px 0 0;font-size:13px;color:{MUTED};">Replying to this email writes to the applicant.</p>'
     )
     html = _layout(f"{name} applied for {job_title}.", body, "Sent to the Avennex hiring team.")
@@ -183,7 +191,7 @@ def application_alert(job_title: str, name: str, email: str, experience: str, co
         "",
         *(["Cover letter:", cover_letter, ""] if cover_letter else []),
         *[line for q, a in answers.items() for line in (f"{q}:", str(a), "")],
-        f"Open in the admin panel: {SITE}/admin/dashboard.html#/jobs",
+        f"Open in the admin panel: {_site()}/admin/dashboard.html#/jobs",
     )
     return subject, html, text
 
@@ -203,7 +211,7 @@ def contact_alert(name: str, email: str, message: str):
         + _button(f"mailto:{email}", f"Reply to {_first_name(name)}")
         + f'<p style="margin:10px 0 0;font-size:13px;color:{MUTED};">Replying to this email writes straight to {_e(name)}.</p>'
     )
-    html = _layout(f"{name} wrote in through the contact form.", body, "Sent from the contact form on avennex.com.")
+    html = _layout(f"{name} wrote in through the contact form.", body, f"Sent from the contact form on {_domain()}.")
     text = _text(
         "New message from the website",
         "",
@@ -251,11 +259,11 @@ def _reply(name: str, where: str, link: str, link_label: str, original: str, rep
 
 
 def chat_reply(name: str, original: str, reply: str):
-    subject = "We've replied to your message on avennex.com"
+    subject = f"We've replied to your message on {_domain()}"
     html, text = _reply(
-        name, "on the Avennex website", f"{SITE}/#chat", "See the conversation", original, reply,
+        name, "on the Avennex website", f"{_site()}/#chat", "See the conversation", original, reply,
         "Our team answered your message.",
-        "You're receiving this because you left a message on avennex.com with this email address.",
+        f"You're receiving this because you left a message on {_domain()} with this email address.",
     )
     return subject, html, text
 
@@ -263,10 +271,10 @@ def chat_reply(name: str, original: str, reply: str):
 def product_chat_reply(name: str, product_name: str, slug: str, original: str, reply: str):
     subject = f"We've replied to your message about {product_name}"
     html, text = _reply(
-        name, f"about {product_name}", f"{SITE}/product-detail.html?slug={quote(str(slug or ''))}", f"Open {product_name}",
+        name, f"about {product_name}", f"{_site()}/product-detail.html?slug={quote(str(slug or ''))}", f"Open {product_name}",
         original, reply,
         f"Our team answered your question about {product_name}.",
-        f"You're receiving this because you asked about {product_name} on avennex.com.",
+        f"You're receiving this because you asked about {product_name} on {_domain()}.",
     )
     return subject, html, text
 

@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     # settings above so a mail sender is never doubled up as a recipient
     admin_notification_email: str = ""
 
+    # the site this backend serves. staging sets it to its own address, so
+    # upload links, email links and reset links point at staging
+    site_url: str = "https://avennex.com"
+
     openai_api_key: str = ""
     chatbot_jwt_secret: str = ""
 
@@ -48,6 +52,10 @@ class Settings(BaseSettings):
     @property
     def chatbot_jwt_secret_effective(self) -> str:
         return self.chatbot_jwt_secret or self.jwt_secret
+
+    @property
+    def site_base(self) -> str:
+        return (self.site_url or "https://avennex.com").rstrip("/")
 
     @property
     def notification_recipient(self) -> str:
