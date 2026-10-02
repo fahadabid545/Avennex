@@ -647,6 +647,8 @@
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* an empty list sits inside its section's own rules, not under a third one */
+.api-empty { padding-block: 0; border-top: 0; }
 .api-empty p,
 .api-error p {
   font-family: var(--text);

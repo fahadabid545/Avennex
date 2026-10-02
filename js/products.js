@@ -6,10 +6,12 @@
 
   API.get('/products').then(function (products) {
     if (!products || products.length === 0) {
-      API.showEmpty(container,
-        '<p>No products to show yet.</p>' +
-        '<p>See <a href="services.html">what we build for clients</a> in the meantime.</p>'
-      );
+      container.innerHTML = '<section class="section">' +
+        '<div class="rules" aria-hidden="true">' + new Array(13).join('<span></span>') + '</div>' +
+        '<div class="section-inner"><div class="grid">' +
+        '<div class="api-empty"><p>No products to show yet.</p>' +
+        '<p>In the meantime, take a look at <a href="services.html">our services</a>.</p></div>' +
+        '</div></div></section>';
       return;
     }
 

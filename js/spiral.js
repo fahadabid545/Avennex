@@ -461,25 +461,6 @@
     ctx.font = '600 ' + fs.toFixed(1) + 'px Manrope, sans-serif';
     ctx.textBaseline = 'middle';
 
-    var current = Math.min(TURNS - 1, Math.floor(cometT));
-    for (var rl = 0; rl < TURNS; rl++) {
-      var edge = view([0, BASE + (rl + 0.5) * RISE, 0]);
-      var lx = cx + (radius((rl + 0.5)) + 1.1) * unit;
-      var now = rl === current && restart <= 0;
-      ctx.fillStyle = rgba(now ? AMBER : INK, now ? 0.95 : 0.4);
-      ctx.fillText('R' + (rl + 1), lx, edge[1]);
-      ctx.fillRect(lx - unit * 0.5, edge[1], unit * 0.3, 1);
-    }
-
-    ctx.textAlign = 'center';
-    p = view(at(0));
-    ctx.fillStyle = rgba(AMBER, 0.9);
-    ctx.fillText('START', p[0], p[1] + unit * 0.62);
-    q = view([0, BASE + TURNS * RISE + 1.15, 0]);
-    ctx.fillStyle = rgba(INK, 0.55);
-    ctx.fillText('next release', q[0], q[1]);
-    ctx.textAlign = 'start';
-
     // the name of the stage the signal is resting on, beside its orb
     if (dwell && restart <= 0 && !reduced) {
       label = Math.min(1, label + s * 3);

@@ -337,6 +337,8 @@ body::after {
   color: var(--ink-2);
   max-width: 48ch;
 }
+/* a line written to sit on one row on desktop, wrapping only on small screens */
+.subtext-wide { max-width: none; }
 
 .body p, .prose p {
   font-size: 1rem;
