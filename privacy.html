@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy | Avennex</title>
-  <meta name="description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <meta name="description" content="How Avennex handles your data. No tracking cookies, no analytics scripts, no advertising pixels.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://avennex.com/privacy.html">
 
   <meta property="og:title" content="Privacy Policy | Avennex">
-  <meta property="og:description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <meta property="og:description" content="How Avennex handles your data. No tracking cookies, no analytics scripts, no advertising pixels.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
   <meta property="og:url" content="https://avennex.com/privacy.html">
   <meta property="og:type" content="website">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Privacy Policy | Avennex">
-  <meta name="twitter:description" content="How Avennex handles your data. No tracking cookies, no third-party analytics, no retargeting. Plain language, no legal tricks.">
+  <meta name="twitter:description" content="How Avennex handles your data. No tracking cookies, no analytics scripts, no advertising pixels.">
   <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
 
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="css/base.css?v=202610021100">
   <link rel="stylesheet" href="css/chrome.css?v=202609270700">
   <link rel="stylesheet" href="css/ui.css?v=202610021100">
-  <link rel="stylesheet" href="css/pages.css?v=202610021400">
+  <link rel="stylesheet" href="css/pages.css?v=202610021500">
   <link rel="stylesheet" href="css/chatbot.css?v=202610021200">
   <link rel="stylesheet" href="css/polish.css?v=202609270700">
 </head>
@@ -77,7 +77,7 @@
             <div class="record-head">
               <p class="section-eyebrow m-in">Legal</p>
               <h1 class="section-heading" data-set-type>Privacy policy.</h1>
-              <p class="page-hero-subtext m-in">How we handle your data. Plain language, no legal tricks.</p>
+              <p class="page-hero-subtext m-in">What we collect, why we keep it, and how to have it removed.</p>
             </div>
           </div>
         </div>
@@ -89,38 +89,62 @@
       <div class="section-inner">
         <div class="grid">
           <div class="legal-content m-in">
-            <p class="legal-updated">Last updated: 26 September 2026</p>
-
-            <h2>What we collect</h2>
-            <p>When you fill out a contact form or submit a job application, we collect your name, email, and whatever you type into the message fields. That's it.</p>
-            <p>Our site doesn't use tracking cookies. We don't run analytics scripts. No pixel trackers, no retargeting.</p>
-
-            <h2>How we use it</h2>
-            <p>Contact form submissions go straight to our team inbox so we can reply to you. Job applications are reviewed internally and stored for the hiring process.</p>
-            <p>We won't sell your information. We won't share it with third parties for marketing. The data exists for one reason: so we can respond to you.</p>
-
-            <h2>Where it's stored</h2>
-            <p>Data lives in Supabase (PostgreSQL), hosted on AWS infrastructure. Connections are encrypted in transit. Passwords are hashed with bcrypt before storage.</p>
-
-            <h2>How long we keep it</h2>
-            <ul>
-              <li>Contact messages: until the conversation is resolved, then deleted within 90 days.</li>
-              <li>Job applications: kept for 12 months after the role closes, then removed.</li>
-              <li>Account data (admin only): kept as long as the account is active.</li>
-            </ul>
-
-            <h2>Your rights</h2>
-            <p>You can ask us to delete any data we hold on you. Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> and we'll handle it within 7 business days.</p>
-
-            <h2>Third-party services</h2>
-            <p>There aren't any on the front end. Fonts and icons are served from our own domain, so no external CDN sees your visit. Nothing on this site loads a script from anywhere else.</p>
-            <p>The one external request a page makes is to our own API, which is what fills in products, posts and job listings.</p>
-
-            <h2>Changes</h2>
-            <p>If we update this policy the date above changes. Anything major gets a note on the homepage. We won't sneak something in.</p>
-
-            <h2>Questions</h2>
-            <p>Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> with any privacy question. Avennex is a remote-first company headquartered in Waterloo, Canada.</p>
+            <p class="legal-updated">Last updated: 2 October 2026</p>
+            <section class="legal-row">
+              <h2>What we collect</h2>
+              <div class="legal-text">
+                <p>When you send us a message, apply for a role or leave a comment, we keep what you give us: your name, your email and whatever you write. A job application also includes the resume you attach.</p>
+                <p>That's all. No tracking cookies, no analytics scripts, no advertising pixels.</p>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>How we use it</h2>
+              <div class="legal-text">
+                <p>Messages reach our team so we can reply. Applications are read by the people hiring for that role. Comments appear publicly, next to whatever you commented on.</p>
+                <p>We don't sell your information, and we don't share it with anyone for marketing.</p>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>Where it's kept</h2>
+              <div class="legal-text">
+                <p>Your data sits with established cloud providers, encrypted on its way to them, and only our team can reach it. Resumes go to private storage that can't be opened from the web.</p>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>Outside services</h2>
+              <div class="legal-text">
+                <p>A few trusted providers keep the site running: hosting, storage and email delivery. They handle data only to provide those services to us.</p>
+                <p>Academy videos play through YouTube's privacy-enhanced player, which loads only when you press play. The site also remembers a small preference or two in your browser, such as whether animations are on. None of it identifies you.</p>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>How long we keep it</h2>
+              <div class="legal-text">
+                <ul>
+                  <li>Messages: until the conversation wraps up, then deleted within 90 days.</li>
+                  <li>Job applications: 12 months after the role closes, then removed.</li>
+                  <li>Admin accounts: as long as the account is active.</li>
+                </ul>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>Your rights</h2>
+              <div class="legal-text">
+                <p>Ask us to show you, correct or delete what we hold on you. Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> and it's done within 7 business days.</p>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>Changes</h2>
+              <div class="legal-text">
+                <p>When this policy changes, the date above changes with it. Anything significant gets a note on the homepage too.</p>
+              </div>
+            </section>
+            <section class="legal-row">
+              <h2>Questions</h2>
+              <div class="legal-text">
+                <p>Write to <a href="mailto:hello@avennex.com">hello@avennex.com</a>. A real person reads it.</p>
+              </div>
+            </section>
           </div>
         </div>
       </div>
@@ -159,15 +183,14 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 Avennex</p>
-      <p>Waterloo, Canada</p>
     </div>
   </footer>
 
   <script src="js/icons.js?v=202609270200" defer></script>
   <script src="js/api.js?v=202609270200" defer></script>
-  <script src="js/chatbot.js?v=202610021200" defer></script>
+  <script src="js/chatbot.js?v=202610021500" defer></script>
   <script src="js/nav-feed.js?v=202609270400" defer></script>
-  <script src="js/motion.js?v=202609270200" defer></script>
+  <script src="js/motion.js?v=202610021500" defer></script>
   <script src="js/polish.js?v=202609270200" defer></script>
 
 </body>

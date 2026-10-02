@@ -128,7 +128,7 @@
       e.preventDefault();
     }, { passive: false });
 
-    addBotMessage('Hi, I\'m Nex. Ask me anything about Avennex.');
+    addBotMessage('Hi, I\'m Nex. I can walk you through what Avennex builds, how a project gets started, or which roles are open. What would you like to know?');
     var hello = messagesEl.lastElementChild;
     var wave = document.createElement('span');
     wave.className = 'chatbot-wave';

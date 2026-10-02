@@ -265,12 +265,31 @@
 
   window.AvxMotion = { adopt: adopt };
 
+  function settle() {
+    enabled = false;
+    if (io) { io.disconnect(); io = null; }
+    document.documentElement.classList.add('no-motion');
+    document.querySelectorAll('[data-animate], .m-in, .m-rule, .m-draw, .m-word').forEach(function (el) {
+      el.classList.add('is-in');
+    });
+  }
+
+  /* the page never waits on the API. A sleeping server can take most of a
+     minute to answer, and the body copy used to stay hidden until it did.
+     The admin switch is remembered from the last visit and applied the
+     moment the server replies */
   function go() {
-    /* the admin switch wins over everything above */
-    if (typeof API === 'undefined') { boot(); return; }
+    var KEY = 'avx_animations';
+    var remembered = null;
+    try { remembered = localStorage.getItem(KEY); } catch (e) {}
+    if (remembered === 'false') enabled = false;
+    boot();
+    if (typeof API === 'undefined') return;
     API.get('/settings/animations_enabled').then(function (setting) {
-      if (setting && setting.value === 'false') enabled = false;
-    }).catch(function () {}).then(function () { boot(); });
+      var off = !!(setting && setting.value === 'false');
+      try { localStorage.setItem(KEY, off ? 'false' : 'true'); } catch (e) {}
+      if (off && enabled) settle();
+    }).catch(function () {});
   }
 
   if (document.readyState === 'loading') {
