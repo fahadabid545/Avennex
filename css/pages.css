@@ -815,29 +815,49 @@
 
 .service-block {
   grid-column: 1 / -1;
-  padding-block: 56px;
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: calc(var(--gutter) * 2);
+  padding-block: 64px;
   border-top: 1px solid var(--rule);
   scroll-margin-top: 90px;
 }
-.service-block:first-child { border-top: 0; padding-top: 0; }
+.service-block:first-child { border-top: 0; padding-top: 8px; }
+.service-block-head { align-self: start; position: sticky; top: 104px; }
+.service-block-no {
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mark);
+}
 .service-block-title {
   font-family: var(--display);
-  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-size: clamp(1.6rem, 2.6vw, 2.3rem);
+  line-height: 1.08;
   letter-spacing: -0.03em;
 }
+.service-block-tag {
+  margin-top: 14px;
+  max-width: 28ch;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
 .service-block-lead {
-  margin-top: 20px;
-  max-width: 62ch;
-  font-size: 1.06rem;
+  max-width: 64ch;
+  font-size: clamp(1.05rem, 1.25vw, 1.2rem);
   line-height: 1.65;
-  color: var(--ink-2);
+  color: var(--ink);
 }
 .service-block-detail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--gutter);
-  margin-top: 30px;
-  max-width: 980px;
+  gap: calc(var(--gutter) * 1.5);
+  margin-top: 36px;
 }
 .service-block-label {
   font-family: var(--label);
@@ -849,7 +869,7 @@
   margin-bottom: 12px;
 }
 .service-block-list li {
-  padding: 9px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--hair);
   color: var(--ink-2);
 }
@@ -859,7 +879,7 @@
   font-size: 1.35rem;
   line-height: 1.35;
   color: var(--ink);
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 /* ---------- our own work, filled from the admin ---------- */
@@ -895,6 +915,11 @@
 .work-bar { display: block; height: 3px; background: var(--hair); }
 .work-bar span { display: block; height: 100%; background: var(--mark); }
 
+@media (max-width: 1024px) {
+  .service-block { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 52px; }
+  .service-block-head { position: static; }
+  .service-block-tag { max-width: none; }
+}
 @media (max-width: 860px) {
   .service-index { grid-template-columns: 1fr 1fr; }
   .service-block-detail { grid-template-columns: 1fr; gap: 28px; }
