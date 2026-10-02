@@ -120,10 +120,16 @@
 
 .chatbot-suggestions.is-chips {
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 7px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 .chatbot-suggestions.is-chips button {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 8px 11px;
   border: 1px solid var(--rule);
   border-top: 1px solid var(--rule);

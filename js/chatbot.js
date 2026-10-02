@@ -120,6 +120,13 @@
     inputEl = document.getElementById('chatbot-input');
     sendBtn = document.getElementById('chatbot-send');
     suggestEl = document.getElementById('chatbot-suggestions');
+    // a mouse wheel scrolls the chip row sideways
+    suggestEl.addEventListener('wheel', function (e) {
+      if (!started || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      if (suggestEl.scrollWidth <= suggestEl.clientWidth) return;
+      suggestEl.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }, { passive: false });
 
     addBotMessage('Hi! Ask me anything about Avennex.');
     renderSuggestions();
