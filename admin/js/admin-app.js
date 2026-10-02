@@ -2812,7 +2812,31 @@
     return res.blob();
   }
 
-  function buildApplicationPrintHtml(app, job) {
+  // the site's CSP has no blob: in connect-src, so pdf.js gets the bytes
+  // directly rather than an object URL it would be refused
+  async function loadResumePdf(appId) {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF preview unavailable');
+    const blob = await fetchResumeBlob(appId);
+    const data = new Uint8Array(await blob.arrayBuffer());
+    return pdfjsLib.getDocument({ data }).promise;
+  }
+
+  async function resumePageImages(appId) {
+    const pdf = await loadResumePdf(appId);
+    const images = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n);
+      const viewport = page.getViewport({ scale: 1.6 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      images.push(canvas.toDataURL('image/png'));
+    }
+    return images;
+  }
+
+  function buildApplicationPrintHtml(app, job, resume) {
     const answers = app.custom_answers && typeof app.custom_answers === 'object' ? Object.entries(app.custom_answers) : [];
     return `
       <html><head><title>Application: ${esc(app.name)}</title>
@@ -2821,6 +2845,8 @@
         h1{font-size:1.4rem;margin-bottom:4px} h2{font-size:1.1rem;margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}
         .meta{color:#555;margin-bottom:16px} .qa{margin-bottom:14px} .qa .q{font-weight:600} .qa .a{margin-top:2px}
         p{white-space:pre-wrap;line-height:1.5}
+        .resume-page{display:block;width:100%;border:1px solid #ddd;margin:0 0 16px;page-break-inside:avoid}
+        .resume-break{page-break-before:always}
       </style></head><body>
         <h1>${esc(job ? job.title : 'Job Application')}</h1>
         <div class="meta">Applicant: ${esc(app.name)} &middot; ${esc(app.email)} &middot; ${formatDate(app.created_at)}</div>
@@ -2832,8 +2858,13 @@
         <h2>Applicant</h2>
         <div class="qa"><div class="q">Name</div><div class="a">${esc(app.name)}</div></div>
         <div class="qa"><div class="q">Email</div><div class="a">${esc(app.email)}</div></div>
+        ${app.resume_text ? `<div class="qa"><div class="q">Experience</div><div class="a">${esc(app.resume_text)}</div></div>` : ''}
         ${app.cover_letter ? `<div class="qa"><div class="q">Cover Letter</div><div class="a">${esc(app.cover_letter)}</div></div>` : ''}
         ${answers.map(([q, a]) => `<div class="qa"><div class="q">${esc(q)}</div><div class="a">${esc(a)}</div></div>`).join('')}
+        ${resume && resume.images && resume.images.length ? `
+          <h2 class="resume-break">Resume</h2>
+          ${resume.images.map((src, i) => `<img class="resume-page" src="${src}" alt="Resume page ${i + 1}">`).join('')}` : ''}
+        ${resume && resume.error ? `<h2>Resume</h2><p>${esc(resume.error)}</p>` : ''}
       </body></html>`;
   }
 
@@ -2863,6 +2894,7 @@
         <div class="review-row"><span class="review-label">Name</span><span class="review-value">${esc(app.name)}</span></div>
         <div class="review-row"><span class="review-label">Email</span><span class="review-value">${esc(app.email)}</span></div>
         <div class="review-row"><span class="review-label">Applied</span><span class="review-value">${formatDate(app.created_at)}</span></div>
+        ${app.resume_text ? `<div class="review-row"><span class="review-label">Experience</span><span class="review-value">${esc(app.resume_text)}</span></div>` : ''}
         ${app.cover_letter ? `<div class="review-row"><span class="review-label">Cover Letter</span><span class="review-value">${esc(app.cover_letter)}</span></div>` : ''}
         ${answers.map(([q, a]) => `<div class="review-row"><span class="review-label">${esc(q)}</span><span class="review-value">${esc(a)}</span></div>`).join('')}
 
@@ -2879,12 +2911,26 @@
 
     document.getElementById('back-to-apps').addEventListener('click', () => showApplications(jobId));
 
-    document.getElementById('download-application-btn').addEventListener('click', () => {
+    document.getElementById('download-application-btn').addEventListener('click', async () => {
+      // opened straight away, inside the click, or the browser blocks it
       const w = window.open('', '_blank');
       if (!w) { AdminUI.toast('Allow pop-ups for this site to download the application.', 'warn'); return; }
-      w.document.write(buildApplicationPrintHtml(app, job));
+      w.document.write('<p style="font-family:Arial,sans-serif;padding:32px">Preparing the application...</p>');
+      let resume = null;
+      if (app.resume_path) {
+        try {
+          resume = { images: await resumePageImages(app.id) };
+        } catch (err) {
+          resume = { error: 'The resume could not be added here. Use Download Resume to get the file.' };
+        }
+      }
+      w.document.open();
+      w.document.write(buildApplicationPrintHtml(app, job, resume));
       w.document.close();
-      w.onload = () => w.print();
+      const imgs = Array.from(w.document.images);
+      await Promise.all(imgs.map((img) => (img.complete ? null : new Promise((r) => { img.onload = img.onerror = r; }))));
+      w.focus();
+      w.print();
     });
 
     const downloadResumeBtn = document.getElementById('download-resume-btn');
@@ -2911,36 +2957,25 @@
 
     if (app.resume_path) {
       const track = document.getElementById('resume-pdf-track');
-      fetchResumeBlob(app.id).then((blob) => {
-        const url = URL.createObjectURL(blob);
-        if (typeof pdfjsLib === 'undefined') {
-          URL.revokeObjectURL(url);
-          track.innerHTML = '<p class="text-muted">PDF preview unavailable.</p>';
-          return;
-        }
-        pdfjsLib.getDocument(url).promise.then((pdf) => {
-          URL.revokeObjectURL(url);
-          track.innerHTML = '';
-          let chain = Promise.resolve();
-          const renderPage = (n) => {
-            chain = chain.then(() => pdf.getPage(n).then((page) => {
-              const viewport = page.getViewport({ scale: 1.4 });
-              const canvas = document.createElement('canvas');
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              canvas.className = 'pdf-page';
-              const ctx = canvas.getContext('2d');
-              return page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-                track.appendChild(canvas);
-              });
-            }));
-          };
-          for (let n = 1; n <= pdf.numPages; n++) renderPage(n);
-        }).catch(() => {
-          track.innerHTML = '<p class="text-muted">Could not load the resume.</p>';
-        });
+      loadResumePdf(app.id).then((pdf) => {
+        track.innerHTML = '';
+        let chain = Promise.resolve();
+        const renderPage = (n) => {
+          chain = chain.then(() => pdf.getPage(n).then((page) => {
+            const viewport = page.getViewport({ scale: 1.4 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.className = 'pdf-page';
+            const ctx = canvas.getContext('2d');
+            return page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+              track.appendChild(canvas);
+            });
+          }));
+        };
+        for (let n = 1; n <= pdf.numPages; n++) renderPage(n);
       }).catch(() => {
-        track.innerHTML = '<p class="text-muted">Could not load the resume.</p>';
+        track.innerHTML = '<p class="text-muted">Could not load the resume. Use Download Resume to open it.</p>';
       });
 
       document.getElementById('resume-pdf-prev').addEventListener('click', () => {
