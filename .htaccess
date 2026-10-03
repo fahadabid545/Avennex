@@ -24,6 +24,10 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 RewriteCond %{HTTP_HOST} ^(www\.)?avennex\.com$ [NC]
 RewriteRule ^(backend|\.git|private_uploads)(/|$) - [F,L]
 
+# the sitemap is built from the live content by sitemap.php, so there is no
+# sitemap.xml file in the folder for this to compete with
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
 # Security headers
 <IfModule mod_headers.c>
   Header always set Strict-Transport-Security "max-age=31536000"
