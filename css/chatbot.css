@@ -10,9 +10,10 @@
   right: 22px;
   bottom: 22px;
   z-index: 190;
-  width: min(392px, calc(100vw - 28px));
-  /* a fixed height, so the panel keeps its size as the conversation grows */
-  height: min(620px, calc(100vh - 44px));
+  width: min(360px, calc(100vw - 28px));
+  /* a fixed height, so the panel keeps its size as the conversation grows,
+     short enough that its header always clears the site header above it */
+  height: min(540px, calc(100vh - 150px));
   display: none;
   flex-direction: column;
   background: var(--paper);

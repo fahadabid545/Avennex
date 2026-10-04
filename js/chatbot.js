@@ -50,7 +50,7 @@
     suggestEl.innerHTML = '';
     // a full list of cards fills the panel before the chat has said anything,
     // so only a few lead, and the rest come back as chips once it starts
-    var shown = started ? SUGGESTIONS.length : 4;
+    var shown = started ? SUGGESTIONS.length : 3;
     for (var i = 0; i < shown; i++) {
       var b = document.createElement('button');
       b.type = 'button';

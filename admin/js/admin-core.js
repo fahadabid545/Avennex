@@ -468,7 +468,7 @@ const AdminSettings = (() => {
       AdminUI.toast(
         keys.length === 1 ? `${label(keys[0])} saved.` : `${keys.length} settings saved.`,
         'success',
-        { href: 'https://avennex.com', hrefLabel: 'Open the site' }
+        { href: window.location.origin, hrefLabel: 'Open the site' }
       );
     } else if (!ok.length) {
       AdminUI.toast(AdminUI.friendly(failed[0].reason, 'Nothing could be saved.'), 'error');

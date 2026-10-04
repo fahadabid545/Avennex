@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 
 from app.database import get_supabase
+from app.config import get_settings
 from app.auth.service import (
     hash_password,
     verify_password,
@@ -175,7 +176,7 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
             "reset_token_expires": expires_at.isoformat(),
         }).eq("id", admin["id"]).execute()
 
-        reset_link = f"https://avennex.com/admin/index.html?reset={token}"
+        reset_link = f"{get_settings().site_base}/admin/index.html?reset={token}"
         try:
             from app.email.service import send_email
             from app.email import templates

@@ -8,7 +8,6 @@ from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-PUBLIC_BASE_URL = "https://avennex.com"
 WEB_ROOT_NAME = "public_html"
 PRIVATE_ROOT_NAME = "private_uploads"
 
@@ -346,13 +345,14 @@ def public_url(remote_path: str) -> str:
     path = remote_path.strip("/")
     if path.startswith(f"{WEB_ROOT_NAME}/"):
         path = path[len(WEB_ROOT_NAME) + 1:]
-    return f"{PUBLIC_BASE_URL}/{path}"
+    return f"{get_settings().site_base}/{path}"
 
 
 def remote_path_from_url(url: str) -> Optional[str]:
-    if not url or not url.startswith(f"{PUBLIC_BASE_URL}/"):
+    base = get_settings().site_base
+    if not url or not url.startswith(f"{base}/"):
         return None
-    return f"{WEB_ROOT_NAME}/{url[len(PUBLIC_BASE_URL) + 1:]}"
+    return f"{WEB_ROOT_NAME}/{url[len(base) + 1:]}"
 
 
 def list_dir(remote_dir: str, extensions: tuple = ()) -> tuple[list, Optional[str]]:
