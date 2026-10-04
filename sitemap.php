@@ -3,7 +3,11 @@
 // products and ideas comes from the API. When the API is asleep or down,
 // the last good copy is served, and failing that the static page list.
 
-$source = 'https://avennex.onrender.com/api/sitemap.xml';
+// staging has its own backend, so its sitemap lists staging's own content
+$isStaging = strtolower($_SERVER['HTTP_HOST'] ?? '') === 'staging.avennex.com';
+$source = $isStaging
+    ? 'https://avennex-stagging.onrender.com/api/sitemap.xml'
+    : 'https://avennex.onrender.com/api/sitemap.xml';
 $cacheFile = __DIR__ . '/sitemap-cache.xml';
 $staticFile = __DIR__ . '/sitemap-static.xml';
 $timeout = 10;

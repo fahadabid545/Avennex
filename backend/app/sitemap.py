@@ -6,13 +6,12 @@ from xml.sax.saxutils import escape
 from fastapi import APIRouter
 from fastapi.responses import Response
 
+from app.config import get_settings
 from app.database import get_supabase
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["sitemap"])
-
-SITE = "https://avennex.com"
 
 # real pages only. the detail pages are templates that show nothing without
 # a slug, so they appear further down once per published item, never bare
@@ -43,22 +42,24 @@ def _entry(loc: str, lastmod: str, changefreq: str, priority: str) -> str:
     )
 
 
-def _detail_entries(rows, page: str, today: str, changefreq: str, priority: str) -> list[str]:
+def _detail_entries(site: str, rows, page: str, today: str, changefreq: str, priority: str) -> list[str]:
     out = []
     for row in rows or []:
         slug = str(row.get("slug") or "").strip()
         if not slug:
             continue
         lastmod = str(row.get("updated_at") or row.get("published_at") or row.get("created_at") or today)[:10]
-        out.append(_entry(f"{SITE}/{page}?slug={quote(slug, safe='')}", lastmod, changefreq, priority))
+        out.append(_entry(f"{site}/{page}?slug={quote(slug, safe='')}", lastmod, changefreq, priority))
     return out
 
 
 @router.get("/api/sitemap.xml")
 def dynamic_sitemap():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # SITE_URL on the server, so the staging backend lists staging addresses
+    site = get_settings().site_base
     urls = [
-        _entry(f"{SITE}{page['path']}", STATIC_LASTMOD, page["changefreq"], page["priority"])
+        _entry(f"{site}{page['path']}", STATIC_LASTMOD, page["changefreq"], page["priority"])
         for page in STATIC_PAGES
     ]
 
@@ -72,7 +73,7 @@ def dynamic_sitemap():
             .order("published_at", desc=True)
             .execute()
         )
-        urls += _detail_entries(blogs.data, "blog-post.html", today, "monthly", "0.7")
+        urls += _detail_entries(site, blogs.data, "blog-post.html", today, "monthly", "0.7")
     except Exception as e:
         logger.warning("sitemap: failed to fetch blogs: %s", e)
 
@@ -86,7 +87,7 @@ def dynamic_sitemap():
             .order("created_at", desc=True)
             .execute()
         )
-        urls += _detail_entries(jobs.data, "job-post.html", today, "weekly", "0.6")
+        urls += _detail_entries(site, jobs.data, "job-post.html", today, "weekly", "0.6")
     except Exception as e:
         logger.warning("sitemap: failed to fetch jobs: %s", e)
 
@@ -98,7 +99,7 @@ def dynamic_sitemap():
             .order("created_at")
             .execute()
         )
-        urls += _detail_entries(products.data, "product-detail.html", today, "weekly", "0.8")
+        urls += _detail_entries(site, products.data, "product-detail.html", today, "weekly", "0.8")
     except Exception as e:
         logger.warning("sitemap: failed to fetch products: %s", e)
 
@@ -110,7 +111,7 @@ def dynamic_sitemap():
             .order("created_at", desc=True)
             .execute()
         )
-        urls += _detail_entries(entries.data, "launchpad-detail.html", today, "weekly", "0.6")
+        urls += _detail_entries(site, entries.data, "launchpad-detail.html", today, "weekly", "0.6")
     except Exception as e:
         logger.warning("sitemap: failed to fetch launchpad entries: %s", e)
 
