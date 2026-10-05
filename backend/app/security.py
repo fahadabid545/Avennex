@@ -106,6 +106,17 @@ async def rate_limited(request: Request, exc: Exception):
     return response
 
 
+async def catch_errors(request: Request, call_next):
+    # an error that escapes to the server's outermost layer is answered
+    # without CORS headers, and the browser then reports a network failure
+    # instead of the error. catching it here, inside CORS, keeps it readable
+    try:
+        return await call_next(request)
+    except Exception:
+        logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+        return JSONResponse(status_code=500, content={"success": False, "detail": "Something went wrong. Please try again."})
+
+
 async def unhandled_error(request: Request, exc: Exception):
     logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(status_code=500, content={"success": False, "detail": "Something went wrong. Please try again."})
