@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
-from app.security import limiter, body_size_guard, rate_limited, security_headers, unhandled_error
+from app.security import limiter, body_size_guard, catch_errors, rate_limited, security_headers, unhandled_error
 from app.auth.router import router as auth_router
 from app.blogs.router import router as blogs_router
 from app.jobs.router import router as jobs_router
@@ -28,6 +28,7 @@ app = FastAPI(title="Avennex API", docs_url=None, redoc_url=None, openapi_url=No
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limited)
 app.add_exception_handler(Exception, unhandled_error)
+app.middleware("http")(catch_errors)
 app.middleware("http")(security_headers)
 app.middleware("http")(body_size_guard)
 
