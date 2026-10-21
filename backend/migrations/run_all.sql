@@ -23,7 +23,7 @@ create table if not exists content_revisions (
 create index if not exists content_revisions_entity_idx
   on content_revisions (entity_type, entity_id, created_at desc);
 
-alter table content_revisions disable row level security;
+alter table content_revisions enable row level security;
 -- Scheduled publishing for blog posts.
 -- A post with status 'scheduled' goes live once publish_at has passed.
 
@@ -58,7 +58,7 @@ create index if not exists media_context_idx on media (context);
 create unique index if not exists media_remote_path_idx on media (remote_path)
   where remote_path is not null;
 
-alter table media disable row level security;
+alter table media enable row level security;
 
 -- Columns the jobs table was missing in production.
 -- location and good_to_have are read and written by the admin form and the
@@ -129,7 +129,7 @@ create table if not exists team_members (
 
 create index if not exists team_members_order_idx on team_members (display_order, created_at);
 
-alter table team_members disable row level security;
+alter table team_members enable row level security;
 
 insert into team_members (name, role, display_order)
 select v.name, v.role, v.display_order
@@ -141,3 +141,19 @@ from (values
   ('Saad', 'Engineering', 4)
 ) as v(name, role, display_order)
 where not exists (select 1 from team_members);
+
+-- Row level security on every table in the public schema.
+-- No policies are added, so the anon and authenticated keys can't read or
+-- write anything through the Data API. The backend connects with the
+-- service role key, which bypasses RLS, so it keeps working as before.
+
+do $$
+declare t record;
+begin
+  for t in select tablename from pg_tables where schemaname = 'public' loop
+    execute format('alter table public.%I enable row level security', t.tablename);
+  end loop;
+end $$;
+
+-- Check: every row should show rowsecurity = true.
+-- select tablename, rowsecurity from pg_tables where schemaname = 'public' order by 1;

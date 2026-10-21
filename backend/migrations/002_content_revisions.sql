@@ -13,4 +13,4 @@ create table if not exists content_revisions (
 create index if not exists content_revisions_entity_idx
   on content_revisions (entity_type, entity_id, created_at desc);
 
-alter table content_revisions disable row level security;
+alter table content_revisions enable row level security;

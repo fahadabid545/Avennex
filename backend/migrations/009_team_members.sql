@@ -16,7 +16,7 @@ create table if not exists team_members (
 
 create index if not exists team_members_order_idx on team_members (display_order, created_at);
 
-alter table team_members disable row level security;
+alter table team_members enable row level security;
 
 insert into team_members (name, role, display_order)
 select v.name, v.role, v.display_order

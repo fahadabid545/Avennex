@@ -24,7 +24,7 @@ create table if not exists admins (
   created_at timestamptz default now()
 );
 
-alter table admins disable row level security;
+alter table admins enable row level security;
 
 -- Blogs
 create table if not exists blogs (
@@ -47,7 +47,7 @@ create table if not exists blogs (
 
 create index if not exists blogs_scheduled_idx on blogs (publish_at) where status = 'scheduled';
 
-alter table blogs disable row level security;
+alter table blogs enable row level security;
 
 -- Jobs
 create table if not exists jobs (
@@ -70,7 +70,7 @@ create table if not exists jobs (
   last_edited_at timestamptz
 );
 
-alter table jobs disable row level security;
+alter table jobs enable row level security;
 
 -- Products
 create table if not exists products (
@@ -112,7 +112,7 @@ create table if not exists products (
 -- than dropped, and left out of the create above so a fresh build does
 -- not repeat it.
 
-alter table products disable row level security;
+alter table products enable row level security;
 
 -- Product chat messages
 create table if not exists product_chat_messages (
@@ -128,7 +128,7 @@ create table if not exists product_chat_messages (
   updated_at timestamptz default now()
 );
 
-alter table product_chat_messages disable row level security;
+alter table product_chat_messages enable row level security;
 
 -- Launchpad entries
 create table if not exists launchpad_entries (
@@ -162,7 +162,7 @@ create table if not exists launchpad_entries (
   last_edited_at timestamptz
 );
 
-alter table launchpad_entries disable row level security;
+alter table launchpad_entries enable row level security;
 
 -- Launchpad comments
 create table if not exists launchpad_comments (
@@ -174,7 +174,7 @@ create table if not exists launchpad_comments (
   created_at timestamptz default now()
 );
 
-alter table launchpad_comments disable row level security;
+alter table launchpad_comments enable row level security;
 
 -- Refresh tokens
 create table if not exists refresh_tokens (
@@ -186,7 +186,7 @@ create table if not exists refresh_tokens (
   created_at timestamptz default now()
 );
 
-alter table refresh_tokens disable row level security;
+alter table refresh_tokens enable row level security;
 
 -- Content revisions
 create table if not exists content_revisions (
@@ -201,7 +201,7 @@ create table if not exists content_revisions (
 create index if not exists content_revisions_entity_idx
   on content_revisions (entity_type, entity_id, created_at desc);
 
-alter table content_revisions disable row level security;
+alter table content_revisions enable row level security;
 
 -- Media library
 create table if not exists media (
@@ -221,7 +221,7 @@ create index if not exists media_created_idx on media (created_at desc);
 create index if not exists media_context_idx on media (context);
 create unique index if not exists media_remote_path_idx on media (remote_path) where remote_path is not null;
 
-alter table media disable row level security;
+alter table media enable row level security;
 
 -- FAQs
 create table if not exists faqs (
@@ -240,7 +240,7 @@ create table if not exists faqs (
 -- to 0, so created_at is what keeps tied questions in a settled order
 create index if not exists faqs_order_idx on faqs (display_order, created_at);
 
-alter table faqs disable row level security;
+alter table faqs enable row level security;
 
 -- Team members on the About page, five at most
 create table if not exists team_members (
@@ -258,7 +258,7 @@ create table if not exists team_members (
 
 create index if not exists team_members_order_idx on team_members (display_order, created_at);
 
-alter table team_members disable row level security;
+alter table team_members enable row level security;
 
 -- Job applications
 create table if not exists job_applications (
@@ -276,7 +276,7 @@ create table if not exists job_applications (
 
 create index if not exists job_applications_job_idx on job_applications (job_id);
 
-alter table job_applications disable row level security;
+alter table job_applications enable row level security;
 
 -- Home board messages. A reply points at the message it answers.
 create table if not exists chat_messages (
@@ -295,7 +295,7 @@ create table if not exists chat_messages (
 
 create index if not exists chat_messages_parent_idx on chat_messages (parent_id);
 
-alter table chat_messages disable row level security;
+alter table chat_messages enable row level security;
 
 -- Academy playlists
 create table if not exists playlists (
@@ -308,7 +308,7 @@ create table if not exists playlists (
   updated_at timestamptz default now()
 );
 
-alter table playlists disable row level security;
+alter table playlists enable row level security;
 
 -- Academy videos
 create table if not exists videos (
@@ -326,7 +326,7 @@ create table if not exists videos (
 
 create index if not exists videos_playlist_idx on videos (playlist_id, display_order);
 
-alter table videos disable row level security;
+alter table videos enable row level security;
 
 -- Admin activity log. entity_id is text, not uuid, because not every
 -- logged action points at a row. The jobs cleanup passes an empty string
@@ -344,7 +344,7 @@ create table if not exists activity_log (
 
 create index if not exists activity_log_created_idx on activity_log (created_at desc);
 
-alter table activity_log disable row level security;
+alter table activity_log enable row level security;
 
 -- Chatbot source documents
 create table if not exists chatbot_documents (
@@ -357,7 +357,7 @@ create table if not exists chatbot_documents (
   error text
 );
 
-alter table chatbot_documents disable row level security;
+alter table chatbot_documents enable row level security;
 
 -- One row per chatbot answer, counted for the usage chart
 create table if not exists chatbot_requests (
@@ -365,7 +365,7 @@ create table if not exists chatbot_requests (
   created_at timestamptz default now()
 );
 
-alter table chatbot_requests disable row level security;
+alter table chatbot_requests enable row level security;
 
 -- Site settings, read as strings and parsed by the caller
 create table if not exists settings (
@@ -375,4 +375,4 @@ create table if not exists settings (
   updated_at timestamptz default now()
 );
 
-alter table settings disable row level security;
+alter table settings enable row level security;
