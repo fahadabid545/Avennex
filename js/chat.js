@@ -3,7 +3,15 @@
   var list = document.getElementById('chat-messages');
   if (!section || !list) return;
 
+  var snapshot = window.HomeSnapshot || Promise.resolve(null);
   var showDetails = false;
+  var live = false;
+  var shown = null;
+
+  snapshot.then(function (snap) {
+    if (live || !snap || !snap.messages) return;
+    renderMessages(snap.messages, !!(snap.settings && snap.settings.chat_show_details === 'true'));
+  });
 
   API.get('/settings/chat_show_details').then(function (setting) {
     showDetails = setting && setting.value === 'true';
@@ -13,47 +21,52 @@
 
   function loadMessages() {
     API.get('/chat/messages').then(function (messages) {
-      if (!messages || messages.length === 0) {
-        list.innerHTML = '<p class="chat-empty">No messages yet. Start the conversation.</p>';
-        return;
-      }
-
-      var html = '';
-      for (var i = 0; i < messages.length; i++) {
-        var m = messages[i];
-        html += '<div class="chat-msg">';
-        html += '<div class="chat-msg-header">';
-        html += '<span class="chat-msg-author">' + API.escHtml(m.author_name) + '</span>';
-        if (showDetails) {
-          var details = [];
-          if (m.author_profession) details.push(API.escHtml(m.author_profession));
-          if (m.author_company) details.push(API.escHtml(m.author_company));
-          if (details.length) {
-            html += '<span class="chat-msg-details">' + details.join(' at ') + '</span>';
-          }
-        }
-        html += '<span class="chat-msg-time">' + API.formatDate(m.created_at) + '</span>';
-        html += '</div>';
-        html += '<p class="chat-msg-text">' + API.escHtml(m.message) + '</p>';
-
-        if (m.replies && m.replies.length) {
-          for (var j = 0; j < m.replies.length; j++) {
-            var r = m.replies[j];
-            html += '<div class="chat-reply">';
-            html += '<div class="chat-msg-header">';
-            html += '<span class="chat-msg-author chat-admin-badge">Avennex</span>';
-            html += '<span class="chat-msg-time">' + API.formatDate(r.created_at) + '</span>';
-            html += '</div>';
-            html += '<p class="chat-msg-text">' + API.escHtml(r.message) + '</p>';
-            html += '</div>';
-          }
-        }
-        html += '</div>';
-      }
-      list.innerHTML = html;
+      live = true;
+      renderMessages(messages, showDetails);
     }).catch(function () {
-      list.innerHTML = '<p class="chat-empty">Could not load messages.</p>';
+      if (shown === null) list.innerHTML = '<p class="chat-empty">Could not load messages.</p>';
     });
+  }
+
+  function renderMessages(messages, details) {
+    var html = '';
+    if (!messages || messages.length === 0) {
+      html = '<p class="chat-empty">No messages yet. Start the conversation.</p>';
+    }
+    for (var i = 0; messages && i < messages.length; i++) {
+      var m = messages[i];
+      html += '<div class="chat-msg">';
+      html += '<div class="chat-msg-header">';
+      html += '<span class="chat-msg-author">' + API.escHtml(m.author_name) + '</span>';
+      if (details) {
+        var parts = [];
+        if (m.author_profession) parts.push(API.escHtml(m.author_profession));
+        if (m.author_company) parts.push(API.escHtml(m.author_company));
+        if (parts.length) {
+          html += '<span class="chat-msg-details">' + parts.join(' at ') + '</span>';
+        }
+      }
+      html += '<span class="chat-msg-time">' + API.formatDate(m.created_at) + '</span>';
+      html += '</div>';
+      html += '<p class="chat-msg-text">' + API.escHtml(m.message) + '</p>';
+
+      if (m.replies && m.replies.length) {
+        for (var j = 0; j < m.replies.length; j++) {
+          var r = m.replies[j];
+          html += '<div class="chat-reply">';
+          html += '<div class="chat-msg-header">';
+          html += '<span class="chat-msg-author chat-admin-badge">Avennex</span>';
+          html += '<span class="chat-msg-time">' + API.formatDate(r.created_at) + '</span>';
+          html += '</div>';
+          html += '<p class="chat-msg-text">' + API.escHtml(r.message) + '</p>';
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+    }
+    if (html === shown) return;
+    shown = html;
+    list.innerHTML = html;
   }
 
   var sendBtn = document.getElementById('chat-send-btn');
