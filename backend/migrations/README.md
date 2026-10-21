@@ -1,7 +1,7 @@
 # Migrations
 
 Run these in the Supabase SQL Editor, in order. Each one is safe to run
-twice. `run_all.sql` is the nine files joined together if you would rather
+twice. `run_all.sql` is the ten files joined together if you would rather
 paste one block.
 
 | File | What it adds |
@@ -15,6 +15,7 @@ paste one block.
 | `007_document_sections.sql` | `documents`, `documents_heading`, `documents_body` on products and launchpad ideas |
 | `008_project_report.sql` | `report` on products and launchpad ideas, the data behind the project report |
 | `009_team_members.sql` | `team_members`, the people on the About page, seeded with the current five |
+| `010_enable_rls.sql` | row level security on every public table, so the anon key can't reach the data |
 
 Existing admin accounts become owners, so nobody loses access. Accounts
 added after that start as editors and you raise them in the panel.

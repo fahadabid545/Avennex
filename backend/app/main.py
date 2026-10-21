@@ -21,6 +21,7 @@ from app.product_chat.router import router as product_chat_router
 from app.uploads.router import router as uploads_router
 from app.revisions.router import router as revisions_router
 from app.team.router import router as team_router
+from app import home_snapshot
 
 settings = get_settings()
 
@@ -31,6 +32,7 @@ app.add_exception_handler(Exception, unhandled_error)
 app.middleware("http")(catch_errors)
 app.middleware("http")(security_headers)
 app.middleware("http")(body_size_guard)
+app.middleware("http")(home_snapshot.refresh_after_writes)
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,6 +81,11 @@ def startup_load_chatbot_index():
             logger.info("Starting with empty chatbot index")
     except Exception as e:
         logger.warning("Chatbot index load failed: %s", e)
+
+
+@app.on_event("startup")
+def startup_write_home_snapshot():
+    home_snapshot.schedule()
 
 
 @app.get("/api/health")
