@@ -30,8 +30,8 @@
     document.head.appendChild(el);
   }
 
+  // the Organization block for the home page sits in index.html itself
   if (page === 'index.html') {
-    inject(org);
     inject({
       '@type': 'WebSite',
       name: 'Avennex',
