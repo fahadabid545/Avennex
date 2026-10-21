@@ -20,4 +20,4 @@ create index if not exists media_context_idx on media (context);
 create unique index if not exists media_remote_path_idx on media (remote_path)
   where remote_path is not null;
 
-alter table media disable row level security;
+alter table media enable row level security;
