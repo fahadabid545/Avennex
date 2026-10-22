@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -15,6 +16,8 @@ from app.database import get_supabase
 logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
+EMBED_BATCH_SIZE = 100
+EMBED_RETRIES = 3
 EMBEDDING_DIM = 1536
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
@@ -30,6 +33,29 @@ def _get_openai_client():
         logger.error("OPENAI_API_KEY is not set")
         raise RuntimeError("OpenAI API key not configured")
     return openai.OpenAI(api_key=settings.openai_api_key)
+
+
+def is_quota_error(e: Exception) -> bool:
+    return getattr(e, "code", None) == "insufficient_quota" or "insufficient_quota" in str(e)
+
+
+# a big PDF sent as one request can pass the account's tokens per minute, so
+# chunks go in batches and a busy answer is retried with a growing wait
+def _embed_batch(client, batch: list[str]):
+    import openai
+    for attempt in range(EMBED_RETRIES + 1):
+        try:
+            return client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
+        except openai.RateLimitError as e:
+            if is_quota_error(e) or attempt == EMBED_RETRIES:
+                logger.error("OpenAI embeddings request failed: %s", e)
+                raise
+            wait = min(5 * 2 ** attempt, 30)
+            logger.warning("OpenAI asked to slow down, retrying in %ds", wait)
+            time.sleep(wait)
+        except Exception as e:
+            logger.error("OpenAI embeddings request failed: %s", e)
+            raise
 
 
 def _strip_html(text: str) -> str:
@@ -124,12 +150,11 @@ class ChatbotService:
     def _embed(self, texts: list[str]) -> np.ndarray:
         client = _get_openai_client()
         logger.info("Requesting embeddings for %d chunk(s)", len(texts))
-        try:
-            response = client.embeddings.create(model=EMBEDDING_MODEL, input=texts)
-        except Exception as e:
-            logger.error("OpenAI embeddings request failed: %s", e)
-            raise
-        embeddings = np.array([d.embedding for d in response.data], dtype="float32")
+        vectors = []
+        for start in range(0, len(texts), EMBED_BATCH_SIZE):
+            response = _embed_batch(client, texts[start:start + EMBED_BATCH_SIZE])
+            vectors.extend(d.embedding for d in response.data)
+        embeddings = np.array(vectors, dtype="float32")
         norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
         norms[norms == 0] = 1
         embeddings = embeddings / norms
