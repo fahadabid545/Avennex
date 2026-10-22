@@ -1,6 +1,7 @@
 import logging
 import uuid
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, HTTPException, Header, Request, UploadFile, File, status
 from typing import Optional
 
@@ -14,6 +15,7 @@ from app.chatbot.service import (
     create_chat_session_token,
     verify_chat_session_token,
     extract_text,
+    is_quota_error,
 )
 from app.security import limiter, global_key, clean_text
 
@@ -159,7 +161,8 @@ async def upload_document(
             raise HTTPException(status_code=400, detail="No text could be extracted from the file")
 
         svc = get_chatbot_service()
-        chunk_count = svc.add_document(text, doc_id, filename)
+        # off the event loop, so a slow OpenAI reply doesn't stall other requests
+        chunk_count = await run_in_threadpool(svc.add_document, text, doc_id, filename)
 
         db.table("chatbot_documents").update({
             "chunk_count": chunk_count,
@@ -182,7 +185,11 @@ async def upload_document(
         logger.error("Document processing failed for %s: %s", filename, e)
         error_reason = str(e)
         lowered = error_reason.lower()
-        if "api key" in lowered or "api_key" in lowered or "authentication" in lowered or "not configured" in lowered:
+        if is_quota_error(e) or "quota" in lowered:
+            error_reason = "The OpenAI account is out of credit. Add billing at platform.openai.com, then upload again."
+        elif type(e).__name__ == "RateLimitError" or "rate limit" in lowered or "429" in lowered:
+            error_reason = "OpenAI is busy for this account right now. Wait a minute, then upload again."
+        elif "api key" in lowered or "api_key" in lowered or "authentication" in lowered or "not configured" in lowered:
             error_reason = "OpenAI API key not configured or invalid"
         elif "faiss" in lowered or "index" in lowered:
             error_reason = f"FAISS index error: {error_reason}"
