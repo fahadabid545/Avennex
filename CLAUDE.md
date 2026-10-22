@@ -87,3 +87,9 @@ Every endpoint must return structured error responses:
 ```
 
 Apply this principle retroactively to ALL existing endpoints. Wrap every side-effect in try/except with proper logging and warning responses.
+
+## Diagnose Before Changing Code
+- When something fails, find the actual cause first: the error text, logs, or the user. Never assume it.
+- If the cause is outside the code (account credit, billing, keys, env vars, quotas, hosting settings), tell the user what to fix there. Don't change code for it.
+- Change code only when the code itself is the cause, or when the user asks for the change after hearing the cause.
+- If the cause can't be confirmed from here, ask the user for the exact error before writing any code.
