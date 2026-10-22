@@ -28,6 +28,13 @@ RewriteRule ^(backend|\.git|private_uploads)(/|$) - [F,L]
 # sitemap.xml file in the folder for this to compete with
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
+# detail pages with a slug go through meta.php, which writes the item's own
+# title, description and share image into the head. it falls back to the
+# plain page whenever the API can't answer in time
+RewriteCond %{QUERY_STRING} (^|&)slug=[^&]+
+RewriteCond %{DOCUMENT_ROOT}/meta.php -f
+RewriteRule ^(blog-post|job-post|product-detail|launchpad-detail)\.html$ meta.php?page=$1 [QSA,L]
+
 # staging stays out of search results
 SetEnvIfNoCase Host ^staging\.avennex\.com$ AVX_STAGING
 
