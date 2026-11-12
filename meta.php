@@ -5,10 +5,10 @@
 // down or answers oddly, the page goes out exactly as it sits on disk.
 
 $pages = [
-    'blog-post' => ['api' => 'blogs', 'type' => 'article', 'title' => 'title', 'desc' => ['meta_description', 'excerpt', 'content']],
-    'job-post' => ['api' => 'jobs', 'type' => 'website', 'title' => 'title', 'desc' => ['description']],
-    'product-detail' => ['api' => 'products', 'type' => 'website', 'title' => 'name', 'desc' => ['tagline', 'description']],
-    'launchpad-detail' => ['api' => 'launchpad', 'type' => 'website', 'title' => 'title', 'desc' => ['tagline', 'description']],
+    'blog-post' => ['api' => 'blogs', 'type' => 'article', 'title' => 'title', 'desc' => ['meta_description', 'excerpt', 'content'], 'body' => ['excerpt', 'content']],
+    'job-post' => ['api' => 'jobs', 'type' => 'website', 'title' => 'title', 'desc' => ['description'], 'body' => ['description']],
+    'product-detail' => ['api' => 'products', 'type' => 'website', 'title' => 'name', 'desc' => ['tagline', 'description'], 'body' => ['tagline', 'description']],
+    'launchpad-detail' => ['api' => 'launchpad', 'type' => 'website', 'title' => 'title', 'desc' => ['tagline', 'description'], 'body' => ['tagline', 'description']],
 ];
 
 $timeout = 2;
@@ -143,6 +143,25 @@ function set_tag($html, $pattern, $tag)
     }, $html, 1);
 }
 
+// the item as plain readable text, for crawlers that don't run JavaScript.
+// it sits hidden inside the page's content box, and the page's own script
+// replaces it with the full layout the moment it runs
+function prerender_body($name, $item, $fields)
+{
+    $out = '<article hidden data-prerender><h1>' . esc($name) . '</h1>';
+    foreach ($fields as $field) {
+        $raw = (string) ($item[$field] ?? '');
+        $raw = preg_replace('#<(br|/p|/li|/h[1-6]|/div)\s*/?>#i', "\n\n", $raw);
+        foreach (preg_split('/\n\s*\n/u', mb_substr($raw, 0, 20000, 'UTF-8')) as $block) {
+            $text = plain_text($block);
+            if ($text !== '') {
+                $out .= '<p>' . esc($text) . '</p>';
+            }
+        }
+    }
+    return $out . '</article>';
+}
+
 function esc($value)
 {
     return htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -220,5 +239,11 @@ if ($description !== '') {
     $html = set_tag($html, '#<meta property="og:description" content="[^"]*">#', "<meta property=\"og:description\" content=\"$desc\">");
     $html = set_tag($html, '#<meta name="twitter:description" content="[^"]*">#', "<meta name=\"twitter:description\" content=\"$desc\">");
 }
+
+$container = $page === 'blog-post' ? 'blog-content' : ($page === 'job-post' ? 'job-content' : ($page === 'product-detail' ? 'product-content' : 'launchpad-content'));
+$body = prerender_body($name, $item, $config['body']);
+$html = preg_replace_callback('#(<div id="' . $container . '"[^>]*>)(</div>)#', function ($m) use ($body) {
+    return $m[1] . $body . $m[2];
+}, $html, 1);
 
 send_page($html);
