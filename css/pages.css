@@ -613,33 +613,57 @@
 .pdf-next { right: 12px; }
 
 .doc-intro { margin-bottom: 26px; }
-/* a page sits inside a fixed box, the way a document post reads, rather
-   than stretching a tall page down the screen */
-.doc-section .pdf-page {
+.doc-grid {
+  --doc-gap: 18px;
+  display: flex;
+  gap: var(--doc-gap);
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+  cursor: grab;
+  user-select: none;
+}
+.doc-grid.is-dragging { cursor: grabbing; }
+.doc-grid.is-dragging .doc-tile { pointer-events: none; }
+.doc-tile {
+  /* three and a half cards show, which hints that the row scrolls */
+  flex: 0 0 calc((100% - 3 * var(--doc-gap)) / 3.5);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.doc-tile:hover, .doc-tile:focus-visible { border-color: var(--mark); transform: translateY(-2px); }
+.doc-thumb {
   display: grid;
   place-items: center;
-  padding: 18px;
+  aspect-ratio: 3 / 4;
+  padding: 16px;
+  overflow: hidden;
   background: var(--paper-3);
+  border-bottom: 1px solid var(--rule);
 }
-.doc-section .pdf-page canvas {
-  width: auto;
+.doc-thumb canvas {
+  display: block;
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
-  max-height: min(76vh, 860px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
 }
-.doc-panel { display: none; }
-.doc-panel.is-active { display: block; }
-.doc-head {
+.doc-tile-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--rule);
-  border-bottom: 0;
-  background: var(--paper-2);
+  gap: 8px 10px;
+  padding: 12px 14px 14px;
 }
+.doc-tile-meta .doc-name { flex-basis: 100%; font-size: 0.95rem; }
 .doc-badge {
   font-family: var(--label);
   font-size: 11px;
@@ -670,10 +694,24 @@
   border: 1px solid rgba(246, 184, 75, 0.55);
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
+.doc-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid var(--rule);
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.doc-share:hover { color: var(--ink); border-color: var(--ink); }
 .doc-download:hover { background: var(--mark); color: var(--mark-ink); }
-.doc-progress { height: 3px; background: var(--hair); }
-.doc-progress span { display: block; height: 100%; width: 0; background: var(--mark); transition: width var(--t-base) var(--ease); }
-.doc-note { padding: 60px 20px; text-align: center; color: var(--ink-3); flex: 0 0 100%; }
+.doc-note { padding: 60px 20px; text-align: center; color: var(--ink-3); }
+.doc-thumb .doc-note { padding: 0; font-size: 0.85rem; }
 .doc-card {
   display: flex;
   flex-wrap: wrap;
@@ -697,6 +735,68 @@
   clip-path: polygon(0 0, 72% 0, 100% 22%, 100% 100%, 0 100%);
 }
 .doc-card-text { flex: 1 1 220px; color: var(--ink-2); }
+
+.doc-modal-open, .doc-modal-open body { overflow: hidden; }
+.doc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(10, 9, 18, 0.82);
+  backdrop-filter: blur(4px);
+}
+.doc-modal-overlay[hidden] { display: none; }
+.doc-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(980px, 100%);
+  height: min(92vh, 100%);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+}
+.doc-modal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px 12px 18px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.doc-modal-close {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--ink-2);
+  border: 1px solid var(--rule);
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.doc-modal-close:hover { color: var(--ink); border-color: var(--ink); }
+.doc-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+  background: var(--paper-3);
+}
+.doc-modal-page { max-width: 900px; margin: 0 auto 18px; cursor: zoom-in; }
+.doc-modal-body.is-zoomed .doc-modal-page { width: 200%; max-width: 1800px; cursor: zoom-out; }
+.doc-modal-page:last-child { margin-bottom: 0; }
+.doc-modal-page canvas { display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+@media (max-width: 640px) {
+  .doc-grid { --doc-gap: 12px; }
+  .doc-tile { flex-basis: calc((100% - var(--doc-gap)) / 1.6); }
+  .doc-thumb { padding: 10px; }
+  .doc-modal-overlay { padding: 0; }
+  .doc-modal { width: 100%; height: 100%; border: 0; }
+  .doc-modal-body { padding: 12px; }
+  .doc-modal-head .doc-name { flex-basis: calc(100% - 52px); order: -1; }
+  .doc-modal-close { order: -1; margin-left: auto; }
+}
 
 /* ---------- launchpad detail ---------- */
 
@@ -960,86 +1060,4 @@
   line-height: 1.26;
   color: var(--ink);
   max-width: 24ch;
-}
-
-/* ---------- how a project runs: steps beside a rising spiral ---------- */
-
-.spiral .about-text { align-self: center; }
-.spiral .about-visual { align-self: center; }
-.spiral-lede { max-width: 44ch; }
-
-.spiral-steps { list-style: none; margin: 26px 0 0; padding: 0; border-top: 1px solid var(--rule); }
-.spiral-steps li { border-bottom: 1px solid var(--rule); }
-.spiral-steps button {
-  position: relative;
-  display: grid;
-  grid-template-columns: 34px 112px 1fr;
-  align-items: baseline;
-  width: 100%;
-  padding: 15px 0 15px 4px;
-  text-align: left;
-  color: var(--ink-2);
-  transition: color 300ms var(--ease), padding-left 400ms var(--ease-out);
-}
-.spiral-steps button:hover { color: var(--ink); }
-.spiral-num { font-family: var(--label); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3); transition: color 300ms var(--ease); }
-.spiral-name { font-family: var(--display); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.015em; color: var(--ink); }
-.spiral-line { font-size: 0.92rem; color: var(--ink-3); transition: color 300ms var(--ease); }
-.spiral-bar {
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  height: 1px;
-  width: 100%;
-  background: linear-gradient(90deg, var(--mark), var(--mark-lit));
-  box-shadow: 0 0 10px rgba(246, 184, 75, 0.6);
-  transform: scaleX(var(--p, 0));
-  transform-origin: left;
-  opacity: 0;
-}
-.spiral-steps [aria-current="step"] { padding-left: 12px; }
-.spiral-steps [aria-current="step"] .spiral-num { color: var(--mark-lit); }
-.spiral-steps [aria-current="step"] .spiral-line { color: var(--ink-2); }
-.spiral-steps [aria-current="step"] .spiral-bar { opacity: 1; }
-.spiral-steps [aria-current="step"]::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 3px;
-  height: 18px;
-  margin-top: -9px;
-  border-radius: 2px;
-  background: var(--mark-lit);
-  box-shadow: 0 0 10px rgba(246, 184, 75, 0.7);
-}
-.spiral .text-link { margin-top: 28px; }
-
-.spiral-stage {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  margin-inline: auto;
-  aspect-ratio: 1 / 0.9;
-  cursor: grab;
-  touch-action: pan-y;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.spiral-stage:active { cursor: grabbing; }
-.spiral-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.spiral-glow { filter: blur(14px) saturate(1.3); opacity: 0.8; pointer-events: none; }
-
-@media (max-width: 980px) {
-  .spiral .about-visual { order: -1; margin-top: 0; margin-bottom: 20px; }
-  .spiral-stage { max-width: 420px; }
-}
-
-@media (max-width: 720px) {
-  .spiral-steps button { grid-template-columns: 30px 1fr; row-gap: 2px; padding-block: 12px; }
-  .spiral-line { grid-column: 2; font-size: 0.88rem; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spiral-steps button { transition: none; }
 }
