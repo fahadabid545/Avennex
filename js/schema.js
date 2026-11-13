@@ -15,7 +15,7 @@
       addressRegion: 'ON',
       addressCountry: 'CA'
     },
-    sameAs: ['https://www.linkedin.com/company/avennex/', 'https://github.com/Avennex-Studio'],
+    sameAs: ['https://www.linkedin.com/company/avennex/', 'https://github.com/Avennex-Studio', 'https://www.youtube.com/@Avennex'],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@avennex.com',
