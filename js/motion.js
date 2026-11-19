@@ -87,23 +87,73 @@
 
   /* ---------- two: type sets, word by word, from behind a mask ---------- */
 
+  // words keep any highlight span they sat in, so a key word stays coloured
+  function wordsOf(el) {
+    var words = [];
+    var cur = null;
+    function push(text, hl) {
+      text.split(/(\s+)/).forEach(function (part) {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { cur = null; return; }
+        if (!cur) { cur = []; words.push(cur); }
+        cur.push({ text: part, hl: hl });
+      });
+    }
+    (function walk(node, hl) {
+      node.childNodes.forEach(function (n) {
+        if (n.nodeType === 3) push(n.textContent, hl);
+        else if (n.nodeType === 1) walk(n, hl || n.classList.contains('hl'));
+      });
+    })(el, false);
+    return words;
+  }
+
   function setType(el, base) {
     if (el.dataset.set === 'done') return [];
-    var words = (el.textContent || '').trim().split(/\s+/);
+    var words = wordsOf(el);
     if (!words.length) return [];
     el.textContent = '';
-    words.forEach(function (w, i) {
+    words.forEach(function (parts, i) {
       var mask = document.createElement('span');
       mask.className = 'm-word';
       var inner = document.createElement('span');
-      inner.textContent = w;
+      parts.forEach(function (p) {
+        if (!p.hl) { inner.appendChild(document.createTextNode(p.text)); return; }
+        var hl = document.createElement('span');
+        hl.className = 'hl';
+        hl.textContent = p.text;
+        inner.appendChild(hl);
+      });
       inner.style.transitionDelay = (base + i * 38) + 'ms';
       mask.appendChild(inner);
       el.appendChild(mask);
       el.appendChild(document.createTextNode(' '));
     });
     el.dataset.set = 'done';
+    paintGradient(el);
     return [].slice.call(el.querySelectorAll('.m-word'));
+  }
+
+  // a gradient heading is cut into words, so each word gets the slice of the
+  // gradient that sits under it, measured against the whole heading
+  var gradients = [];
+  function paintGradient(el) {
+    if (!el.classList.contains('grad')) return;
+    if (gradients.indexOf(el) < 0) gradients.push(el);
+    var w = el.clientWidth;
+    el.querySelectorAll('.m-word').forEach(function (m) {
+      var inner = m.firstChild;
+      inner.style.backgroundSize = w + 'px 100%';
+      inner.style.backgroundPosition = (-m.offsetLeft) + 'px 0';
+    });
+  }
+  var gradTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(gradTimer);
+    gradTimer = setTimeout(function () { gradients.forEach(paintGradient); }, 120);
+  });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { gradients.forEach(paintGradient); });
   }
 
   /* a headline with a second clause keeps the clause on its own line */
@@ -113,12 +163,12 @@
     var tailText = sub.textContent;
     sub.remove();
     var lead = document.createElement('span');
-    lead.style.display = 'block';
+    lead.className = 'hero-headline-lead' + (el.classList.contains('grad') ? ' grad' : '');
     lead.textContent = (el.textContent || '').trim();
     el.textContent = '';
     el.appendChild(lead);
     var tail = document.createElement('span');
-    tail.className = 'hero-headline-sub';
+    tail.className = sub.className;
     tail.textContent = tailText;
     el.appendChild(tail);
     return setType(lead, 60).concat(setType(tail, 260));
