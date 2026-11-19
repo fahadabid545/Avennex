@@ -50,7 +50,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 .logo {
   font-family: var(--brand);
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   letter-spacing: -0.022em;
   color: var(--panel-ink);
   display: flex;
@@ -58,16 +58,16 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   gap: 0;
   flex: none;
 }
-.logo-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  margin-right: 11px;
-  box-shadow: 0 0 0 1px rgba(182, 156, 255, 0.28), 0 6px 18px -6px rgba(124, 58, 237, 0.7);
-  flex: none;
-}
 .logo-aven { color: inherit; }
 .logo-nex { color: inherit; opacity: 0.55; }
+.logo::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  background: var(--mark-lit);
+  display: block;
+}
 
 /* the main links sit in one floating pill */
 .nav-links {
