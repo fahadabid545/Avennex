@@ -84,13 +84,15 @@
     glide.setAttribute('aria-hidden', 'true');
     nav.insertBefore(glide, nav.firstChild);
     function to(a) {
-      glide.style.width = (a.offsetWidth + 22) + 'px';
-      glide.style.transform = 'translateX(' + (a.offsetLeft - 11) + 'px)';
+      var base = (glide.offsetParent || nav).getBoundingClientRect();
+      var r = a.getBoundingClientRect();
+      glide.style.width = r.width + 'px';
+      glide.style.transform = 'translateX(' + (r.left - base.left) + 'px)';
       glide.classList.add('is-on');
     }
     nav.addEventListener('pointerover', function (e) {
-      var a = e.target.closest('a');
-      if (!a || a.classList.contains('nav-cta') || a.hidden) return;
+      var a = e.target.closest('.nav-top, .nav-trigger');
+      if (!a || a.hidden) return;
       to(a);
     });
     nav.addEventListener('pointerleave', function () { glide.classList.remove('is-on'); });
