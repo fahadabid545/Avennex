@@ -26,7 +26,6 @@ STATIC_PAGES = [
     {"path": "/how-we-work.html", "priority": "0.7", "changefreq": "monthly"},
     {"path": "/why-avennex.html", "priority": "0.7", "changefreq": "monthly"},
     {"path": "/custom-software-vs-saas.html", "priority": "0.6", "changefreq": "monthly"},
-    {"path": "/custom-automation-vs-zapier.html", "priority": "0.6", "changefreq": "monthly"},
     {"path": "/studio-vs-freelancer-vs-in-house.html", "priority": "0.6", "changefreq": "monthly"},
     {"path": "/avennex-vs-agency-vs-offshore.html", "priority": "0.6", "changefreq": "monthly"},
     {"path": "/about.html", "priority": "0.6", "changefreq": "monthly"},
