@@ -45,7 +45,7 @@
 body:not([data-header-transparent="true"]) .site-header::after { background: var(--mark); }
 
 .logo {
-  font-family: var(--display);
+  font-family: var(--brand);
   font-weight: 600;
   font-size: 1.3rem;
   letter-spacing: -0.022em;
