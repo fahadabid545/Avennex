@@ -1,0 +1,163 @@
+/* ==========================================================
+   Avennex — theme
+   Near black surface, grey text, one violet accent, sans
+   headings. Loaded last so it sets the look for every page.
+   ========================================================== */
+
+:root {
+  --paper:      #07070A;
+  --paper-2:    #0E0E14;
+  --paper-3:    #15151D;
+  --ink:        #F5F5F7;
+  --ink-2:      #A1A1AA;
+  --ink-3:      #71717A;
+  --rule:       rgba(255, 255, 255, 0.12);
+  --hair:       rgba(255, 255, 255, 0.07);
+
+  --mark:       #8B7CFF;
+  --mark-lit:   #B4A9FF;
+  --mark-soft:  rgba(139, 124, 255, 0.12);
+  --mark-ink:   #0A0A0D;
+  --royal:      #8B7CFF;
+  --royal-lit:  #B4A9FF;
+  --royal-deep: #2A2366;
+  --royal-soft: rgba(139, 124, 255, 0.12);
+
+  --ok:         #4ADE80;
+  --dash-series: #8B7CFF, #F5F5F7, #4ADE80, #60A5FA, #F87171, #FBBF24;
+
+  --display: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --serif:   'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --brand:   'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --surface:   linear-gradient(180deg, var(--paper-2), rgba(14, 14, 20, 0.6));
+  --radius:    14px;
+  --radius-sm: 10px;
+}
+
+body { background: var(--paper); font-feature-settings: 'cv11', 'ss01', 'ss03'; }
+
+/* one soft light at the top instead of drifting colour */
+body::before {
+  background: radial-gradient(70vmax 40vmax at 50% -8%, rgba(139, 124, 255, 0.16), transparent 62%);
+  filter: none;
+  animation: none;
+}
+body::after { opacity: 0.12; }
+
+.panel { background: transparent; border-block-color: var(--hair); }
+.rules > span { border-color: rgba(255, 255, 255, 0.035); }
+
+/* ---------- headings ---------- */
+
+.display, .h-hero, .h-sect, .h-block,
+.section-heading, .cta-heading, .page-hero h1, .hero-headline {
+  font-weight: 600;
+  letter-spacing: -0.042em;
+  line-height: 1.04;
+}
+h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
+
+/* the marked word is the accent, never a gradient */
+.hl { color: var(--mark-lit); }
+.grad, .grad-warm { --grad: linear-gradient(180deg, #FFFFFF 30%, rgba(255, 255, 255, 0.62)); }
+.hero-headline-sub { color: var(--ink-3); font-weight: 600; }
+
+/* italic serif quotes become plain emphasis */
+[class*="fit"], [class*="tag"], .pull, .callout, blockquote { font-style: normal; }
+
+/* ---------- eyebrows and labels ---------- */
+
+.section-eyebrow, .hero-eyebrow, .cap {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--mark-lit);
+}
+.section-eyebrow::before, .hero-eyebrow::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--mark);
+}
+
+/* ---------- buttons: one set for the whole site ---------- */
+
+.hero-btn-primary, .hero-btn-secondary, .form-submit, .error-actions a,
+.text-link, .back-link, .academy-playlist-view {
+  font-family: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+.hero-btn-primary, .hero-btn-secondary, .form-submit, .error-actions a {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+}
+.hero-btn-primary, .form-submit, .error-actions a:first-child {
+  background: var(--ink);
+  color: var(--mark-ink);
+  border: 1px solid var(--ink);
+  background-image: none;
+}
+.hero-btn-primary:hover, .form-submit:hover, .error-actions a:first-child:hover {
+  background: #FFFFFF;
+  color: var(--mark-ink);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+}
+.hero-btn-primary::after, .form-submit::after, .error-actions a:first-child::after { display: none; }
+.hero-btn-secondary, .error-actions a + a {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+}
+.hero-btn-secondary:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.22); }
+.hero-btn-secondary::before { display: none; }
+
+.text-link, .back-link { color: var(--ink); border-bottom-color: var(--rule); }
+.text-link:hover, .back-link:hover { color: var(--mark-lit); border-color: var(--mark); }
+.text-link::after, .back-link::after { background: var(--mark); }
+
+/* ---------- header ---------- */
+
+.site-header.is-solid { background: rgba(7, 7, 10, 0.72); }
+.nav-links { background: rgba(255, 255, 255, 0.03); border-color: var(--hair); }
+.nav-top.is-current, .nav-trigger.is-current { color: var(--ink); background: rgba(255, 255, 255, 0.06); }
+.site-header .nav-glide { background: rgba(255, 255, 255, 0.06); box-shadow: none; }
+.nav-panel { background: var(--paper-2); border-color: var(--hair); }
+.nav-item-link:hover, .nav-item-link:focus-visible { background: rgba(255, 255, 255, 0.04); }
+.nav-item-link:hover .nav-item-title, .nav-item-link[aria-current="page"] .nav-item-title,
+.nav-col-more a:hover, .nav-col-more a[aria-current="page"] { color: var(--mark-lit); }
+.nav-col-more a:hover { background: rgba(255, 255, 255, 0.04); }
+.nav-cta {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--mark-ink) !important;
+  border-radius: 9px;
+  font-weight: 500;
+  padding: 8px 16px !important;
+}
+.nav-cta:hover { background: #FFFFFF; border-color: #FFFFFF; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08); }
+.nav-cta::after { display: none; }
+.logo::after { background: var(--mark); }
+.site-header::after { background: var(--mark) !important; box-shadow: none !important; }
+
+/* ---------- footer ---------- */
+
+.site-footer { background: var(--paper); border-top-color: var(--hair); }
+
+/* footer wordmark fills violet into grey */
+.site-footer::after {
+  font-weight: 700;
+  background:
+    linear-gradient(100deg, rgba(139, 124, 255, 0.5), rgba(255, 255, 255, 0.14) 70%) 0 0 / 0% 100% no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* read links match the text link */
+.blog-card-read { font: 500 14px var(--text); letter-spacing: -0.01em; text-transform: none; color: var(--ink-2); }
+.blog-card:hover .blog-card-read { color: var(--mark-lit); }

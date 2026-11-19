@@ -28,7 +28,7 @@
 /* ---------- home: the signal field ---------- */
 
 .brain-section {
-  background: radial-gradient(46vw 38vw at 78% 50%, rgba(124, 58, 237, 0.18), transparent 70%);
+  background: radial-gradient(46vw 38vw at 78% 50%, rgba(139, 124, 255, 0.18), transparent 70%);
 }
 .brain-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--col), minmax(0, 1fr)); column-gap: var(--gutter); }
 .brain-text { grid-column: 1 / 6; }
@@ -691,7 +691,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mark);
-  border: 1px solid rgba(246, 184, 75, 0.55);
+  border: 1px solid rgba(139, 124, 255, 0.55);
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
 .doc-share {

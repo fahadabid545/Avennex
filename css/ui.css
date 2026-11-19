@@ -29,7 +29,7 @@
 .form-submit:hover {
   background: var(--mark-lit);
   color: var(--mark-ink);
-  box-shadow: 0 10px 34px -8px rgba(124, 58, 237, 0.7);
+  box-shadow: 0 10px 34px -8px rgba(139, 124, 255, 0.7);
 }
 
 .hero-btn-secondary {
@@ -684,8 +684,8 @@
 
 .cta-banner {
   background:
-    radial-gradient(44vw 30vw at 18% 40%, rgba(246, 184, 75, 0.16), transparent 66%),
-    radial-gradient(50vw 36vw at 86% 60%, rgba(124, 58, 237, 0.34), transparent 68%);
+    radial-gradient(44vw 30vw at 18% 40%, rgba(139, 124, 255, 0.16), transparent 66%),
+    radial-gradient(50vw 36vw at 86% 60%, rgba(139, 124, 255, 0.34), transparent 68%);
   color: var(--panel-ink);
 }
 .cta-banner.section-loose { padding-block: var(--sect-y); }

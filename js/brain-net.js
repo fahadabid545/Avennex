@@ -7,12 +7,12 @@
   canvas.className = 'brain-net-canvas';
   host.appendChild(canvas);
 
-  /* the field is drawn in pale lavender on the night surface. a node that is
-     carrying a signal is lit amber inside a purple halo, the rest stay as
+  /* the field is drawn in pale grey on the night surface. a node that is
+     carrying a signal is lit violet inside a violet halo, the rest stay as
      structure */
-  var INK = [207, 201, 226];
-  var MARK = [246, 184, 75];
-  var HALO = [124, 58, 237];
+  var INK = [212, 212, 220];
+  var MARK = [180, 169, 255];
+  var HALO = [139, 124, 255];
 
   function readInk() { /* the surface is fixed now, so there is nothing to read */ }
 

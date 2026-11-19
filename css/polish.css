@@ -60,7 +60,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 /* the read position, lit at its tip */
 .site-header::after {
   background: linear-gradient(90deg, var(--royal), #B0569B 60%, var(--mark-lit)) !important;
-  box-shadow: 0 0 12px 1px rgba(246, 184, 75, 0.55);
+  box-shadow: 0 0 12px 1px rgba(139, 124, 255, 0.55);
 }
 
 /* ---------- primary actions ---------- */
@@ -85,7 +85,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
   position: absolute;
   inset: -2px;
   z-index: -1;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.65) 48%, rgba(255, 244, 214, 0.2) 54%, transparent 70%);
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.65) 48%, rgba(235, 232, 255, 0.2) 54%, transparent 70%);
   transform: translateX(-110%);
   pointer-events: none;
 }
@@ -98,7 +98,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 
 .hero-btn-primary:hover,
 .form-submit:hover {
-  box-shadow: 0 14px 38px -10px rgba(124, 58, 237, 0.8), 0 0 0 1px rgba(255, 216, 138, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 14px 38px -10px rgba(139, 124, 255, 0.8), 0 0 0 1px rgba(180, 169, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .hero-btn-primary:active,
@@ -160,7 +160,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
   position: absolute;
   inset: 0 -12px;
   z-index: -1;
-  background: linear-gradient(90deg, rgba(124, 58, 237, 0.26), rgba(176, 86, 155, 0.1) 55%, transparent);
+  background: linear-gradient(90deg, rgba(139, 124, 255, 0.26), rgba(139, 124, 255, 0.1) 55%, transparent);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 640ms var(--ease-out);
@@ -223,7 +223,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
   width: 0;
   margin-top: -15px;
   border-radius: 999px;
-  background: radial-gradient(120% 140% at 50% 0%, rgba(182, 156, 255, 0.22), rgba(124, 58, 237, 0.08));
+  background: radial-gradient(120% 140% at 50% 0%, rgba(182, 156, 255, 0.22), rgba(139, 124, 255, 0.08));
   box-shadow: inset 0 0 0 1px rgba(182, 156, 255, 0.18);
   opacity: 0;
   pointer-events: none;
@@ -252,7 +252,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
   inset: 0;
   padding: 1px;
   border-radius: inherit;
-  background: radial-gradient(260px circle at var(--sx, 50%) var(--sy, 50%), rgba(255, 203, 107, 0.75), rgba(182, 156, 255, 0.35) 40%, transparent 70%);
+  background: radial-gradient(260px circle at var(--sx, 50%) var(--sy, 50%), rgba(180, 169, 255, 0.75), rgba(182, 156, 255, 0.35) 40%, transparent 70%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -273,7 +273,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .academy-card:hover,
 .rep-block:hover {
   transform: translateY(-3px);
-  box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.9), 0 10px 40px -30px rgba(124, 58, 237, 0.9);
+  box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.9), 0 10px 40px -30px rgba(139, 124, 255, 0.9);
 }
 
 /* ---------- images arrive instead of popping in ---------- */
@@ -341,7 +341,7 @@ img.px-ready {
   z-index: -1;
   border-radius: 999px;
   background: linear-gradient(120deg, var(--mark), var(--mark-lit));
-  box-shadow: 0 6px 22px -8px rgba(246, 184, 75, 0.7);
+  box-shadow: 0 6px 22px -8px rgba(139, 124, 255, 0.7);
   transition: transform 460ms var(--ease-out), width 460ms var(--ease-out);
 }
 .has-glide .rep-tab[aria-selected="true"] { background: transparent; }
@@ -399,7 +399,7 @@ img.px-ready {
   inset: -6px;
   z-index: -1;
   border-radius: inherit;
-  background: conic-gradient(from var(--spin), rgba(124, 58, 237, 0), rgba(124, 58, 237, 0.55), rgba(246, 184, 75, 0.5), rgba(124, 58, 237, 0));
+  background: conic-gradient(from var(--spin), rgba(139, 124, 255, 0), rgba(139, 124, 255, 0.55), rgba(139, 124, 255, 0.5), rgba(139, 124, 255, 0));
   filter: blur(12px);
   opacity: 0.55;
   animation: spin-border 7s linear infinite;
@@ -422,7 +422,7 @@ img.px-ready {
   letter-spacing: -0.06em;
   color: transparent;
   background:
-    linear-gradient(100deg, rgba(124, 58, 237, 0.55), rgba(176, 86, 155, 0.4) 45%, rgba(246, 184, 75, 0.5)) 0 0 / 0% 100% no-repeat,
+    linear-gradient(100deg, rgba(139, 124, 255, 0.55), rgba(139, 124, 255, 0.4) 45%, rgba(139, 124, 255, 0.5)) 0 0 / 0% 100% no-repeat,
     linear-gradient(rgba(207, 201, 226, 0.05), rgba(207, 201, 226, 0.05));
   -webkit-background-clip: text;
   background-clip: text;

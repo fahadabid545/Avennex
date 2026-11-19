@@ -25,18 +25,19 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://avennex.onrender.com" crossorigin>
   <script src="js/logo-intro.js?v=202609270500"></script>
 
-  <link rel="stylesheet" href="css/base.css?v=202611191200">
-  <link rel="stylesheet" href="css/chrome.css?v=202611191200">
+  <link rel="stylesheet" href="css/base.css?v=202611200300">
+  <link rel="stylesheet" href="css/chrome.css?v=202611200300">
   <link rel="stylesheet" href="css/cookieconsent.css?v=310">
-  <link rel="stylesheet" href="css/ui.css?v=202611191300">
-  <link rel="stylesheet" href="css/hero.css?v=202609270700">
-  <link rel="stylesheet" href="css/pages.css?v=202611201000">
+  <link rel="stylesheet" href="css/ui.css?v=202611200300">
+  <link rel="stylesheet" href="css/hero.css?v=202611200300">
+  <link rel="stylesheet" href="css/pages.css?v=202611200300">
   <link rel="stylesheet" href="css/chatbot.css?v=202610040900">
-  <link rel="stylesheet" href="css/polish.css?v=202609270700">
+  <link rel="stylesheet" href="css/polish.css?v=202611200300">
+  <link rel="stylesheet" href="css/theme.css?v=202611200200">
+  <link rel="stylesheet" href="css/home.css?v=202611200200">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -103,22 +104,44 @@
               </h1>
               <p class="hero-subtext lede m-in" data-m="9">Custom software, AI tools and automation for startups and established businesses. We map how your team works, lay out the ways to fix what's slow, from a Zapier flow to a full build, and agree one plan with you.</p>
 
-              <div class="hero-links m-in" data-m="11">
-                <a href="contact.html" class="hero-link">
-                  <span class="hero-link-index">01</span>
-                  <span class="hero-link-label">Start a project</span>
-                  <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
-                </a>
-                <a href="services.html" class="hero-link">
-                  <span class="hero-link-index">02</span>
-                  <span class="hero-link-label">See what we build</span>
-                  <span class="hero-link-arrow" aria-hidden="true">&rarr;</span>
-                </a>
+              <div class="hero-actions m-in" data-m="11">
+                <a href="contact.html" class="hero-btn-primary">Start a project</a>
+                <a href="services.html" class="hero-btn-secondary">See what we build</a>
               </div>
             </div>
 
             <div class="hero-cube" id="hero-cube" aria-hidden="true">
               <div class="hero-cube-stage"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section options-section" id="options-section">
+      <div class="section-inner">
+        <div class="grid">
+          <div class="record">
+            <div class="record-head">
+              <p class="section-eyebrow">Before anything gets built</p>
+              <h2 class="section-heading" data-set-type>Every option on the table, <span class="hl">with its time and cost</span>.</h2>
+              <p class="section-subtext m-in">A setting you never switched on, an automation or a full build. You see them side by side and pick what fits your budget.</p>
+            </div>
+          </div>
+          <div class="opt-frame m-in" aria-hidden="true">
+            <div class="opt-app">
+              <div class="opt-side">
+                <p>Your plan</p>
+                <span class="on"><i></i>Options</span><span><i></i>Timeline</span><span><i></i>Scope</span><span><i></i>Messages</span>
+              </div>
+              <div class="opt-main">
+                <div class="opt-head"><div><b>Three ways to fix bookings</b><small>Example from a scoping call</small></div><span class="opt-chip opt-chip-acc">Waiting for your pick</span></div>
+                <div class="opt-list">
+                  <div class="opt-card"><span class="opt-chip">Option A</span><b>Change two settings</b><p>Turn on online booking in the tool you already pay for.</p><dl><div><dt>Time</dt><dd>2 days</dd></div><div><dt>Effort</dt><dd><span class="opt-bars" data-n="1"><i></i><i></i><i></i><i></i></span></dd></div></dl></div>
+                  <div class="opt-card is-picked"><span class="opt-chip opt-chip-ok">Recommended</span><b>Automate the handover</b><p>Phone bookings land in the calendar and the patient gets a reminder.</p><dl><div><dt>Time</dt><dd>3 weeks</dd></div><div><dt>Effort</dt><dd><span class="opt-bars" data-n="2"><i></i><i></i><i></i><i></i></span></dd></div></dl></div>
+                  <div class="opt-card"><span class="opt-chip">Option C</span><b>Build a booking app</b><p>Your own app with payments, reminders and staff rotas.</p><dl><div><dt>Time</dt><dd>9 weeks</dd></div><div><dt>Effort</dt><dd><span class="opt-bars" data-n="4"><i></i><i></i><i></i><i></i></span></dd></div></dl></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -136,31 +159,52 @@
             </div>
           </div>
 
-          <div class="values-grid services-grid m-in m-stagger">
-            <div class="value-card">
-              <h3 class="value-title">Custom software</h3>
-              <p class="value-desc">If the tool you need doesn't exist yet, we'll write it. Usually that's an internal system, a customer portal or a SaaS product.</p>
-            </div>
-            <div class="value-card">
-              <h3 class="value-title">AI integration</h3>
-              <p class="value-desc">Models inside your product or back office, doing work your team used to do by hand. Each one gets tested on your own data before anyone relies on it.</p>
-            </div>
-            <div class="value-card">
-              <h3 class="value-title">Workflow automation</h3>
-              <p class="value-desc">Someone copies data between two systems every morning. Someone else rebuilds the same report each Friday. We automate that work in Zapier, Make or code, whichever fits.</p>
-            </div>
-            <div class="value-card">
-              <h3 class="value-title">Web and mobile apps</h3>
-              <p class="value-desc">Websites, dashboards and apps for iOS and Android. We stay on after launch for the releases that follow.</p>
-            </div>
-            <div class="value-card">
-              <h3 class="value-title">Cloud and data</h3>
-              <p class="value-desc">Databases, APIs and hosting that keep up when usage climbs. Moving you off an old setup is part of the job too.</p>
-            </div>
-            <div class="value-card">
-              <h3 class="value-title">Consulting and analytics</h3>
-              <p class="value-desc">Still working out what to build? We'll study your process and your data first. Sometimes the right answer is a smaller project.</p>
-            </div>
+          <div class="bento m-in">
+            <a href="services.html#ai-integration" class="bento-card bento-half">
+              <div class="bento-vis" aria-hidden="true">
+                <div class="vis-doc">
+                  <div class="vis-paper"><i class="h"></i><i></i><i class="w8"></i><i></i><i class="w6"></i><i></i><i class="w7"></i></div>
+                  <div class="vis-fields">
+                    <div><span>Supplier</span><b>Read from PDF<em>99%</em></b></div>
+                    <div><span>Total</span><b>4,210.00<em>98%</em></b></div>
+                    <div><span>Due date</span><b>2 Dec<em>97%</em></b></div>
+                    <div class="acc"><span>Sent to</span><b>Accounts</b></div>
+                  </div>
+                </div>
+              </div>
+              <div class="bento-text"><h3>AI integration <span aria-hidden="true">&rarr;</span></h3><p>Models inside your product or back office, doing work your team used to do by hand. Each one gets tested on your own data before anyone relies on it.</p></div>
+            </a>
+            <a href="services.html#workflow-automation" class="bento-card bento-half">
+              <div class="bento-vis" aria-hidden="true">
+                <div class="vis-flow"><div class="vis-node"><small>When</small>New order</div><div class="vis-wire"></div><div class="vis-node acc"><small>Check</small>Stock and price</div><div class="vis-wire"></div><div class="vis-node"><small>Then</small>Invoice and alert</div></div>
+              </div>
+              <div class="bento-text"><h3>Workflow automation <span aria-hidden="true">&rarr;</span></h3><p>Someone copies data between two systems every morning. Someone else rebuilds the same report each Friday. That work moves to software.</p></div>
+            </a>
+            <a href="services.html#custom-software" class="bento-card">
+              <div class="bento-vis" aria-hidden="true">
+                <div class="vis-table"><div><span>Request</span><span>Stage</span><span>Owner</span></div><div><b>Refund 1042</b><span>Review</span><span>Ops</span></div><div><b>Order 2210</b><span>Packed</span><span>Store</span></div><div><b>Quote 318</b><span>Sent</span><span>Sales</span></div></div>
+              </div>
+              <div class="bento-text"><h3>Custom software <span aria-hidden="true">&rarr;</span></h3><p>If the tool you need doesn't exist yet, we'll write it. An internal system, a customer portal or a SaaS product.</p></div>
+            </a>
+            <a href="services.html#web-and-mobile" class="bento-card">
+              <div class="bento-vis bento-vis-low" aria-hidden="true">
+                <div class="vis-phone"><i class="a"></i><i></i><i></i><i></i></div>
+              </div>
+              <div class="bento-text"><h3>Web and mobile apps <span aria-hidden="true">&rarr;</span></h3><p>Websites, dashboards and apps for iOS and Android. We stay on after launch for the releases that follow.</p></div>
+            </a>
+            <a href="services.html#cloud-and-data" class="bento-card">
+              <div class="bento-vis bento-vis-col" aria-hidden="true">
+                <span class="vis-k">Response time, 30 days</span>
+                <svg class="vis-spark" viewBox="0 0 300 70" preserveAspectRatio="none"><path class="fill" d="M0 30 L30 34 L60 28 L90 36 L120 30 L150 42 L180 40 L210 48 L240 46 L270 52 L300 50 L300 70 L0 70Z"/><path class="line" d="M0 30 L30 34 L60 28 L90 36 L120 30 L150 42 L180 40 L210 48 L240 46 L270 52 L300 50"/></svg>
+              </div>
+              <div class="bento-text"><h3>Cloud and data <span aria-hidden="true">&rarr;</span></h3><p>Databases, APIs and hosting that keep up when usage climbs. Moving you off an old setup is part of the job too.</p></div>
+            </a>
+            <a href="services.html#consulting-and-analytics" class="bento-card bento-wide">
+              <div class="bento-text"><h3>Consulting and analytics <span aria-hidden="true">&rarr;</span></h3><p>Still working out what to build? We'll study your process and your data first. Sometimes the right answer is a smaller project.</p></div>
+              <div class="bento-vis" aria-hidden="true">
+                <div class="vis-hours"><span class="vis-k">Hours a week, by task</span><div><span>Re-typing orders</span><i style="--w:86%"></i></div><div><span>Weekly report</span><i style="--w:58%"></i></div><div><span>Chasing invoices</span><i style="--w:40%"></i></div><div><span>Everything else</span><i style="--w:22%"></i></div></div>
+              </div>
+            </a>
           </div>
           <a href="services.html" class="text-link services-more">All services <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
         </div>
@@ -336,7 +380,7 @@
   <script src="js/motion.js?v=202611191400" defer></script>
   <script src="js/polish.js?v=202609270200" defer></script>
   <script src="js/hero-cube.js?v=202609270300" defer></script>
-  <script src="js/brain-net.js?v=202609270200" defer></script>
+  <script src="js/brain-net.js?v=202611200300" defer></script>
   <script src="js/home-snapshot.js?v=202610211200" defer></script>
   <script src="js/home.js?v=202610211200" defer></script>
   <script src="js/home-sections.js?v=202609270200" defer></script>
