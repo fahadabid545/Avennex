@@ -3,12 +3,14 @@
 
   var org = {
     '@type': 'Organization',
+    '@id': 'https://avennex.com/#org',
     name: 'Avennex',
     url: 'https://avennex.com',
     logo: 'https://avennex.com/img/og-image.png',
-    description: 'Custom software, AI integration and workflow automation for startups and established businesses.',
-    slogan: 'Crafted around your needs.',
+    description: 'Custom software, AI integration and workflow automation, in code or on Zapier and Make, for startups and established businesses.',
+    slogan: 'Software built around how you work.',
     foundingDate: '2022',
+    disambiguatingDescription: 'Software studio in Waterloo, Ontario, Canada, founded in 2022. Builds custom software, AI integrations and workflow automation for clients and runs its own products, with public roadmaps and a Launchpad.',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Waterloo',
@@ -34,7 +36,10 @@
   if (page === 'index.html') {
     inject({
       '@type': 'WebSite',
+      '@id': 'https://avennex.com/#website',
       name: 'Avennex',
+      alternateName: 'Avennex Studio',
+      publisher: { '@id': 'https://avennex.com/#org' },
       url: 'https://avennex.com',
       potentialAction: {
         '@type': 'SearchAction',

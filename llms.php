@@ -84,12 +84,12 @@ function fetch_all($api, $sections, $timeout)
 }
 
 $intro = "# Avennex\n\n"
-    . "> Avennex builds custom software, AI integrations and workflow automation for startups and established businesses. "
-    . "The team is remote first, based in Waterloo, Ontario, Canada, and has been shipping client work since 2022.\n\n"
+    . "> Avennex builds custom software, AI integrations and workflow automation, in code or on Zapier and Make, for startups and established businesses. "
+    . "It's based in Waterloo, Ontario, Canada, and has been shipping client work since 2022. Projects are priced after scoping, around the client's budget and timeline. NDAs are signed on request.\n\n"
     . "Contact: hello@avennex.com. LinkedIn: https://www.linkedin.com/company/avennex/\n\n"
     . "## Pages\n\n"
     . "- [Home]($site/): what Avennex builds and for whom\n"
-    . "- [Services]($site/services.html): custom software, AI integration, workflow automation, apps, cloud and consulting\n"
+    . "- [Services]($site/services.html): custom software, AI integration, workflow automation on Zapier, Make or code, apps, cloud and consulting\n"
     . "- [Products]($site/products.html): products in active development, with live progress and roadmaps\n"
     . "- [Launchpad]($site/launchpad.html): products about to launch, open for comments\n"
     . "- [Academy]($site/academy.html): free video lessons from real software, AI and automation projects\n"
@@ -98,10 +98,11 @@ $intro = "# Avennex\n\n"
     . "- [How we work]($site/how-we-work.html): how a project runs, from the first call to one agreed plan and price, and why there's no price list\n"
     . "- [Why Avennex]($site/why-avennex.html): what working with Avennex looks like, with links to proof on the site\n"
     . "- [Custom software vs SaaS]($site/custom-software-vs-saas.html): when to buy a subscription and when to build\n"
-    . "- [Zapier and Make vs custom automation]($site/custom-automation-vs-zapier.html): when no code is enough and when code is worth it\n"
+    . "- [Zapier, Make or custom code]($site/custom-automation-vs-zapier.html): how to pick an automation tool, from a team that builds with all three\n"
+    . "- [Avennex vs agency vs offshore team]($site/avennex-vs-agency-vs-offshore.html): how Avennex compares with a digital agency and an offshore team\n"
     . "- [Studio vs freelancer vs in house]($site/studio-vs-freelancer-vs-in-house.html): who should build your software\n"
     . "- [About]($site/about.html): the company and the people behind it\n"
-    . "- [Contact]($site/contact.html): replies within 24 hours on weekdays\n";
+    . "- [Contact]($site/contact.html): replies within 5 working days\n";
 
 $cached = @file_get_contents($cacheFile);
 if ($cached !== false && time() - (int) @filemtime($cacheFile) < $cacheTtl) {
