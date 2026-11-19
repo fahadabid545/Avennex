@@ -84,12 +84,12 @@ function fetch_all($api, $sections, $timeout)
 }
 
 $intro = "# Avennex\n\n"
-    . "> Avennex builds custom software, AI integrations and workflow automation, in code or on Zapier and Make, for startups and established businesses. "
+    . "> Avennex builds custom software, AI integrations and workflow automation, in code or on automation tools, for startups and established businesses. "
     . "It's based in Waterloo, Ontario, Canada, and has been shipping client work since 2022. Projects are priced after scoping, around the client's budget and timeline. NDAs are signed on request.\n\n"
     . "Contact: hello@avennex.com. LinkedIn: https://www.linkedin.com/company/avennex/\n\n"
     . "## Pages\n\n"
     . "- [Home]($site/): what Avennex builds and for whom\n"
-    . "- [Services]($site/services.html): custom software, AI integration, workflow automation on Zapier, Make or code, apps, cloud and consulting\n"
+    . "- [Services]($site/services.html): custom software, AI integration, workflow automation in code or on automation tools, apps, cloud and consulting\n"
     . "- [Products]($site/products.html): products in active development, with live progress and roadmaps\n"
     . "- [Launchpad]($site/launchpad.html): products about to launch, open for comments\n"
     . "- [Academy]($site/academy.html): free video lessons from real software, AI and automation projects\n"
