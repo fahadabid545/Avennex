@@ -95,6 +95,11 @@ $intro = "# Avennex\n\n"
     . "- [Academy]($site/academy.html): free video lessons from real software, AI and automation projects\n"
     . "- [Journal]($site/blog.html): notes from the team on what worked, what didn't, and why\n"
     . "- [Careers]($site/careers.html): open roles on the team\n"
+    . "- [How we work]($site/how-we-work.html): how a project runs, from the first call to one agreed plan and price, and why there's no price list\n"
+    . "- [Why Avennex]($site/why-avennex.html): what working with Avennex looks like, with links to proof on the site\n"
+    . "- [Custom software vs SaaS]($site/custom-software-vs-saas.html): when to buy a subscription and when to build\n"
+    . "- [Zapier and Make vs custom automation]($site/custom-automation-vs-zapier.html): when no code is enough and when code is worth it\n"
+    . "- [Studio vs freelancer vs in house]($site/studio-vs-freelancer-vs-in-house.html): who should build your software\n"
     . "- [About]($site/about.html): the company and the people behind it\n"
     . "- [Contact]($site/contact.html): replies within 24 hours on weekdays\n";
 
