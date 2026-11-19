@@ -8,11 +8,11 @@
   host.appendChild(canvas);
 
   /* the field is drawn in pale grey on the night surface. a node that is
-     carrying a signal is lit violet inside a violet halo, the rest stay as
+     carrying a signal is lit white inside a soft halo, the rest stay as
      structure */
   var INK = [212, 212, 220];
-  var MARK = [180, 169, 255];
-  var HALO = [139, 124, 255];
+  var MARK = [245, 245, 250];
+  var HALO = [220, 220, 232];
 
   function readInk() { /* the surface is fixed now, so there is nothing to read */ }
 

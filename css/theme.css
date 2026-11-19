@@ -162,15 +162,24 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 .blog-card-read { font: 500 14px var(--text); letter-spacing: -0.01em; text-transform: none; color: var(--ink-2); }
 .blog-card:hover .blog-card-read { color: var(--mark-lit); }
 
-/* ---------- hero cube: violet glass with a soft white light ---------- */
+/* ---------- hero cube: white glass with a soft white light ---------- */
 
 .hero-cube-stage::before {
   content: '';
   position: absolute;
   inset: 12%;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.12), rgba(139, 124, 255, 0.08) 55%, transparent);
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05) 55%, transparent);
   filter: blur(30px);
   pointer-events: none;
 }
 .hero-cube-stage canvas:not(.hero-cube-glow) { filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.22)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.18)); }
+
+/* cube and brain sit in a soft white light, not a coloured one */
+.hero {
+  background:
+    radial-gradient(48vw 40vw at 82% 34%, rgba(255, 255, 255, 0.07), transparent 66%),
+    radial-gradient(34vw 26vw at 62% 70%, rgba(255, 255, 255, 0.03), transparent 64%);
+}
+.brain-section { background: radial-gradient(46vw 38vw at 78% 50%, rgba(255, 255, 255, 0.06), transparent 70%); }
+.hero-cube-glow { filter: blur(16px); }
