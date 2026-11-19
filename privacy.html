@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy | Avennex</title>
-  <meta name="description" content="How Avennex handles your data. No tracking cookies, no analytics scripts, no advertising pixels.">
+  <meta name="description" content="How Avennex handles your data, what we store in your browser, and how to change your cookie choice.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://avennex.com/privacy.html">
 
   <meta property="og:title" content="Privacy Policy | Avennex">
-  <meta property="og:description" content="How Avennex handles your data. No tracking cookies, no analytics scripts, no advertising pixels.">
+  <meta property="og:description" content="How Avennex handles your data, what we store in your browser, and how to change your cookie choice.">
   <meta property="og:image" content="https://avennex.com/img/og-image.png">
   <meta property="og:url" content="https://avennex.com/privacy.html">
   <meta property="og:type" content="website">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Privacy Policy | Avennex">
-  <meta name="twitter:description" content="How Avennex handles your data. No tracking cookies, no analytics scripts, no advertising pixels.">
+  <meta name="twitter:description" content="How Avennex handles your data, what we store in your browser, and how to change your cookie choice.">
   <meta name="twitter:image" content="https://avennex.com/img/og-image.png">
 
   <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -31,7 +31,8 @@
 
   <link rel="stylesheet" href="css/base.css?v=202611191200">
   <link rel="stylesheet" href="css/chrome.css?v=202611191200">
-  <link rel="stylesheet" href="css/ui.css?v=202610021930">
+  <link rel="stylesheet" href="css/cookieconsent.css?v=310">
+  <link rel="stylesheet" href="css/ui.css?v=202611191300">
   <link rel="stylesheet" href="css/pages.css?v=202611131200">
   <link rel="stylesheet" href="css/chatbot.css?v=202610040900">
   <link rel="stylesheet" href="css/polish.css?v=202609270700">
@@ -94,12 +95,12 @@
       <div class="section-inner">
         <div class="grid">
           <div class="legal-content m-in">
-            <p class="legal-updated">Last updated: 2 October 2026</p>
+            <p class="legal-updated">Last updated: 19 November 2026</p>
             <section class="legal-row">
               <h2>What we collect</h2>
               <div class="legal-text">
                 <p>When you send us a message, apply for a role or leave a comment, we keep what you give us: your name, your email and whatever you write. A job application also includes the resume you attach.</p>
-                <p>That's all. No tracking cookies, no analytics scripts, no advertising pixels.</p>
+                <p>If you allow it, we also count visits with Google Analytics. More on that under Cookies below. We don't use advertising pixels.</p>
               </div>
             </section>
             <section class="legal-row">
@@ -122,6 +123,19 @@
                 <p>Academy videos play through YouTube's privacy-enhanced player, which loads only when you press play. The site also remembers a small preference or two in your browser, such as whether animations are on, and your chat with Nex stays in the tab until you close it. None of it is used to track you.</p>
               </div>
             </section>
+            <section class="legal-row" id="cookies">
+              <h2>Cookies</h2>
+              <div class="legal-text">
+                <p>On your first visit a small banner asks before anything optional runs. Saying no changes nothing about how the site works.</p>
+                <ul>
+                  <li><strong>avx_consent</strong>: remembers your cookie choice. Needed. Kept for 6 months.</li>
+                  <li><strong>Motion and chat settings</strong>: stored in your browser, not as cookies, so the site remembers whether animations are on and keeps your chat with Nex open in the tab. Needed. Never sent to us.</li>
+                  <li><strong>_ga and _ga_*</strong>: Google Analytics, only if you accept analytics. Counts visits and shows which pages get read. Kept for up to 13 months.</li>
+                </ul>
+                <p>Google processes analytics data, mostly in the United States. We don't use it for ads and we don't share it with anyone else.</p>
+                <p>Change your mind any time with <a href="#cookie-settings" data-cc="show-preferencesModal">Cookie settings</a>, also in the footer. If your browser sends a Global Privacy Control signal, we treat it as a no.</p>
+              </div>
+            </section>
             <section class="legal-row">
               <h2>How long we keep it</h2>
               <div class="legal-text">
@@ -136,6 +150,7 @@
               <h2>Your rights</h2>
               <div class="legal-text">
                 <p>Ask us to show you, correct or delete what we hold on you. Email <a href="mailto:hello@avennex.com">hello@avennex.com</a> and it's done within 7 business days.</p>
+                <p>If you're in the EU, the UK or Quebec, you can also object to how we use your data, ask for a copy you can take elsewhere, and complain to your local privacy regulator. In Canada that's the Office of the Privacy Commissioner, and in Quebec the Commission d'accès à l'information.</p>
               </div>
             </section>
             <section class="legal-row">
@@ -147,7 +162,7 @@
             <section class="legal-row">
               <h2>Questions</h2>
               <div class="legal-text">
-                <p>Just email <a href="mailto:hello@avennex.com">hello@avennex.com</a>. You'll hear back from someone on the team.</p>
+                <p>Just email <a href="mailto:hello@avennex.com">hello@avennex.com</a>. You'll hear back from someone on the team. The same address reaches the person responsible for privacy at Avennex.</p>
               </div>
             </section>
           </div>
@@ -185,6 +200,7 @@
         <div class="footer-col">
           <h4>Legal</h4>
           <a href="privacy.html">Privacy</a>
+          <a href="#cookie-settings" class="cookie-link" data-cc="show-preferencesModal">Cookie settings</a>
         </div>
       </div>
     </div>
@@ -194,10 +210,14 @@
   </footer>
 
   <script src="js/icons.js?v=202611131500" defer></script>
+
+  <script src="js/vendor/cookieconsent.umd.js?v=310" defer></script>
+
+  <script src="js/consent.js?v=202611191400" defer></script>
   <script src="js/api.js?v=202610022310" defer></script>
   <script src="js/chatbot.js?v=202610040900" defer></script>
   <script src="js/nav-feed.js?v=202609270400" defer></script>
-  <script src="js/motion.js?v=202611191200" defer></script>
+  <script src="js/motion.js?v=202611191400" defer></script>
   <script src="js/polish.js?v=202609270200" defer></script>
 
 </body>
