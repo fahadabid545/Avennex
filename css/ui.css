@@ -770,3 +770,48 @@
   .chat-compose-btn { align-self: flex-start; }
   .chat-modal { padding: 34px 22px 26px; }
 }
+
+/* ---------- cookie banner, in the site's colours ---------- */
+
+#cc-main {
+  --cc-font-family: var(--text);
+  --cc-modal-border-radius: 0;
+  --cc-btn-border-radius: 0;
+  --cc-bg: var(--paper-2);
+  --cc-primary-color: var(--ink);
+  --cc-secondary-color: var(--ink-2);
+  --cc-btn-primary-bg: var(--mark);
+  --cc-btn-primary-color: var(--mark-ink);
+  --cc-btn-primary-border-color: var(--mark);
+  --cc-btn-primary-hover-bg: #FFD27A;
+  --cc-btn-primary-hover-color: var(--mark-ink);
+  --cc-btn-primary-hover-border-color: #FFD27A;
+  --cc-btn-secondary-bg: transparent;
+  --cc-btn-secondary-color: var(--ink);
+  --cc-btn-secondary-border-color: var(--rule);
+  --cc-btn-secondary-hover-bg: rgba(255, 255, 255, 0.06);
+  --cc-btn-secondary-hover-color: var(--ink);
+  --cc-btn-secondary-hover-border-color: var(--ink-3);
+  --cc-separator-border-color: var(--rule);
+  --cc-toggle-on-bg: var(--mark);
+  --cc-toggle-off-bg: #3A3452;
+  --cc-toggle-on-knob-bg: var(--mark-ink);
+  --cc-toggle-off-knob-bg: var(--ink);
+  --cc-toggle-readonly-bg: #2A2540;
+  --cc-toggle-readonly-knob-bg: var(--ink-3);
+  --cc-cookie-category-block-bg: rgba(255, 255, 255, 0.03);
+  --cc-cookie-category-block-border: var(--rule);
+  --cc-cookie-category-block-hover-bg: rgba(255, 255, 255, 0.05);
+  --cc-cookie-category-block-hover-border: var(--rule);
+  --cc-cookie-category-expanded-block-bg: transparent;
+  --cc-cookie-category-expanded-block-hover-bg: transparent;
+  --cc-overlay-bg: rgba(8, 7, 16, 0.72);
+  --cc-footer-bg: var(--paper);
+  --cc-footer-color: var(--ink-3);
+  --cc-footer-border-color: var(--rule);
+  --cc-link-color: var(--mark);
+}
+#cc-main .cm, #cc-main .pm { border: 1px solid var(--rule); }
+#cc-main .cm__title, #cc-main .pm__title { font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; }
+#cc-main .cm__btn, #cc-main .pm__btn { font-family: var(--label); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.footer-col .cookie-link { color: inherit; }

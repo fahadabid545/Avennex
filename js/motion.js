@@ -139,7 +139,10 @@
   var gradients = [];
   function paintGradient(el) {
     if (!el.classList.contains('grad')) return;
-    if (gradients.indexOf(el) < 0) gradients.push(el);
+    if (gradients.indexOf(el) < 0) {
+      gradients.push(el);
+      if (gradObserver) gradObserver.observe(el);
+    }
     var w = el.clientWidth;
     el.querySelectorAll('.m-word').forEach(function (m) {
       var inner = m.firstChild;
@@ -147,6 +150,11 @@
       inner.style.backgroundPosition = (-m.offsetLeft) + 'px 0';
     });
   }
+  // repaint when a heading changes size, including a section that starts
+  // hidden and is shown later
+  var gradObserver = window.ResizeObserver
+    ? new ResizeObserver(function (entries) { entries.forEach(function (e) { paintGradient(e.target); }); })
+    : null;
   var gradTimer = null;
   window.addEventListener('resize', function () {
     clearTimeout(gradTimer);
