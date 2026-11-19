@@ -98,8 +98,7 @@ $intro = "# Avennex\n\n"
     . "- [How we work]($site/how-we-work.html): how a project runs, from the first call to one agreed plan and price, and why there's no price list\n"
     . "- [Why Avennex]($site/why-avennex.html): what working with Avennex looks like, with links to proof on the site\n"
     . "- [Custom software vs SaaS]($site/custom-software-vs-saas.html): when to buy a subscription and when to build\n"
-    . "- [Avennex vs agency vs offshore team]($site/avennex-vs-agency-vs-offshore.html): how Avennex compares with a digital agency and an offshore team\n"
-    . "- [Studio vs freelancer vs in house]($site/studio-vs-freelancer-vs-in-house.html): who should build your software\n"
+    . "- [Who should build your software]($site/avennex-vs-agency-vs-freelancer.html): Avennex compared with a digital agency, an offshore team, a freelancer and an in house hire\n"
     . "- [About]($site/about.html): the company and the people behind it\n"
     . "- [Contact]($site/contact.html): replies within 5 working days\n";
 
