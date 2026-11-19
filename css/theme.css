@@ -1,36 +1,36 @@
 /* ==========================================================
    Avennex — theme
-   Near black surface, grey text, one violet accent, sans
+   Near black surface, grey text, white as the accent, sans
    headings. Loaded last so it sets the look for every page.
    ========================================================== */
 
 :root {
-  --paper:      #07070A;
-  --paper-2:    #0E0E14;
-  --paper-3:    #15151D;
+  --paper:      #09090B;
+  --paper-2:    #111113;
+  --paper-3:    #18181B;
   --ink:        #F5F5F7;
   --ink-2:      #A1A1AA;
   --ink-3:      #71717A;
   --rule:       rgba(255, 255, 255, 0.12);
   --hair:       rgba(255, 255, 255, 0.07);
 
-  --mark:       #8B7CFF;
-  --mark-lit:   #B4A9FF;
-  --mark-soft:  rgba(139, 124, 255, 0.12);
+  --mark:       #E4E4E7;
+  --mark-lit:   #FFFFFF;
+  --mark-soft:  rgba(255, 255, 255, 0.054);
   --mark-ink:   #0A0A0D;
-  --royal:      #8B7CFF;
-  --royal-lit:  #B4A9FF;
-  --royal-deep: #2A2366;
-  --royal-soft: rgba(139, 124, 255, 0.12);
+  --royal:      #E4E4E7;
+  --royal-lit:  #FFFFFF;
+  --royal-deep: #27272A;
+  --royal-soft: rgba(255, 255, 255, 0.054);
 
   --ok:         #4ADE80;
-  --dash-series: #8B7CFF, #F5F5F7, #4ADE80, #60A5FA, #F87171, #FBBF24;
+  --dash-series: #F5F5F7, #71717A, #4ADE80, #60A5FA, #F87171, #FBBF24;
 
   --display: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --serif:   'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --brand:   'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
-  --surface:   linear-gradient(180deg, var(--paper-2), rgba(14, 14, 20, 0.6));
+  --surface:   linear-gradient(180deg, var(--paper-2), rgba(17, 17, 19, 0.6));
   --radius:    14px;
   --radius-sm: 10px;
 }
@@ -39,7 +39,7 @@ body { background: var(--paper); font-feature-settings: 'cv11', 'ss01', 'ss03'; 
 
 /* one soft light at the top instead of drifting colour */
 body::before {
-  background: radial-gradient(70vmax 40vmax at 50% -8%, rgba(139, 124, 255, 0.16), transparent 62%);
+  background: radial-gradient(70vmax 40vmax at 50% -8%, rgba(255, 255, 255, 0.072), transparent 62%);
   filter: none;
   animation: none;
 }
@@ -59,7 +59,8 @@ body::after { opacity: 0.12; }
 h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 
 /* the marked word is the accent, never a gradient */
-.hl { color: var(--mark-lit); }
+.hl { color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
+:is(h1, h2, h3, .section-heading, .cta-heading, .h-sect, .h-block):has(.hl) { color: var(--ink-3); }
 .grad, .grad-warm { --grad: linear-gradient(180deg, #FFFFFF 30%, rgba(255, 255, 255, 0.62)); }
 .hero-headline-sub { color: var(--ink-3); font-weight: 600; }
 
@@ -72,7 +73,7 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
-  color: var(--mark-lit);
+  color: var(--ink-2);
 }
 .section-eyebrow::before, .hero-eyebrow::before {
   width: 5px;
@@ -122,7 +123,7 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 
 /* ---------- header ---------- */
 
-.site-header.is-solid { background: rgba(7, 7, 10, 0.72); }
+.site-header.is-solid { background: rgba(9, 9, 11, 0.72); }
 .nav-links { background: rgba(255, 255, 255, 0.03); border-color: var(--hair); }
 .nav-top.is-current, .nav-trigger.is-current { color: var(--ink); background: rgba(255, 255, 255, 0.06); }
 .site-header .nav-glide { background: rgba(255, 255, 255, 0.06); box-shadow: none; }
@@ -148,11 +149,11 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 
 .site-footer { background: var(--paper); border-top-color: var(--hair); }
 
-/* footer wordmark fills violet into grey */
+/* footer wordmark fills white into grey */
 .site-footer::after {
   font-weight: 700;
   background:
-    linear-gradient(100deg, rgba(139, 124, 255, 0.5), rgba(255, 255, 255, 0.14) 70%) 0 0 / 0% 100% no-repeat,
+    linear-gradient(100deg, rgba(255, 255, 255, 0.225), rgba(255, 255, 255, 0.14) 70%) 0 0 / 0% 100% no-repeat,
     linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
   -webkit-background-clip: text;
   background-clip: text;

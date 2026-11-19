@@ -93,8 +93,8 @@
   --ink:        #F4F1FB;
   --ink-2:      #CFC9E2;
   --ink-3:      #A69FC2;
-  --rule:       rgba(207, 201, 226, 0.2);
-  --hair:       rgba(207, 201, 226, 0.085);
+  --rule:       rgba(228, 228, 231, 0.2);
+  --hair:       rgba(228, 228, 231, 0.085);
 
   /* panels share the surface now, so their tokens match it */
   --panel:      var(--paper);
@@ -107,14 +107,14 @@
   --panel-hair: var(--hair);
 
   /* amber marks what matters, royal purple carries the atmosphere */
-  --mark:       #8B7CFF;
-  --mark-lit:   #B4A9FF;
-  --mark-soft:  rgba(139, 124, 255, 0.14);
+  --mark:       #E4E4E7;
+  --mark-lit:   #FFFFFF;
+  --mark-soft:  rgba(255, 255, 255, 0.063);
   --mark-ink:   #1A1204;
-  --royal:      #8B7CFF;
-  --royal-lit:  #B4A9FF;
-  --royal-deep: #3B1782;
-  --royal-soft: rgba(139, 124, 255, 0.2);
+  --royal:      #E4E4E7;
+  --royal-lit:  #FFFFFF;
+  --royal-deep: #27272A;
+  --royal-soft: rgba(255, 255, 255, 0.09);
 
   /* state, kept away from the accent */
   --ok:         #5CCB8F;
@@ -122,7 +122,7 @@
   --stop:       #F2766B;
 
   /* chart series for the public dashboards, read by js/dashboard.js */
-  --dash-series: #8B7CFF, #B4A9FF, #5CCB8F, #6FA8FF, #F2766B, #C9D46B;
+  --dash-series: #E4E4E7, #FFFFFF, #5CCB8F, #6FA8FF, #F2766B, #C9D46B;
 
   --display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --text:    'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -221,10 +221,10 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(52vmax 42vmax at 10% 4%, rgba(139, 124, 255, 0.38), transparent 64%),
-    radial-gradient(40vmax 34vmax at 96% 22%, rgba(139, 124, 255, 0.15), transparent 62%),
-    radial-gradient(60vmax 46vmax at 74% 104%, rgba(91, 33, 214, 0.32), transparent 64%),
-    radial-gradient(34vmax 30vmax at 4% 78%, rgba(139, 124, 255, 0.08), transparent 62%);
+    radial-gradient(52vmax 42vmax at 10% 4%, rgba(255, 255, 255, 0.171), transparent 64%),
+    radial-gradient(40vmax 34vmax at 96% 22%, rgba(255, 255, 255, 0.068), transparent 62%),
+    radial-gradient(60vmax 46vmax at 74% 104%, rgba(255, 255, 255, 0.096), transparent 64%),
+    radial-gradient(34vmax 30vmax at 4% 78%, rgba(255, 255, 255, 0.036), transparent 62%);
   filter: blur(8px);
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -253,7 +253,7 @@ body::after {
 /* a panel is the same night, tinted a shade toward purple so a block of
    machinery still reads as its own place without a hard band */
 .panel {
-  background: linear-gradient(180deg, rgba(139, 124, 255, 0.09), rgba(139, 124, 255, 0.025));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.041), rgba(255, 255, 255, 0.011));
   border-block: 1px solid var(--hair);
   color: var(--panel-ink);
   --rule: var(--panel-rule);
@@ -515,12 +515,12 @@ body::after {
 /* the home page headings fade across the line. motion.js hands each word
    its slice of the gradient, so it reads as one sweep */
 .grad {
-  --grad: linear-gradient(90deg, #FFFFFF 0%, #D8CBFF 55%, #B4A9FF 100%);
+  --grad: linear-gradient(90deg, #FFFFFF 0%, #D4D4D8 55%, #FFFFFF 100%);
   position: relative;
   width: fit-content;
   max-width: 100%;
 }
-.grad-warm { --grad: linear-gradient(90deg, #B4A9FF 0%, #E58FC4 55%, #8B7CFF 100%); }
+.grad-warm { --grad: linear-gradient(90deg, #FFFFFF 0%, #A1A1AA 55%, #E4E4E7 100%); }
 .grad > .m-word > span,
 .grad:not([data-set="done"]) {
   background-image: var(--grad);

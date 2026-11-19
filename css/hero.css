@@ -11,8 +11,8 @@
   flex-direction: column;
   overflow: hidden;
   background:
-    radial-gradient(48vw 40vw at 82% 34%, rgba(139, 124, 255, 0.3), transparent 66%),
-    radial-gradient(34vw 26vw at 62% 70%, rgba(139, 124, 255, 0.12), transparent 64%);
+    radial-gradient(48vw 40vw at 82% 34%, rgba(255, 255, 255, 0.135), transparent 66%),
+    radial-gradient(34vw 26vw at 62% 70%, rgba(255, 255, 255, 0.054), transparent 64%);
   color: var(--panel-ink);
   --rule: var(--panel-rule);
   --hair: var(--panel-hair);

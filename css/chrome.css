@@ -16,7 +16,7 @@
   transition: background var(--t-base) var(--ease), border-color var(--t-base) var(--ease), backdrop-filter var(--t-base) var(--ease);
 }
 .site-header.is-solid {
-  background: rgba(13, 11, 24, 0.72);
+  background: rgba(9, 9, 11, 0.72);
   border-bottom-color: var(--hair);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
@@ -76,7 +76,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   gap: 2px;
   padding: 5px;
   border-radius: 999px;
-  background: rgba(21, 18, 38, 0.86);
+  background: rgba(17, 17, 19, 0.86);
   border: 1px solid var(--rule);
   min-width: 0;
 }
@@ -112,7 +112,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 .nav-top.is-current,
 .nav-trigger.is-current {
   color: var(--mark-lit);
-  background: radial-gradient(70% 90% at 50% 100%, rgba(139, 124, 255, 0.2), transparent 75%);
+  background: radial-gradient(70% 90% at 50% 100%, rgba(255, 255, 255, 0.09), transparent 75%);
 }
 
 /* ---------- dropdown panels ---------- */
@@ -127,7 +127,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   border-radius: 16px;
   background: var(--paper-2);
   border: 1px solid var(--rule);
-  box-shadow: 0 28px 70px -20px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(139, 124, 255, 0.08);
+  box-shadow: 0 28px 70px -20px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.036);
   opacity: 0;
   visibility: hidden;
   transform: translate(-50%, -6px);
@@ -237,7 +237,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 .nav-cta:hover {
   background: var(--mark-lit);
   border-color: var(--mark-lit);
-  box-shadow: 0 10px 30px -10px rgba(139, 124, 255, 0.7);
+  box-shadow: 0 10px 30px -10px rgba(255, 255, 255, 0.315);
 }
 
 /* the name types itself in on first load and refresh, see logo-intro.js */
@@ -335,7 +335,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
 /* ---------- footer ---------- */
 
 .site-footer {
-  background: linear-gradient(180deg, rgba(13, 11, 24, 0.4), rgba(8, 6, 16, 0.92));
+  background: linear-gradient(180deg, rgba(9, 9, 11, 0.4), rgba(8, 8, 9, 0.92));
   border-top: 1px solid var(--hair);
   color: var(--panel-ink);
   --rule: var(--panel-rule);
@@ -428,18 +428,18 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   gap: 10px;
   padding: 11px 18px 11px 16px;
   /* purple under the icon and label so both stay readable, amber only at the far edge */
-  background: linear-gradient(110deg, #4C1D95 0%, var(--royal) 38%, #B0569B 70%, var(--mark) 100%);
+  background: linear-gradient(110deg, #3F3F46 0%, var(--royal) 38%, #A1A1AA 70%, var(--mark) 100%);
   background-size: 118% 100%;
   background-position: 0% 50%;
   color: #fff;
-  border: 1px solid rgba(180, 169, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.203);
   font-family: var(--label);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  text-shadow: 0 1px 2px rgba(20, 8, 40, 0.45);
-  box-shadow: 0 12px 34px -8px rgba(139, 124, 255, 0.65), 0 6px 22px -10px rgba(139, 124, 255, 0.55);
+  text-shadow: 0 1px 2px rgba(12, 12, 14, 0.45);
+  box-shadow: 0 12px 34px -8px rgba(255, 255, 255, 0.293), 0 6px 22px -10px rgba(255, 255, 255, 0.248);
 }
 .chatbot-trigger:hover {
   background-position: 100% 50%;
@@ -450,7 +450,7 @@ body:not([data-header-transparent="true"]) .site-header::after { background: var
   width: 16px;
   height: 16px;
   flex: none;
-  color: #B4A9FF;
+  color: #FFFFFF;
 }
 .chatbot-trigger.is-hidden { display: none; }
 .chatbot-trigger { transition: background-position 600ms var(--ease-out), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease-out), opacity var(--t-fast) var(--ease); }

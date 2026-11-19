@@ -29,7 +29,7 @@
 .form-submit:hover {
   background: var(--mark-lit);
   color: var(--mark-ink);
-  box-shadow: 0 10px 34px -8px rgba(139, 124, 255, 0.7);
+  box-shadow: 0 10px 34px -8px rgba(255, 255, 255, 0.315);
 }
 
 .hero-btn-secondary {
@@ -684,8 +684,8 @@
 
 .cta-banner {
   background:
-    radial-gradient(44vw 30vw at 18% 40%, rgba(139, 124, 255, 0.16), transparent 66%),
-    radial-gradient(50vw 36vw at 86% 60%, rgba(139, 124, 255, 0.34), transparent 68%);
+    radial-gradient(44vw 30vw at 18% 40%, rgba(255, 255, 255, 0.072), transparent 66%),
+    radial-gradient(50vw 36vw at 86% 60%, rgba(255, 255, 255, 0.153), transparent 68%);
   color: var(--panel-ink);
 }
 .cta-banner.section-loose { padding-block: var(--sect-y); }
@@ -783,9 +783,9 @@
   --cc-btn-primary-bg: var(--mark);
   --cc-btn-primary-color: var(--mark-ink);
   --cc-btn-primary-border-color: var(--mark);
-  --cc-btn-primary-hover-bg: #FFD27A;
+  --cc-btn-primary-hover-bg: #FFFFFF;
   --cc-btn-primary-hover-color: var(--mark-ink);
-  --cc-btn-primary-hover-border-color: #FFD27A;
+  --cc-btn-primary-hover-border-color: #FFFFFF;
   --cc-btn-secondary-bg: transparent;
   --cc-btn-secondary-color: var(--ink);
   --cc-btn-secondary-border-color: var(--rule);
@@ -794,10 +794,10 @@
   --cc-btn-secondary-hover-border-color: var(--ink-3);
   --cc-separator-border-color: var(--rule);
   --cc-toggle-on-bg: var(--mark);
-  --cc-toggle-off-bg: #3A3452;
+  --cc-toggle-off-bg: #3F3F46;
   --cc-toggle-on-knob-bg: var(--mark-ink);
   --cc-toggle-off-knob-bg: var(--ink);
-  --cc-toggle-readonly-bg: #2A2540;
+  --cc-toggle-readonly-bg: #27272A;
   --cc-toggle-readonly-knob-bg: var(--ink-3);
   --cc-cookie-category-block-bg: rgba(255, 255, 255, 0.03);
   --cc-cookie-category-block-border: var(--rule);
@@ -805,7 +805,7 @@
   --cc-cookie-category-block-hover-border: var(--rule);
   --cc-cookie-category-expanded-block-bg: transparent;
   --cc-cookie-category-expanded-block-hover-bg: transparent;
-  --cc-overlay-bg: rgba(8, 7, 16, 0.72);
+  --cc-overlay-bg: rgba(8, 8, 9, 0.72);
   --cc-footer-bg: var(--paper);
   --cc-footer-color: var(--ink-3);
   --cc-footer-border-color: var(--rule);

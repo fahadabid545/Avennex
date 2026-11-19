@@ -28,7 +28,7 @@
 /* ---------- home: the signal field ---------- */
 
 .brain-section {
-  background: radial-gradient(46vw 38vw at 78% 50%, rgba(139, 124, 255, 0.18), transparent 70%);
+  background: radial-gradient(46vw 38vw at 78% 50%, rgba(255, 255, 255, 0.081), transparent 70%);
 }
 .brain-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(var(--col), minmax(0, 1fr)); column-gap: var(--gutter); }
 .brain-text { grid-column: 1 / 6; }
@@ -691,7 +691,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mark);
-  border: 1px solid rgba(139, 124, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.248);
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
 .doc-share {
@@ -745,7 +745,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(10, 9, 18, 0.82);
+  background: rgba(9, 9, 11, 0.82);
   backdrop-filter: blur(4px);
 }
 .doc-modal-overlay[hidden] { display: none; }
@@ -1021,7 +1021,7 @@
   gap: 10px;
   padding: 24px;
   border: 1px solid var(--rule);
-  background: rgba(21, 18, 38, 0.6);
+  background: rgba(17, 17, 19, 0.6);
   transition: border-color var(--t-fast) var(--ease), transform var(--t-base) var(--ease-out);
 }
 .work-card:hover { border-color: var(--mark); transform: translateY(-2px); }
