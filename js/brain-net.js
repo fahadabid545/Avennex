@@ -251,10 +251,10 @@
       var b = nodes[e.b];
       var depth = (a.s + b.s) * 0.5;
       var lift = a.lift > b.lift ? a.lift : b.lift;
-      var alpha = (depth - 0.72) * 0.34 + e.heat * 0.55 + lift * 0.22;
+      var alpha = 0.05 + (depth - 0.72) * 0.55 + e.heat * 0.6 + lift * 0.25;
       if (alpha <= 0.012) continue;
       ctx.strokeStyle = ink(alpha);
-      ctx.lineWidth = e.heat > 0.25 ? 1.4 : 0.8;
+      ctx.lineWidth = e.heat > 0.25 ? 1.5 : 1;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -309,7 +309,7 @@
       n = nodes[order[i]];
       var d = n.s;
       var r = n.base * d + n.lift * 1.8 + n.heat * 2.6;
-      var a2 = (d - 0.7) * 1.15 + n.heat * 0.55 + n.lift * 0.4;
+      var a2 = 0.18 + (d - 0.7) * 1.3 + n.heat * 0.55 + n.lift * 0.4;
       if (a2 <= 0.02) continue;
 
       if (n.heat > 0.08) {
