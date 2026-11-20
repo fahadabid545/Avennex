@@ -11,6 +11,7 @@
   var MAGNETIC = '.hero-btn-primary, .hero-btn-secondary, .nav-cta, .form-submit, .error-actions a';
   var CARDS = '.work-card, .blog-card, .lp-card, .academy-card, .team-card, .rep-block, .doc-card, .value-card';
   var ROWS = '.jobs-table-row, .product-row';
+  var LIT = CARDS + ', ' + MAGNETIC + ', .nav-top, .nav-trigger, .nav-item-link, .hero-link, .text-link, .back-link';
   var DECODE = '.section-eyebrow, .hero-eyebrow, .rep-eyebrow';
   var FIGURES = '.rep-tile-value b, .rep-stat-value, .rep-team-size b, .rep-uptime-value b';
   var GLYPHS = '01<>/_#*+=';
@@ -73,6 +74,30 @@
       card.style.setProperty('--sx', (e.clientX - r.left).toFixed(0) + 'px');
       card.style.setProperty('--sy', (e.clientY - r.top).toFixed(0) + 'px');
     });
+  }
+
+  // ---------- a soft light behind the pointer, off over things that light up themselves ----------
+
+  function cursorGlow() {
+    var glow = document.createElement('div');
+    glow.className = 'cursor-glow is-off';
+    glow.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(glow);
+    var x = 0, y = 0, gx = 0, gy = 0, frame = 0, started = false;
+    function step() {
+      gx += (x - gx) * 0.18;
+      gy += (y - gy) * 0.18;
+      glow.style.transform = 'translate3d(' + gx.toFixed(1) + 'px,' + gy.toFixed(1) + 'px,0)';
+      frame = Math.abs(x - gx) + Math.abs(y - gy) > 0.5 ? requestAnimationFrame(step) : 0;
+    }
+    document.addEventListener('pointermove', function (e) {
+      x = e.clientX;
+      y = e.clientY;
+      if (!started) { gx = x; gy = y; started = true; }
+      glow.classList.toggle('is-off', !!(e.target.closest && e.target.closest(LIT)));
+      if (!frame) frame = requestAnimationFrame(step);
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', function () { glow.classList.add('is-off'); });
   }
 
   // ---------- nav pill ----------
@@ -277,7 +302,10 @@
   function boot() {
     scan(document.body);
     prefetch();
-    if (finePointer && !reduced) document.addEventListener('pointermove', trackSpot, { passive: true });
+    if (finePointer && !reduced) {
+      document.addEventListener('pointermove', trackSpot, { passive: true });
+      cursorGlow();
+    }
 
     var pending = [];
     var queued = false;

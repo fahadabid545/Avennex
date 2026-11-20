@@ -184,3 +184,66 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 }
 .brain-section { background: radial-gradient(46vw 38vw at 78% 50%, rgba(255, 255, 255, 0.06), transparent 70%); }
 .hero-cube-glow { filter: blur(16px); }
+
+/* ---------- cards: one lit style for the whole site ---------- */
+
+:is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card) {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: var(--radius);
+  background-color: rgba(255, 255, 255, 0.11);
+  background-image: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.15) 50%, transparent 62%);
+  background-size: 260% 100%;
+  background-repeat: no-repeat;
+  background-position: 105% 0;
+  transition:
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.7s ease,
+    border-color 0.7s ease,
+    box-shadow 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+:is(.value-card, .team-card, .academy-card) { padding: 22px 22px 24px; }
+.lp-card { padding: 34px 32px; }
+.lp-card + .lp-card { margin-top: 14px; }
+:is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card):hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.17);
+  background-position: -5% 0;
+  box-shadow: 0 22px 44px -20px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition:
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.7s ease,
+    border-color 0.7s ease,
+    box-shadow 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    background-position 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- hover tint for buttons and menu links ---------- */
+
+.hero-btn-secondary, .nav-top, .nav-trigger { transition: background-color 0.5s ease, border-color 0.5s ease, color 0.3s ease; }
+.hero-btn-secondary:hover { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.16); }
+.nav-top:hover, .nav-trigger:hover { background: rgba(255, 255, 255, 0.14); color: var(--ink); }
+
+/* ---------- a soft light that follows the pointer ---------- */
+
+.cursor-glow {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025) 55%, transparent);
+  transition: opacity 0.5s ease;
+  will-change: transform;
+}
+.cursor-glow.is-off { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card):hover { transform: none; background-position: 105% 0; }
+}
+@media (max-width: 720px) { .values-grid { gap: 14px; } }
