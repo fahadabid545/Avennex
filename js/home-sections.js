@@ -8,9 +8,16 @@
   var STATUS = { 'in-development': 'In development', launched: 'Live', paused: 'Paused' };
   var STAGE = { concept: 'Concept', planning: 'Planning', 'open-for-feedback': 'Open for comments', building: 'Building' };
 
-  function card(href, kind, title, line, state, progress) {
+  function visual(cover) {
+    if (cover) return '<div class="wk-vis"><img src="' + API.escHtml(cover) + '" alt="" loading="lazy"></div>';
+    return '<div class="wk-vis" aria-hidden="true"><div class="wk-win"><i></i><i></i><i></i></div>' +
+      '<div class="wk-body"><span></span><span style="width:70%"></span><span style="width:45%"></span><em></em></div></div>';
+  }
+
+  function card(href, kind, title, line, state, progress, cover, live) {
     var html = '<a class="work-card" href="' + href + '">';
-    html += '<span class="work-kind">' + API.escHtml(kind) + '</span>';
+    html += visual(cover);
+    html += '<span class="work-kind' + (live ? ' is-live' : '') + '">' + API.escHtml(kind) + '</span>';
     html += '<h3 class="work-title">' + API.escHtml(title) + '</h3>';
     if (line) html += '<p class="work-line">' + API.escHtml(line) + '</p>';
     html += '<span class="work-state">' + API.escHtml(state);
@@ -24,11 +31,12 @@
     var html = '';
     res[0].forEach(function (p) {
       html += card('product-detail.html?slug=' + encodeURIComponent(p.slug), 'Product', p.name, p.tagline,
-        STATUS[p.status] || 'In development', p.status === 'launched' ? undefined : p.progress);
+        STATUS[p.status] || 'In development', p.status === 'launched' ? undefined : p.progress,
+        API.assetUrl(p.cover_image), p.status === 'launched');
     });
     res[1].forEach(function (e) {
       html += card('launchpad-detail.html?slug=' + encodeURIComponent(e.slug), 'Launching soon', e.title, e.tagline,
-        STAGE[e.stage] || 'Coming soon');
+        STAGE[e.stage] || 'Coming soon', undefined, API.assetUrl(e.cover_image), false);
     });
     if (!html) return;
     list.innerHTML = html;
