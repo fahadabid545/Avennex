@@ -120,7 +120,7 @@
     revision: 1,
     cookie: { name: 'avx_consent', expiresAfterDays: 182 },
     guiOptions: {
-      consentModal: { layout: 'box', position: 'bottom left', equalWeightButtons: true },
+      consentModal: { layout: 'bar inline', position: 'bottom', equalWeightButtons: true },
       preferencesModal: { layout: 'box', equalWeightButtons: true },
     },
     categories: {
