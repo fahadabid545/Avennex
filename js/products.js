@@ -2,7 +2,12 @@
   var container = document.getElementById('products-list');
   if (!container) return;
 
-  API.showLoading(container);
+  function frame(fn, msg) {
+    container.innerHTML = '<section class="section prod-section"><div class="section-inner"><div class="grid"></div></div></section>';
+    fn(container.querySelector('.grid'), msg);
+  }
+
+  frame(API.showLoading);
 
   API.get('/products').then(function (products) {
     if (!products || products.length === 0) {
@@ -90,7 +95,7 @@
       }
     }
   }).catch(function () {
-    API.showError(container, 'Couldn\'t load products right now. Try refreshing in a minute.');
+    frame(API.showError, 'Couldn\'t load products right now. Try refreshing in a minute.');
   });
 
   function statusBadgeClass(status) {
