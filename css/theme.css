@@ -170,11 +170,11 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
   position: absolute;
   inset: 12%;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 55%, transparent);
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04) 55%, transparent);
   filter: blur(30px);
   pointer-events: none;
 }
-.hero-cube-stage canvas:not(.hero-cube-glow) { filter: brightness(0.84) drop-shadow(0 0 28px rgba(255, 255, 255, 0.14)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.1)); }
+.hero-cube-stage canvas:not(.hero-cube-glow) { filter: brightness(0.92) drop-shadow(0 0 28px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.14)); }
 
 /* cube and brain sit in a soft white light, not a coloured one */
 .hero {
@@ -183,7 +183,7 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
     radial-gradient(34vw 26vw at 62% 70%, rgba(255, 255, 255, 0.03), transparent 64%);
 }
 .brain-section { background: radial-gradient(46vw 38vw at 78% 50%, rgba(255, 255, 255, 0.06), transparent 70%); }
-.hero-cube-glow { filter: blur(16px); opacity: 0.6; }
+.hero-cube-glow { filter: blur(16px); opacity: 0.75; }
 
 /* ---------- cards: one lit style for the whole site ---------- */
 
