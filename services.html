@@ -25,17 +25,17 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://avennex.onrender.com" crossorigin>
   <script src="js/logo-intro.js?v=202609270500"></script>
 
-  <link rel="stylesheet" href="css/base.css?v=202611191200">
-  <link rel="stylesheet" href="css/chrome.css?v=202611191200">
+  <link rel="stylesheet" href="css/base.css?v=202611200700">
+  <link rel="stylesheet" href="css/chrome.css?v=202611200700">
   <link rel="stylesheet" href="css/cookieconsent.css?v=310">
-  <link rel="stylesheet" href="css/ui.css?v=202611191300">
+  <link rel="stylesheet" href="css/ui.css?v=202611200800">
   <link rel="stylesheet" href="css/pages.css?v=202611201000">
-  <link rel="stylesheet" href="css/chatbot.css?v=202610040900">
-  <link rel="stylesheet" href="css/polish.css?v=202609270700">
+  <link rel="stylesheet" href="css/chatbot.css?v=202611200700">
+  <link rel="stylesheet" href="css/polish.css?v=202611200700">
+  <link rel="stylesheet" href="css/theme.css?v=202611200900">
 </head>
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
@@ -43,17 +43,8 @@
   <header class="site-header">
     <div class="header-inner">
       <a href="index.html" class="logo"><span class="logo-aven">aven</span><span class="logo-nex">nex</span></a>
-      <nav class="nav-links" aria-label="Main navigation">
-        <a href="index.html">Home</a>
-        <a href="services.html" class="active" aria-current="page">Services</a>
-        <a href="products.html">Products</a>
-        <a href="launchpad.html">Launchpad</a>
-        <a href="academy.html">Academy</a>
-        <a href="blog.html">Journal</a>
-        <a href="about.html">About</a>
-        <a href="careers.html">Careers</a>
-        <a href="contact.html" class="nav-cta">Let's talk</a>
-      </nav>
+      <nav class="nav-links" aria-label="Main navigation"><div class="nav-group nav-group-wide"><button type="button" class="nav-trigger is-current" aria-expanded="false" aria-controls="nav-services">Services<i data-icon="chevron-down" width="14" height="14"></i></button><div class="nav-panel" id="nav-services"><div class="nav-panel-cols"><div class="nav-col"><p class="nav-col-label">Build</p><a class="nav-item-link" href="services.html#custom-software"><span class="nav-item-title">Custom software and SaaS</span><span class="nav-item-desc">For when the usual tools run out.</span></a><a class="nav-item-link" href="services.html#web-and-mobile"><span class="nav-item-title">Web and mobile apps</span><span class="nav-item-desc">Apps built for daily use.</span></a></div><div class="nav-col"><p class="nav-col-label">AI and automation</p><a class="nav-item-link" href="services.html#ai-integration"><span class="nav-item-title">AI integration</span><span class="nav-item-desc">AI with numbers behind it.</span></a><a class="nav-item-link" href="services.html#workflow-automation"><span class="nav-item-title">Workflow automation</span><span class="nav-item-desc">Less copying between tabs.</span></a></div><div class="nav-col"><p class="nav-col-label">Run and grow</p><a class="nav-item-link" href="services.html#cloud-and-data"><span class="nav-item-title">Cloud and data</span><span class="nav-item-desc">Quiet systems and a bill that makes sense.</span></a><a class="nav-item-link" href="services.html#consulting-and-analytics"><span class="nav-item-title">Consulting and analytics</span><span class="nav-item-desc">Sometimes the answer isn't code.</span></a></div><div class="nav-col nav-col-more"><p class="nav-col-label">More</p><a href="services.html" aria-current="page">All services</a><a href="how-we-work.html">How we work</a><a href="custom-software-vs-saas.html">Custom software vs SaaS</a><a href="avennex-vs-agency-vs-freelancer.html">Who should build your software</a></div></div></div></div><a href="products.html" class="nav-top">Products</a><a href="launchpad.html" class="nav-top">Launchpad</a><div class="nav-group"><button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-learn">Learn<i data-icon="chevron-down" width="14" height="14"></i></button><div class="nav-panel" id="nav-learn"><div class="nav-panel-list"><a class="nav-item-link" href="academy.html"><span class="nav-item-title">Academy</span><span class="nav-item-desc">Video lessons and code walkthroughs.</span></a><a class="nav-item-link" href="blog.html"><span class="nav-item-title">Journal</span><span class="nav-item-desc">Notes from client work and our own products.</span></a></div></div></div><div class="nav-group"><button type="button" class="nav-trigger" aria-expanded="false" aria-controls="nav-company">Company<i data-icon="chevron-down" width="14" height="14"></i></button><div class="nav-panel" id="nav-company"><div class="nav-panel-list"><a class="nav-item-link" href="about.html"><span class="nav-item-title">About</span><span class="nav-item-desc">Who we are and how we got here.</span></a><a class="nav-item-link" href="why-avennex.html"><span class="nav-item-title">Why Avennex</span><span class="nav-item-desc">What you get when we build it.</span></a><a class="nav-item-link" href="how-we-work.html"><span class="nav-item-title">How we work</span><span class="nav-item-desc">From first call to launch and after.</span></a><a class="nav-item-link" href="careers.html"><span class="nav-item-title">Careers</span><span class="nav-item-desc">Open roles on the team.</span></a></div></div></div></nav>
+      <a href="contact.html" class="nav-cta">Let's talk</a>
       <button class="menu-toggle" aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
         <i data-icon="menu" width="22" height="22"></i>
       </button>
@@ -64,15 +55,7 @@
     <button class="mobile-menu-close" aria-label="Close menu">
       <i data-icon="x" width="24" height="24"></i>
     </button>
-    <a href="index.html">Home</a>
-    <a href="services.html" class="active" aria-current="page">Services</a>
-    <a href="products.html">Products</a>
-    <a href="launchpad.html">Launchpad</a>
-    <a href="academy.html">Academy</a>
-    <a href="blog.html">Journal</a>
-    <a href="about.html">About</a>
-    <a href="careers.html">Careers</a>
-    <a href="contact.html" class="nav-cta">Let's talk</a>
+    <a href="index.html">Home</a><details class="mm-group"><summary>Services<i data-icon="chevron-down" width="20" height="20"></i></summary><a href="services.html#custom-software">Custom software and SaaS</a><a href="services.html#web-and-mobile">Web and mobile apps</a><a href="services.html#ai-integration">AI integration</a><a href="services.html#workflow-automation">Workflow automation</a><a href="services.html#cloud-and-data">Cloud and data</a><a href="services.html#consulting-and-analytics">Consulting and analytics</a><a href="services.html" aria-current="page">All services</a><a href="how-we-work.html">How we work</a><a href="custom-software-vs-saas.html">Custom software vs SaaS</a><a href="avennex-vs-agency-vs-freelancer.html">Who should build your software</a></details><a href="products.html">Products</a><a href="launchpad.html">Launchpad</a><details class="mm-group"><summary>Learn<i data-icon="chevron-down" width="20" height="20"></i></summary><a href="academy.html">Academy</a><a href="blog.html">Journal</a></details><details class="mm-group"><summary>Company<i data-icon="chevron-down" width="20" height="20"></i></summary><a href="about.html">About</a><a href="why-avennex.html">Why Avennex</a><a href="how-we-work.html">How we work</a><a href="careers.html">Careers</a></details><a href="contact.html" class="nav-cta">Let's talk</a>
   </div>
   <main id="main">
     <section class="page-hero">
@@ -102,152 +85,200 @@
       <div class="rules" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="section-inner">
         <div class="grid">
-          <article class="service-block m-in" id="custom-software">
-            <div class="service-block-head">
-              <h2 class="service-block-title">Custom software and SaaS</h2>
-              <p class="service-block-tag">For when the usual tools run out.</p>
-              <p class="service-block-lead">When nothing on the market fits the way you work, we build the missing piece. Internal systems, client portals or a full product, written so the next developer can pick it up without a headache.</p>
-            </div>
-            <div class="service-block-body">
-              <div class="service-block-detail">
-                <div>
-                  <h3 class="service-block-label">Includes</h3>
-                  <ul class="service-block-list">
-                  <li>Internal tools and admin panels</li>
-                  <li>Client portals and platforms your customers log into</li>
-                  <li>SaaS products, from the first release onward</li>
-                  <li>Rebuilds of old systems everyone is afraid to touch</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 class="service-block-label">Sounds familiar?</h3>
-                  <p class="service-block-fit">You've tried three tools and the process still lives in a spreadsheet.</p>
-                  <a href="contact.html?topic=custom-software" class="text-link">Plan a build <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
-                </div>
-              </div>
-            </div>
-          </article>
-          <article class="service-block m-in" id="ai-integration">
-            <div class="service-block-head">
-              <h2 class="service-block-title">AI integration</h2>
-              <p class="service-block-tag">AI with numbers behind it.</p>
-              <p class="service-block-lead">Reading invoices. Sorting support tickets. Writing the first draft of a reply. We hand that kind of repetitive work to a model, then test it on your own data before anyone depends on it. Then we show you the results.</p>
-            </div>
-            <div class="service-block-body">
-              <div class="service-block-detail">
-                <div>
-                  <h3 class="service-block-label">Includes</h3>
-                  <ul class="service-block-list">
-                  <li>Document, email and form processing</li>
-                  <li>Assistants and search over your own files</li>
-                  <li>Accuracy testing before and after launch</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 class="service-block-label">Sounds familiar?</h3>
-                  <p class="service-block-fit">Skilled people spend hours reading just to make one small call.</p>
-                  <a href="contact.html?topic=ai-integration" class="text-link">Ask about AI <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+          <article class="service-block svc-row m-in" id="custom-software">
+            <h2 class="svc-head">
+              <button type="button" class="svc-top" aria-expanded="false" aria-controls="svc-panel-1">
+                <span class="svc-no">01</span>
+                <span class="svc-name service-block-title">Custom software and SaaS</span>
+                <span class="svc-tag">For when the usual tools run out.</span>
+                <span class="svc-plus" aria-hidden="true"></span>
+              </button>
+            </h2>
+            <div class="svc-panel" id="svc-panel-1">
+              <div class="svc-inner">
+                <p class="service-block-lead">When nothing on the market fits the way you work, we build the missing piece. Internal systems, client portals or a full product, written so the next developer can pick it up without a headache.</p>
+                <div class="service-block-body">
+                  <div class="service-block-detail">
+                    <div>
+                      <h3 class="service-block-label">Includes</h3>
+                      <ul class="service-block-list">
+                      <li>Internal tools and admin panels</li>
+                      <li>Client portals and platforms your customers log into</li>
+                      <li>SaaS products, from the first release onward</li>
+                      <li>Rebuilds of old systems everyone is afraid to touch</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 class="service-block-label">Sounds familiar?</h3>
+                      <p class="service-block-fit">You've tried three tools and the process still lives in a spreadsheet.</p>
+                      <a href="contact.html?topic=custom-software" class="text-link">Plan a build <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </article>
-          <article class="service-block m-in" id="workflow-automation">
-            <div class="service-block-head">
-              <h2 class="service-block-title">Workflow automation</h2>
-              <p class="service-block-tag">Less copying between tabs.</p>
-              <p class="service-block-lead">Somewhere in your week, someone moves data from one system to another by hand. We trace how the work really flows, then automate the routine steps in Zapier, Make or custom code, whichever suits the volume and the data. Judgement calls stay with your people.</p>
-            </div>
-            <div class="service-block-body">
-              <div class="service-block-detail">
-                <div>
-                  <h3 class="service-block-label">Includes</h3>
-                  <ul class="service-block-list">
-                  <li>Zapier and Make builds, fixes and cleanups</li>
-                  <li>Custom code for high volume or sensitive flows</li>
-                  <li>Scheduled reports and alerts</li>
-                  <li>Approvals and handovers between teams</li>
-                  <li>AI steps inside larger workflows</li>
-                  <li>Logs that show what ran and when</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 class="service-block-label">Sounds familiar?</h3>
-                  <p class="service-block-fit">The same report gets rebuilt by hand every Monday.</p>
-                  <a href="contact.html?topic=workflow-automation" class="text-link">Automate a process <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
-                </div>
-              </div>
-            </div>
-          </article>
-          <article class="service-block m-in" id="web-and-mobile">
-            <div class="service-block-head">
-              <h2 class="service-block-title">Web and mobile apps</h2>
-              <p class="service-block-tag">Apps built for daily use.</p>
-              <p class="service-block-lead">Web apps, dashboards and apps for iOS and Android, shaped around the people who'll use them. We ship in small pieces, so you're tapping through real screens early, not at the end.</p>
-            </div>
-            <div class="service-block-body">
-              <div class="service-block-detail">
-                <div>
-                  <h3 class="service-block-label">Includes</h3>
-                  <ul class="service-block-list">
-                  <li>Web apps and dashboards</li>
-                  <li>iOS and Android apps</li>
-                  <li>Fast marketing sites built for search</li>
-                  <li>Updates and support after launch</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 class="service-block-label">Sounds familiar?</h3>
-                  <p class="service-block-fit">Your customers or your staff need something they'll come back to daily.</p>
-                  <a href="contact.html?topic=web-and-mobile" class="text-link">Start an app <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+          <article class="service-block svc-row m-in" id="ai-integration">
+            <h2 class="svc-head">
+              <button type="button" class="svc-top" aria-expanded="false" aria-controls="svc-panel-2">
+                <span class="svc-no">02</span>
+                <span class="svc-name service-block-title">AI integration</span>
+                <span class="svc-tag">AI with numbers behind it.</span>
+                <span class="svc-plus" aria-hidden="true"></span>
+              </button>
+            </h2>
+            <div class="svc-panel" id="svc-panel-2">
+              <div class="svc-inner">
+                <p class="service-block-lead">Reading invoices. Sorting support tickets. Writing the first draft of a reply. We hand that kind of repetitive work to a model, then test it on your own data before anyone depends on it. Then we show you the results.</p>
+                <div class="service-block-body">
+                  <div class="service-block-detail">
+                    <div>
+                      <h3 class="service-block-label">Includes</h3>
+                      <ul class="service-block-list">
+                      <li>Document, email and form processing</li>
+                      <li>Assistants and search over your own files</li>
+                      <li>Accuracy testing before and after launch</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 class="service-block-label">Sounds familiar?</h3>
+                      <p class="service-block-fit">Skilled people spend hours reading just to make one small call.</p>
+                      <a href="contact.html?topic=ai-integration" class="text-link">Ask about AI <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </article>
-          <article class="service-block m-in" id="cloud-and-data">
-            <div class="service-block-head">
-              <h2 class="service-block-title">Cloud and data</h2>
-              <p class="service-block-tag">Quiet systems and a bill that makes sense.</p>
-              <p class="service-block-lead">Hosting, databases and APIs that keep up as more people use them. Monitoring and backups get set up properly from day one. If your current setup has turned fragile over the years, we'll move you somewhere steadier, and look at cost while we're there.</p>
-            </div>
-            <div class="service-block-body">
-              <div class="service-block-detail">
-                <div>
-                  <h3 class="service-block-label">Includes</h3>
-                  <ul class="service-block-list">
-                  <li>Cloud setup and migrations</li>
-                  <li>Database design, tuning and APIs</li>
-                  <li>Monitoring, backups and cost control</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 class="service-block-label">Sounds familiar?</h3>
-                  <p class="service-block-fit">It works, but nobody wants to be the one who touches it.</p>
-                  <a href="contact.html?topic=cloud-and-data" class="text-link">Review my setup <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+          <article class="service-block svc-row m-in" id="workflow-automation">
+            <h2 class="svc-head">
+              <button type="button" class="svc-top" aria-expanded="false" aria-controls="svc-panel-3">
+                <span class="svc-no">03</span>
+                <span class="svc-name service-block-title">Workflow automation</span>
+                <span class="svc-tag">Less copying between tabs.</span>
+                <span class="svc-plus" aria-hidden="true"></span>
+              </button>
+            </h2>
+            <div class="svc-panel" id="svc-panel-3">
+              <div class="svc-inner">
+                <p class="service-block-lead">Somewhere in your week, someone moves data from one system to another by hand. We trace how the work really flows, then automate the routine steps in Zapier, Make or custom code, whichever suits the volume and the data. Judgement calls stay with your people.</p>
+                <div class="service-block-body">
+                  <div class="service-block-detail">
+                    <div>
+                      <h3 class="service-block-label">Includes</h3>
+                      <ul class="service-block-list">
+                      <li>Zapier and Make builds, fixes and cleanups</li>
+                      <li>Custom code for high volume or sensitive flows</li>
+                      <li>Scheduled reports and alerts</li>
+                      <li>Approvals and handovers between teams</li>
+                      <li>AI steps inside larger workflows</li>
+                      <li>Logs that show what ran and when</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 class="service-block-label">Sounds familiar?</h3>
+                      <p class="service-block-fit">The same report gets rebuilt by hand every Monday.</p>
+                      <a href="contact.html?topic=workflow-automation" class="text-link">Automate a process <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </article>
-          <article class="service-block m-in" id="consulting-and-analytics">
-            <div class="service-block-head">
-              <h2 class="service-block-title">Consulting and analytics</h2>
-              <p class="service-block-tag">Sometimes the answer isn't code.</p>
-              <p class="service-block-lead">It's worth knowing where your time and money go before anything gets built. We go through your process and your numbers, then tell you what to fix first. Now and then the answer is a better setup of a tool you already own.</p>
-            </div>
-            <div class="service-block-body">
-              <div class="service-block-detail">
-                <div>
-                  <h3 class="service-block-label">Includes</h3>
-                  <ul class="service-block-list">
-                  <li>Process and systems reviews</li>
-                  <li>Reporting and analytics setup</li>
-                  <li>Technical due diligence</li>
-                  <li>Roadmaps any team can pick up</li>
-                  </ul>
+          <article class="service-block svc-row m-in" id="web-and-mobile">
+            <h2 class="svc-head">
+              <button type="button" class="svc-top" aria-expanded="false" aria-controls="svc-panel-4">
+                <span class="svc-no">04</span>
+                <span class="svc-name service-block-title">Web and mobile apps</span>
+                <span class="svc-tag">Apps built for daily use.</span>
+                <span class="svc-plus" aria-hidden="true"></span>
+              </button>
+            </h2>
+            <div class="svc-panel" id="svc-panel-4">
+              <div class="svc-inner">
+                <p class="service-block-lead">Web apps, dashboards and apps for iOS and Android, shaped around the people who'll use them. We ship in small pieces, so you're tapping through real screens early, not at the end.</p>
+                <div class="service-block-body">
+                  <div class="service-block-detail">
+                    <div>
+                      <h3 class="service-block-label">Includes</h3>
+                      <ul class="service-block-list">
+                      <li>Web apps and dashboards</li>
+                      <li>iOS and Android apps</li>
+                      <li>Fast marketing sites built for search</li>
+                      <li>Updates and support after launch</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 class="service-block-label">Sounds familiar?</h3>
+                      <p class="service-block-fit">Your customers or your staff need something they'll come back to daily.</p>
+                      <a href="contact.html?topic=web-and-mobile" class="text-link">Start an app <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 class="service-block-label">Sounds familiar?</h3>
-                  <p class="service-block-fit">You know something's slow and expensive. You just don't know what to fix first.</p>
-                  <a href="contact.html?topic=consulting-and-analytics" class="text-link">Book a review <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+              </div>
+            </div>
+          </article>
+          <article class="service-block svc-row m-in" id="cloud-and-data">
+            <h2 class="svc-head">
+              <button type="button" class="svc-top" aria-expanded="false" aria-controls="svc-panel-5">
+                <span class="svc-no">05</span>
+                <span class="svc-name service-block-title">Cloud and data</span>
+                <span class="svc-tag">Quiet systems and a bill that makes sense.</span>
+                <span class="svc-plus" aria-hidden="true"></span>
+              </button>
+            </h2>
+            <div class="svc-panel" id="svc-panel-5">
+              <div class="svc-inner">
+                <p class="service-block-lead">Hosting, databases and APIs that keep up as more people use them. Monitoring and backups get set up properly from day one. If your current setup has turned fragile over the years, we'll move you somewhere steadier, and look at cost while we're there.</p>
+                <div class="service-block-body">
+                  <div class="service-block-detail">
+                    <div>
+                      <h3 class="service-block-label">Includes</h3>
+                      <ul class="service-block-list">
+                      <li>Cloud setup and migrations</li>
+                      <li>Database design, tuning and APIs</li>
+                      <li>Monitoring, backups and cost control</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 class="service-block-label">Sounds familiar?</h3>
+                      <p class="service-block-fit">It works, but nobody wants to be the one who touches it.</p>
+                      <a href="contact.html?topic=cloud-and-data" class="text-link">Review my setup <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="service-block svc-row m-in" id="consulting-and-analytics">
+            <h2 class="svc-head">
+              <button type="button" class="svc-top" aria-expanded="false" aria-controls="svc-panel-6">
+                <span class="svc-no">06</span>
+                <span class="svc-name service-block-title">Consulting and analytics</span>
+                <span class="svc-tag">Sometimes the answer isn't code.</span>
+                <span class="svc-plus" aria-hidden="true"></span>
+              </button>
+            </h2>
+            <div class="svc-panel" id="svc-panel-6">
+              <div class="svc-inner">
+                <p class="service-block-lead">It's worth knowing where your time and money go before anything gets built. We go through your process and your numbers, then tell you what to fix first. Now and then the answer is a better setup of a tool you already own.</p>
+                <div class="service-block-body">
+                  <div class="service-block-detail">
+                    <div>
+                      <h3 class="service-block-label">Includes</h3>
+                      <ul class="service-block-list">
+                      <li>Process and systems reviews</li>
+                      <li>Reporting and analytics setup</li>
+                      <li>Technical due diligence</li>
+                      <li>Roadmaps any team can pick up</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 class="service-block-label">Sounds familiar?</h3>
+                      <p class="service-block-fit">You know something's slow and expensive. You just don't know what to fix first.</p>
+                      <a href="contact.html?topic=consulting-and-analytics" class="text-link">Book a review <span class="text-link-arrow" aria-hidden="true">&rarr;</span></a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -321,9 +352,11 @@
   <script src="js/api.js?v=202610022310" defer></script>
   <script src="js/chatbot.js?v=202610040900" defer></script>
   <script src="js/nav-feed.js?v=202609270400" defer></script>
+  <script src="js/nav-menu.js?v=202611200100" defer></script>
   <script src="js/motion.js?v=202611191400" defer></script>
-  <script src="js/polish.js?v=202609270200" defer></script>
-  <script src="js/schema.js?v=202611131500" defer></script>
+  <script src="js/polish.js?v=202611200900" defer></script>
+  <script src="js/schema.js?v=202611200900" defer></script>
+  <script src="js/services.js?v=202611201000" defer></script>
 
 </body>
 </html>

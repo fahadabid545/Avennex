@@ -9,8 +9,9 @@
   var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   var MAGNETIC = '.hero-btn-primary, .hero-btn-secondary, .nav-cta, .form-submit, .error-actions a';
-  var CARDS = '.work-card, .blog-card, .lp-card, .academy-card, .team-card, .rep-block, .doc-card, .value-card';
-  var ROWS = '.jobs-table-row, .product-row';
+  var CARDS = '.work-card, .blog-card, .lp-card, .academy-card, .team-card, .rep-block, .doc-card, .value-card, .prod-card';
+  var ROWS = '.jobs-table-row';
+  var LIT = CARDS + ', ' + MAGNETIC + ', .nav-top, .nav-trigger, .nav-item-link, .hero-link, .text-link, .back-link';
   var DECODE = '.section-eyebrow, .hero-eyebrow, .rep-eyebrow';
   var FIGURES = '.rep-tile-value b, .rep-stat-value, .rep-team-size b, .rep-uptime-value b';
   var GLYPHS = '01<>/_#*+=';
@@ -75,6 +76,30 @@
     });
   }
 
+  // ---------- a soft light behind the pointer, off over things that light up themselves ----------
+
+  function cursorGlow() {
+    var glow = document.createElement('div');
+    glow.className = 'cursor-glow is-off';
+    glow.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(glow);
+    var x = 0, y = 0, gx = 0, gy = 0, frame = 0, started = false;
+    function step() {
+      gx += (x - gx) * 0.18;
+      gy += (y - gy) * 0.18;
+      glow.style.transform = 'translate3d(' + gx.toFixed(1) + 'px,' + gy.toFixed(1) + 'px,0)';
+      frame = Math.abs(x - gx) + Math.abs(y - gy) > 0.5 ? requestAnimationFrame(step) : 0;
+    }
+    document.addEventListener('pointermove', function (e) {
+      x = e.clientX;
+      y = e.clientY;
+      if (!started) { gx = x; gy = y; started = true; }
+      glow.classList.toggle('is-off', !!(e.target.closest && e.target.closest(LIT)));
+      if (!frame) frame = requestAnimationFrame(step);
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', function () { glow.classList.add('is-off'); });
+  }
+
   // ---------- nav pill ----------
 
   function navGlide(nav) {
@@ -84,13 +109,15 @@
     glide.setAttribute('aria-hidden', 'true');
     nav.insertBefore(glide, nav.firstChild);
     function to(a) {
-      glide.style.width = (a.offsetWidth + 22) + 'px';
-      glide.style.transform = 'translateX(' + (a.offsetLeft - 11) + 'px)';
+      var base = (glide.offsetParent || nav).getBoundingClientRect();
+      var r = a.getBoundingClientRect();
+      glide.style.width = r.width + 'px';
+      glide.style.transform = 'translateX(' + (r.left - base.left) + 'px)';
       glide.classList.add('is-on');
     }
     nav.addEventListener('pointerover', function (e) {
-      var a = e.target.closest('a');
-      if (!a || a.classList.contains('nav-cta') || a.hidden) return;
+      var a = e.target.closest('.nav-top, .nav-trigger');
+      if (!a || a.hidden) return;
       to(a);
     });
     nav.addEventListener('pointerleave', function () { glide.classList.remove('is-on'); });
@@ -275,7 +302,10 @@
   function boot() {
     scan(document.body);
     prefetch();
-    if (finePointer && !reduced) document.addEventListener('pointermove', trackSpot, { passive: true });
+    if (finePointer && !reduced) {
+      document.addEventListener('pointermove', trackSpot, { passive: true });
+      cursorGlow();
+    }
 
     var pending = [];
     var queued = false;

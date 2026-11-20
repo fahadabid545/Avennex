@@ -81,7 +81,7 @@
     var prodEl = document.getElementById('products-list');
     if (prodEl) {
       var observer = new MutationObserver(function () {
-        var cards = prodEl.querySelectorAll('.product-detail');
+        var cards = prodEl.querySelectorAll('.prod-card');
         if (!cards.length) return;
         observer.disconnect();
         cards.forEach(function (card) {

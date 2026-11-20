@@ -7,12 +7,12 @@
   canvas.className = 'brain-net-canvas';
   host.appendChild(canvas);
 
-  /* the field is drawn in pale lavender on the night surface. a node that is
-     carrying a signal is lit amber inside a purple halo, the rest stay as
+  /* the field is drawn in pale grey on the night surface. a node that is
+     carrying a signal is lit white inside a soft halo, the rest stay as
      structure */
-  var INK = [207, 201, 226];
-  var MARK = [246, 184, 75];
-  var HALO = [124, 58, 237];
+  var INK = [212, 212, 220];
+  var MARK = [245, 245, 250];
+  var HALO = [220, 220, 232];
 
   function readInk() { /* the surface is fixed now, so there is nothing to read */ }
 
@@ -251,10 +251,10 @@
       var b = nodes[e.b];
       var depth = (a.s + b.s) * 0.5;
       var lift = a.lift > b.lift ? a.lift : b.lift;
-      var alpha = (depth - 0.72) * 0.34 + e.heat * 0.55 + lift * 0.22;
+      var alpha = 0.05 + (depth - 0.72) * 0.55 + e.heat * 0.6 + lift * 0.25;
       if (alpha <= 0.012) continue;
       ctx.strokeStyle = ink(alpha);
-      ctx.lineWidth = e.heat > 0.25 ? 1.4 : 0.8;
+      ctx.lineWidth = e.heat > 0.25 ? 1.5 : 1;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -309,7 +309,7 @@
       n = nodes[order[i]];
       var d = n.s;
       var r = n.base * d + n.lift * 1.8 + n.heat * 2.6;
-      var a2 = (d - 0.7) * 1.15 + n.heat * 0.55 + n.lift * 0.4;
+      var a2 = 0.18 + (d - 0.7) * 1.3 + n.heat * 0.55 + n.lift * 0.4;
       if (a2 <= 0.02) continue;
 
       if (n.heat > 0.08) {

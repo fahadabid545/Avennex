@@ -50,27 +50,39 @@
 
   function append(posts) {
     var holder = document.createElement('div');
-    holder.innerHTML = posts.map(function (post) { return card(post, ''); }).join('');
+    holder.innerHTML = posts.map(function (post) { return card(post); }).join('');
     while (holder.firstChild) container.appendChild(holder.firstChild);
     reveal();
     moreButton(posts.length);
   }
 
-  function card(post, lead) {
-    var html = '<a href="blog-post.html?slug=' + encodeURIComponent(post.slug) + '" class="blog-card' + lead + '" data-animate="fade-up">';
+  // about 220 words a minute, counted from the post body when the list sends it
+  function readTime(post) {
+    var text = post.content || post.html || '';
+    if (!text) return '';
+    var words = String(text).replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.round(words / 220)) + ' min read';
+  }
+
+  function card(post) {
+    var html = '<a href="blog-post.html?slug=' + encodeURIComponent(post.slug) + '" class="blog-card" data-animate="fade-up">';
     var cover = API.assetUrl(post.cover_image);
     if (cover) {
       html += '<div class="blog-card-media"><img src="' + API.escHtml(cover) + '" alt="' + API.escHtml(post.title) + '" loading="lazy"></div>';
+    } else {
+      html += '<div class="blog-card-media is-blank" aria-hidden="true"><span>' + API.escHtml(post.title) + '</span></div>';
     }
     html += '<div class="blog-card-body">';
-    if (post.published_at) {
-      html += '<span class="blog-card-date">' + API.formatDate(post.published_at) + '</span>';
-    }
+    var meta = [];
+    if (post.published_at) meta.push('<span class="blog-card-date">' + API.formatDate(post.published_at) + '</span>');
+    var mins = readTime(post);
+    if (mins) meta.push('<span>' + mins + '</span>');
+    if (meta.length) html += '<div class="blog-card-meta">' + meta.join('<i></i>') + '</div>';
     html += '<h3 class="blog-card-title">' + API.escHtml(post.title) + '</h3>';
     if (post.excerpt) {
       html += '<p class="blog-card-excerpt">' + API.escHtml(post.excerpt) + '</p>';
     }
-    html += '<span class="blog-card-read">Read more <i data-lucide="arrow-right" width="14" height="14"></i></span>';
+    html += '<span class="blog-card-read"><b>Read the post</b><span class="arr" aria-hidden="true">&rarr;</span></span>';
     html += '</div>';
     return html + '</a>';
   }
@@ -105,8 +117,7 @@
 
     var html = '';
     for (var i = 0; i < posts.length; i++) {
-      // the newest post leads the page when there is a run of them behind it
-      html += card(posts[i], i === 0 && posts.length >= 3 ? ' blog-card-featured' : '');
+      html += card(posts[i]);
     }
     container.innerHTML = html;
     reveal();

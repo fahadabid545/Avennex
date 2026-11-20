@@ -28,16 +28,16 @@
   var GLYPHS = '01<>/_#*+=';
 
   var FACES = [
-    { n: [0, 0, 1], c: [246, 184, 75] },
-    { n: [1, 0, 0], c: [182, 156, 255] },
-    { n: [0, 1, 0], c: [237, 233, 254] },
-    { n: [0, 0, -1], c: [242, 118, 107] },
-    { n: [-1, 0, 0], c: [139, 92, 246] },
-    { n: [0, -1, 0], c: [232, 121, 249] },
+    { n: [0, 0, 1], c: [236, 236, 242] },
+    { n: [1, 0, 0], c: [214, 214, 224] },
+    { n: [0, 1, 0], c: [250, 250, 252] },
+    { n: [0, 0, -1], c: [176, 176, 188] },
+    { n: [-1, 0, 0], c: [228, 228, 236] },
+    { n: [0, -1, 0], c: [196, 196, 208] },
   ];
-  var WARM = [255, 236, 200];
-  var AMBER = [246, 184, 75];
-  var ROYAL = [124, 58, 237];
+  var WARM = [255, 255, 255];
+  var LIGHT = [230, 230, 238];
+  var ROYAL = [200, 200, 212];
 
   var services = [];
   document.querySelectorAll('#services-section .value-title').forEach(function (el) {
@@ -265,7 +265,7 @@
         v: [f.n[0] * sp + (Math.random() - 0.5) * 2, f.n[1] * sp + (Math.random() - 0.5) * 2, f.n[2] * sp + (Math.random() - 0.5) * 2],
         life: 0,
         max: 0.8 + Math.random() * 0.9,
-        c: Math.random() < 0.6 ? AMBER : f.c,
+        c: Math.random() < 0.6 ? LIGHT : f.c,
       });
     }
   }
@@ -368,7 +368,7 @@
     var coreR = unit * zoom * core[2] * (2.4 + explode * 1.6);
     var g = ctx.createRadialGradient(core[0], core[1], 0, core[0], core[1], coreR);
     var coreA = 0.2 + Math.sin(clock / 900) * 0.04 + explode * 0.25 + flash * 0.35;
-    g.addColorStop(0, rgba(mix(ROYAL, AMBER, flash * 0.8 + explode * 0.3), coreA));
+    g.addColorStop(0, rgba(mix(ROYAL, LIGHT, flash * 0.8 + explode * 0.3), coreA));
     g.addColorStop(1, rgba(ROYAL, 0));
     ctx.fillStyle = g;
     ctx.fillRect(core[0] - coreR, core[1] - coreR, coreR * 2, coreR * 2);
@@ -438,11 +438,11 @@
     }
 
     ctx.lineWidth = 1;
-    ctx.strokeStyle = rgba([207, 201, 226], 0.03 + assemble * 0.02);
+    ctx.strokeStyle = rgba([226, 226, 236], 0.03 + assemble * 0.02);
     ctx.stroke(frames[0]);
-    ctx.strokeStyle = rgba([207, 201, 226], 0.05 + assemble * 0.03);
+    ctx.strokeStyle = rgba([226, 226, 236], 0.05 + assemble * 0.03);
     ctx.stroke(frames[1]);
-    ctx.strokeStyle = rgba([207, 201, 226], 0.08 + assemble * 0.05);
+    ctx.strokeStyle = rgba([226, 226, 236], 0.08 + assemble * 0.05);
     ctx.stroke(frames[2]);
 
     if (active && active.solve) drawSlice(V, active, angle, spread);
@@ -471,9 +471,9 @@
       ctx.beginPath();
       trace(pts);
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = rgba(AMBER, a);
+      ctx.strokeStyle = rgba(LIGHT, a);
       ctx.stroke();
-      ctx.fillStyle = rgba(AMBER, a * 0.06);
+      ctx.fillStyle = rgba(LIGHT, a * 0.06);
       ctx.fill();
     });
   }
@@ -489,7 +489,7 @@
       else ctx.moveTo(p[0], p[1]);
     }
     ctx.lineWidth = 1 + (1 - ring) * 2;
-    ctx.strokeStyle = rgba(AMBER, a);
+    ctx.strokeStyle = rgba(LIGHT, a);
     ctx.stroke();
   }
 

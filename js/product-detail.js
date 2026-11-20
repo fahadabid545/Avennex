@@ -79,7 +79,7 @@
     if (typeof product.progress === 'number' && product.status !== 'launched') {
       html += '<div class="product-progress product-progress-detail product-wide-band">';
       html += '<div class="product-progress-header">';
-      html += '<span class="product-progress-label">Development Progress</span>';
+      html += '<span class="product-progress-label">Built so far</span>';
       html += '<span class="product-progress-pct">' + product.progress + '%</span>';
       html += '</div>';
       html += '<div class="product-progress-bar"><div class="product-progress-fill" style="width:' + product.progress + '%"></div></div>';
@@ -337,11 +337,10 @@
     return '';
   }
 
+  // the API sends values like in_development, so they're turned into words
   function statusLabel(status) {
-    if (status === 'in-development') return 'In Development';
-    if (status === 'launched') return 'Launched';
-    if (status === 'paused') return 'Paused';
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    var words = String(status || '').replace(/[_-]+/g, ' ').trim().toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
   }
 
 })();
