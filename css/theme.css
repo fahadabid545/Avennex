@@ -187,7 +187,7 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 
 /* ---------- cards: one lit style for the whole site ---------- */
 
-:is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card) {
+:is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card, .prod-card) {
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.26);
   border-radius: var(--radius);
@@ -205,7 +205,7 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 :is(.value-card, .team-card, .academy-card) { padding: 22px 22px 24px; }
 .lp-card { padding: 34px 32px; }
 .lp-card + .lp-card { margin-top: 14px; }
-:is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card):hover {
+:is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card, .prod-card):hover {
   transform: translateY(-5px);
   border-color: rgba(255, 255, 255, 0.42);
   background-color: rgba(255, 255, 255, 0.17);
@@ -244,6 +244,6 @@ h3, h4, .h-small { font-weight: 600; letter-spacing: -0.022em; }
 .cursor-glow.is-off { opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card):hover { transform: none; background-position: 105% 0; }
+  :is(.value-card, .team-card, .academy-card, .work-card, .blog-card, .lp-card, .doc-card, .prod-card):hover { transform: none; background-position: 105% 0; }
 }
 @media (max-width: 720px) { .values-grid { gap: 14px; } }

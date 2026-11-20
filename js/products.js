@@ -15,14 +15,11 @@
       return;
     }
 
-    var html = '';
+    var html = '<section class="section prod-section"><div class="section-inner"><div class="prod-list">';
     for (var i = 0; i < products.length; i++) {
       var p = products[i];
-      var isReversed = i % 2 !== 0;
 
-      html += '<section class="section product-detail" data-animate="fade-up">';
-      html += '<div class="section-inner">';
-      html += '<div class="product-row' + (isReversed ? ' product-row-reverse' : '') + '">';
+      html += '<article class="prod-card" data-animate="fade-up">';
 
       html += '<div class="product-info">';
       html += '<span class="badge ' + statusBadgeClass(p.status) + '"><span class="badge-dot ' + statusDotClass(p.status) + '"></span> ' + statusLabel(p.status) + '</span>';
@@ -40,7 +37,7 @@
         html += '<div class="feature-grid">';
         for (var k = 0; k < p.features.length; k++) {
           var f = p.features[k];
-          html += '<div class="feature-item">';
+          html += '<div class="feature-item prod-chip">';
           html += '<i data-lucide="' + API.escHtml(f.icon || 'check') + '" width="20" height="20"></i>';
           html += '<span>' + API.escHtml(f.text) + '</span>';
           html += '</div>';
@@ -51,7 +48,7 @@
       if (typeof p.progress === 'number') {
         html += '<div class="product-progress">';
         html += '<div class="product-progress-header">';
-        html += '<span class="product-progress-label">Development Progress</span>';
+        html += '<span class="product-progress-label">Built so far</span>';
         html += '<span class="product-progress-pct">' + p.progress + '%</span>';
         html += '</div>';
         html += '<div class="product-progress-bar"><div class="product-progress-fill" style="width: ' + p.progress + '%"></div></div>';
@@ -69,15 +66,9 @@
           (typeof AvxFig !== 'undefined' ? AvxFig.productMock(p.name) : '') + '</div>';
       }
       html += '</div>';
-
-      html += '</div>';
-      html += '</div>';
-      html += '</section>';
-
-      if (i < products.length - 1) {
-        html += '<div class="section-divider"></div>';
-      }
+      html += '</article>';
     }
+    html += '</div></div></section>';
 
     container.innerHTML = html;
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -103,21 +94,22 @@
   });
 
   function statusBadgeClass(status) {
+    status = String(status || '').replace(/_/g, '-');
     if (status === 'launched') return 'badge-blue';
     if (status === 'paused') return 'badge-yellow';
     return 'badge-green';
   }
 
   function statusDotClass(status) {
+    status = String(status || '').replace(/_/g, '-');
     if (status === 'launched') return 'badge-dot-blue';
     if (status === 'paused') return 'badge-dot-yellow';
     return '';
   }
 
+  // the API sends values like in_development, so they're turned into words
   function statusLabel(status) {
-    if (status === 'in-development') return 'In Development';
-    if (status === 'launched') return 'Launched';
-    if (status === 'paused') return 'Paused';
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    var words = String(status || '').replace(/[_-]+/g, ' ').trim().toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
   }
 })();

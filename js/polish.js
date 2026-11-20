@@ -9,8 +9,8 @@
   var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   var MAGNETIC = '.hero-btn-primary, .hero-btn-secondary, .nav-cta, .form-submit, .error-actions a';
-  var CARDS = '.work-card, .blog-card, .lp-card, .academy-card, .team-card, .rep-block, .doc-card, .value-card';
-  var ROWS = '.jobs-table-row, .product-row';
+  var CARDS = '.work-card, .blog-card, .lp-card, .academy-card, .team-card, .rep-block, .doc-card, .value-card, .prod-card';
+  var ROWS = '.jobs-table-row';
   var LIT = CARDS + ', ' + MAGNETIC + ', .nav-top, .nav-trigger, .nav-item-link, .hero-link, .text-link, .back-link';
   var DECODE = '.section-eyebrow, .hero-eyebrow, .rep-eyebrow';
   var FIGURES = '.rep-tile-value b, .rep-stat-value, .rep-team-size b, .rep-uptime-value b';
